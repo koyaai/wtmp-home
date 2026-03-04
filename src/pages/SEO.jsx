@@ -54,7 +54,7 @@ export default function SEO() {
   }, [selectedClientId]);
 
   const latest = seoData[0];
-  const canEdit = ["leadership", "team_lead", "seo_specialist"].includes(user?.role);
+  const canEdit = !user || ["admin", "leadership", "team_lead", "seo_specialist"].includes(user?.role);
 
   const handleGSCSync = async () => {
     const selectedClient = clients.find(c => c.id === selectedClientId);
