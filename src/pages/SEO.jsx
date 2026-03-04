@@ -56,6 +56,26 @@ export default function SEO() {
   const latest = seoData[0];
   const canEdit = ["leadership", "team_lead", "seo_specialist"].includes(user?.role);
 
+  const handleGSCSync = async () => {
+    const selectedClient = clients.find(c => c.id === selectedClientId);
+    if (!selectedClient?.google_search_console_url) {
+      setSyncError("This client has no Google Search Console URL set. Please add it in the client profile.");
+      return;
+    }
+    setSyncing(true);
+    setSyncError("");
+    try {
+      await base44.functions.invoke('syncGSC', {
+        client_id: selectedClientId,
+        site_url: selectedClient.google_search_console_url,
+      });
+      base44.entities.SEOData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setSeoData);
+    } catch (err) {
+      setSyncError(err?.response?.data?.error || "Sync failed. Check that the service account has access to this GSC property.");
+    }
+    setSyncing(false);
+  };
+
   const handleSave = async () => {
     await base44.entities.SEOData.create({ ...form, client_id: selectedClientId });
     setShowForm(false);
