@@ -38,7 +38,7 @@ export default function Layout({ children, currentPageName }) {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const userRole = user?.role || "admin";
+  const userRole = user?.role === "admin" ? "leadership" : (user?.role || "leadership");
   const visibleNav = navItems.filter(item => item.roles.includes(userRole));
 
   const SidebarContent = () => (
