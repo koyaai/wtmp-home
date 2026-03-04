@@ -3,6 +3,17 @@ import { Button } from "@/components/ui/button";
 
 const SERVICES = ["SEO", "PPC", "Social Media", "Web Design", "GHL Automations", "Customer Success"];
 
+function Field({ label, name, type = "text", placeholder, value, onChange }) {
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>
+      <input type={type} value={value || ""} onChange={e => onChange(name, e.target.value)}
+        placeholder={placeholder}
+        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+    </div>
+  );
+}
+
 export default function ClientForm({ initial, onSave, onCancel }) {
   const [form, setForm] = useState({
     name: "", contact_name: "", contact_email: "", contact_phone: "",
@@ -27,27 +38,18 @@ export default function ClientForm({ initial, onSave, onCancel }) {
     onSave({ ...form, retainer_fee: form.retainer_fee ? parseFloat(form.retainer_fee) : null });
   };
 
-  const Field = ({ label, name, type = "text", placeholder }) => (
-    <div>
-      <label className="block text-xs font-semibold text-slate-600 mb-1">{label}</label>
-      <input type={type} value={form[name] || ""} onChange={e => set(name, e.target.value)}
-        placeholder={placeholder}
-        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
-    </div>
-  );
-
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-5">
       {/* Basic Info */}
       <div>
         <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Basic Info</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="Business Name *" name="name" placeholder="e.g. Sunshine Blinds" />
-          <Field label="Contact Name" name="contact_name" placeholder="e.g. John Smith" />
-          <Field label="Email" name="contact_email" type="email" placeholder="john@example.com" />
-          <Field label="Phone" name="contact_phone" placeholder="(555) 000-0000" />
-          <Field label="Website" name="website" placeholder="https://..." />
-          <Field label="Location (City, State)" name="location" placeholder="Miami, FL" />
+          <Field label="Business Name *" name="name" placeholder="e.g. Sunshine Blinds" value={form.name} onChange={set} />
+          <Field label="Contact Name" name="contact_name" placeholder="e.g. John Smith" value={form.contact_name} onChange={set} />
+          <Field label="Email" name="contact_email" type="email" placeholder="john@example.com" value={form.contact_email} onChange={set} />
+          <Field label="Phone" name="contact_phone" placeholder="(555) 000-0000" value={form.contact_phone} onChange={set} />
+          <Field label="Website" name="website" placeholder="https://..." value={form.website} onChange={set} />
+          <Field label="Location (City, State)" name="location" placeholder="Miami, FL" value={form.location} onChange={set} />
         </div>
       </div>
 
@@ -64,11 +66,11 @@ export default function ClientForm({ initial, onSave, onCancel }) {
               ))}
             </select>
           </div>
-          <Field label="Monthly Retainer ($)" name="retainer_fee" type="number" placeholder="2500" />
-          <Field label="Start Date" name="start_date" type="date" />
+          <Field label="Monthly Retainer ($)" name="retainer_fee" type="number" placeholder="2500" value={form.retainer_fee} onChange={set} />
+          <Field label="Start Date" name="start_date" type="date" value={form.start_date} onChange={set} />
         </div>
         <div className="mt-3">
-          <Field label="Assigned CSM (email)" name="csm_assigned" placeholder="csm@agency.com" />
+          <Field label="Assigned CSM (email)" name="csm_assigned" placeholder="csm@agency.com" value={form.csm_assigned} onChange={set} />
         </div>
       </div>
 
@@ -89,10 +91,10 @@ export default function ClientForm({ initial, onSave, onCancel }) {
       <div>
         <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Integration IDs</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="GHL Location ID" name="ghl_location_id" placeholder="abc123..." />
-          <Field label="Google Ads Account ID" name="google_ads_account_id" placeholder="123-456-7890" />
-          <Field label="Google Search Console URL" name="google_search_console_url" placeholder="https://..." />
-          <Field label="Google Business Profile URL" name="gbp_url" placeholder="https://..." />
+          <Field label="GHL Location ID" name="ghl_location_id" placeholder="abc123..." value={form.ghl_location_id} onChange={set} />
+          <Field label="Google Ads Account ID" name="google_ads_account_id" placeholder="123-456-7890" value={form.google_ads_account_id} onChange={set} />
+          <Field label="Google Search Console URL" name="google_search_console_url" placeholder="https://..." value={form.google_search_console_url} onChange={set} />
+          <Field label="Google Business Profile URL" name="gbp_url" placeholder="https://..." value={form.gbp_url} onChange={set} />
         </div>
       </div>
 
