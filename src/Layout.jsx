@@ -38,7 +38,7 @@ export default function Layout({ children, currentPageName }) {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const userRole = user?.role || "csm";
+  const userRole = user?.role || "admin";
   const visibleNav = navItems.filter(item => item.roles.includes(userRole));
 
   const SidebarContent = () => (
