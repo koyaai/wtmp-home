@@ -104,9 +104,18 @@ export default function SEO() {
             {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           {canEdit && (
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setShowForm(true)}>
-              <Plus className="w-4 h-4 mr-1" /> Log Report
-            </Button>
+            <>
+              <Button size="sm" variant="outline" onClick={handleGSCSync} disabled={syncing}>
+                <RefreshCw className={`w-4 h-4 mr-1 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Syncing..." : "Sync GSC"}
+              </Button>
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setShowForm(true)}>
+                <Plus className="w-4 h-4 mr-1" /> Log Report
+              </Button>
+            </>
+          )}
+          {syncError && (
+            <p className="text-xs text-red-500 w-full mt-1">{syncError}</p>
           )}
         </div>
       </div>
