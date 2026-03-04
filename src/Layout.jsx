@@ -20,12 +20,12 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { label: "Command Center", icon: LayoutDashboard, page: "Dashboard", roles: ["leadership", "team_lead", "seo_specialist", "ppc_specialist", "social_media", "csm", "web_designer"] },
-  { label: "Clients", icon: Users, page: "Clients", roles: ["leadership", "team_lead", "seo_specialist", "ppc_specialist", "social_media", "csm", "web_designer"] },
-  { label: "SEO", icon: Search, page: "SEO", roles: ["leadership", "team_lead", "seo_specialist"] },
-  { label: "PPC", icon: MousePointerClick, page: "PPC", roles: ["leadership", "team_lead", "ppc_specialist"] },
-  { label: "Social Media", icon: CalendarDays, page: "SocialMedia", roles: ["leadership", "team_lead", "social_media"] },
-  { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: ["leadership", "team_lead", "csm"] },
+  { label: "Command Center", icon: LayoutDashboard, page: "Dashboard", roles: ["admin", "leadership", "team_lead", "seo_specialist", "ppc_specialist", "social_media", "csm", "web_designer"] },
+  { label: "Clients", icon: Users, page: "Clients", roles: ["admin", "leadership", "team_lead", "seo_specialist", "ppc_specialist", "social_media", "csm", "web_designer"] },
+  { label: "SEO", icon: Search, page: "SEO", roles: ["admin", "leadership", "team_lead", "seo_specialist"] },
+  { label: "PPC", icon: MousePointerClick, page: "PPC", roles: ["admin", "leadership", "team_lead", "ppc_specialist"] },
+  { label: "Social Media", icon: CalendarDays, page: "SocialMedia", roles: ["admin", "leadership", "team_lead", "social_media"] },
+  { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: ["admin", "leadership", "team_lead", "csm"] },
 ];
 
 export default function Layout({ children, currentPageName }) {

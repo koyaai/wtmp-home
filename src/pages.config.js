@@ -47,22 +47,22 @@
  *
  * The mainPage value must match a key in the PAGES object exactly.
  */
-import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
-import SEO from './pages/SEO';
-import PPC from './pages/PPC';
-import SocialMedia from './pages/SocialMedia';
+import Dashboard from './pages/Dashboard';
 import Leads from './pages/Leads';
+import PPC from './pages/PPC';
+import SEO from './pages/SEO';
+import SocialMedia from './pages/SocialMedia';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
-    "Dashboard": Dashboard,
     "Clients": Clients,
-    "SEO": SEO,
-    "PPC": PPC,
-    "SocialMedia": SocialMedia,
+    "Dashboard": Dashboard,
     "Leads": Leads,
+    "PPC": PPC,
+    "SEO": SEO,
+    "SocialMedia": SocialMedia,
 }
 
 export const pagesConfig = {
