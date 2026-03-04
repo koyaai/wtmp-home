@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import ClientList from "../components/clients/ClientList";
-import ClientDetail from "../components/clients/ClientDetail";
-import ClientForm from "../components/clients/ClientForm";
+import ClientList from "@/components/clients/ClientList";
+import ClientDetail from "@/components/clients/ClientDetail";
+import ClientForm from "@/components/clients/ClientForm";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 

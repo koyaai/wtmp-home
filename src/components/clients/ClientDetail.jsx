@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { ArrowLeft, Edit, Trash2, Globe, Phone, Mail, MapPin, DollarSign, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import MeetingNotes from "./MeetingNotes";
-import CSMUpdates from "./CSMUpdates";
+import MeetingNotes from "@/components/clients/MeetingNotes";
+import CSMUpdates from "@/components/clients/CSMUpdates";
 
 const statusColors = {
   active: "bg-emerald-100 text-emerald-700",

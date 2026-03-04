@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, X, CalendarDays, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ContentCard from "../components/social/ContentCard";
-import ContentForm from "../components/social/ContentForm";
+import ContentCard from "@/components/social/ContentCard";
+import ContentForm from "@/components/social/ContentForm";
 
 const STATUSES = ["all", "idea", "in_production", "ready_for_review", "approved", "scheduled", "published"];
 
