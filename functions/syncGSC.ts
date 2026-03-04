@@ -17,7 +17,13 @@ Deno.serve(async (req) => {
     }
 
     // Parse service account key from secret
-    const serviceAccountKey = JSON.parse(Deno.env.get("GSC_SERVICE_ACCOUNT_KEY"));
+    const rawKey = Deno.env.get("GSC_SERVICE_ACCOUNT_KEY");
+    let serviceAccountKey;
+    try {
+      serviceAccountKey = JSON.parse(rawKey);
+    } catch (e) {
+      return Response.json({ error: 'GSC_SERVICE_ACCOUNT_KEY secret is not valid JSON. Please re-paste the entire service account JSON key.' }, { status: 500 });
+    }
 
     // Authenticate using service account
     const auth = new GoogleAuth({
@@ -33,7 +39,7 @@ Deno.serve(async (req) => {
     const toDate = end_date || new Date().toISOString().split('T')[0];
     const fromDate = start_date || new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-    // Fetch search analytics data from GSC
+    // Fetch overall metrics from GSC
     const gscResponse = await fetch(
       `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site_url)}/searchAnalytics/query`,
       {
@@ -59,7 +65,7 @@ Deno.serve(async (req) => {
     const gscData = await gscResponse.json();
     const row = gscData.rows?.[0] || {};
 
-    // Also fetch top keywords
+    // Fetch top keywords
     const keywordsResponse = await fetch(
       `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site_url)}/searchAnalytics/query`,
       {
@@ -91,7 +97,7 @@ Deno.serve(async (req) => {
       organic_clicks: Math.round(row.clicks || 0),
       organic_impressions: Math.round(row.impressions || 0),
       avg_position: row.position ? Math.round(row.position * 10) / 10 : null,
-      ctr: row.ctr ? Math.round(row.ctr * 10000) / 100 : null, // convert to percentage
+      ctr: row.ctr ? Math.round(row.ctr * 10000) / 100 : null,
       top_keywords: topKeywords,
       notes: `Auto-synced from GSC. Period: ${fromDate} to ${toDate}`,
     });
