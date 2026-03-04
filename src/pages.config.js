@@ -51,6 +51,7 @@ import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
 import SEO from './pages/SEO';
 import PPC from './pages/PPC';
+import SocialMedia from './pages/SocialMedia';
 import __Layout from './Layout.jsx';
 
 
@@ -59,6 +60,7 @@ export const PAGES = {
     "Clients": Clients,
     "SEO": SEO,
     "PPC": PPC,
+    "SocialMedia": SocialMedia,
 }
 
 export const pagesConfig = {
