@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, TrendingUp, Eye, MousePointer, BarChart2, X } from "lucide-react";
+import { Plus, TrendingUp, Eye, MousePointer, BarChart2, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
