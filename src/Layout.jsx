@@ -66,24 +66,50 @@ export default function Layout({ children, currentPageName }) {
       <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
         {visibleNav.map((item) => {
           const isActive = currentPageName === item.page;
+          const hasChildren = item.children?.length > 0;
+          const isChildActive = item.children?.some(c => currentPageName === c.page);
+          const visibleChildren = item.children?.filter(c => c.roles.includes(userRole)) || [];
+
           return (
-            <Link
-              key={item.page}
-              to={createPageUrl(item.page)}
-              onClick={() => setMobileOpen(false)}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 group",
-                isActive
-                  ? "bg-white/15 text-white"
-                  : "text-blue-200 hover:bg-white/10 hover:text-white",
-                collapsed && "justify-center px-2"
-              )}
-              title={collapsed ? item.label : undefined}
-            >
-              <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-white" : "text-blue-300 group-hover:text-white")} />
-              {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
-              {!collapsed && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-300" />}
-            </Link>
+            <div key={item.page}>
+              <Link
+                to={createPageUrl(item.page)}
+                onClick={() => setMobileOpen(false)}
+                className={cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 group",
+                  isActive
+                    ? "bg-white/15 text-white"
+                    : "text-blue-200 hover:bg-white/10 hover:text-white",
+                  collapsed && "justify-center px-2"
+                )}
+                title={collapsed ? item.label : undefined}
+              >
+                <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-white" : "text-blue-300 group-hover:text-white")} />
+                {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+                {!collapsed && isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-300" />}
+              </Link>
+              {/* Nested children */}
+              {!collapsed && hasChildren && visibleChildren.map(child => {
+                const childActive = currentPageName === child.page;
+                return (
+                  <Link
+                    key={child.page}
+                    to={createPageUrl(child.page)}
+                    onClick={() => setMobileOpen(false)}
+                    className={cn(
+                      "flex items-center gap-3 pl-9 pr-3 py-2 rounded-lg transition-all duration-150 group mt-0.5",
+                      childActive
+                        ? "bg-white/15 text-white"
+                        : "text-blue-300 hover:bg-white/10 hover:text-white"
+                    )}
+                  >
+                    <child.icon className={cn("w-4 h-4 flex-shrink-0", childActive ? "text-white" : "text-blue-400 group-hover:text-white")} />
+                    <span className="text-xs font-medium">{child.label}</span>
+                    {childActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-300" />}
+                  </Link>
+                );
+              })}
+            </div>
           );
         })}
       </nav>
