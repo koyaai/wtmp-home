@@ -29,6 +29,7 @@ export default function SEO() {
   const [user, setUser] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState("");
+  const [syncMonths, setSyncMonths] = useState(1);
 
   useEffect(() => {
     base44.entities.Client.filter({ services: "SEO" }).then(c => {
