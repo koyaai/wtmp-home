@@ -35,74 +35,93 @@ Deno.serve(async (req) => {
     const tokenResponse = await authClient.getAccessToken();
     const accessToken = tokenResponse.token;
 
-    // Default date range: last 28 days
-    const toDate = end_date || new Date().toISOString().split('T')[0];
-    const fromDate = start_date || new Date(Date.now() - 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    // Build monthly date ranges to sync
+    const today = new Date();
+    const months = parseInt(sync_months) || 1;
 
-    // Fetch overall metrics from GSC
-    const gscResponse = await fetch(
-      `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site_url)}/searchAnalytics/query`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          startDate: fromDate,
-          endDate: toDate,
-          dimensions: [],
-          rowLimit: 1,
-        }),
-      }
-    );
-
-    if (!gscResponse.ok) {
-      const errText = await gscResponse.text();
-      return Response.json({ error: `GSC API error: ${errText}` }, { status: 400 });
+    // Generate one entry per month going back `months` months
+    const monthRanges = [];
+    for (let i = 0; i < months; i++) {
+      const monthEnd = new Date(today.getFullYear(), today.getMonth() - i, 0); // last day of that month
+      const monthStart = new Date(monthEnd.getFullYear(), monthEnd.getMonth(), 1); // first day of that month
+      // For the current month, use today as end
+      const endD = i === 0 ? today : monthEnd;
+      monthRanges.push({
+        start: monthStart.toISOString().split('T')[0],
+        end: endD.toISOString().split('T')[0],
+      });
     }
 
-    const gscData = await gscResponse.json();
-    const row = gscData.rows?.[0] || {};
+    const results = [];
 
-    // Fetch top keywords
-    const keywordsResponse = await fetch(
-      `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site_url)}/searchAnalytics/query`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          startDate: fromDate,
-          endDate: toDate,
-          dimensions: ['query'],
-          rowLimit: 10,
-          orderBy: [{ fieldName: 'clicks', sortOrder: 'DESCENDING' }],
-        }),
+    for (const range of monthRanges) {
+      // Fetch overall metrics from GSC
+      const gscResponse = await fetch(
+        `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site_url)}/searchAnalytics/query`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            startDate: range.start,
+            endDate: range.end,
+            dimensions: [],
+            rowLimit: 1,
+          }),
+        }
+      );
+
+      if (!gscResponse.ok) {
+        const errText = await gscResponse.text();
+        return Response.json({ error: `GSC API error: ${errText}` }, { status: 400 });
       }
-    );
 
-    let topKeywords = '';
-    if (keywordsResponse.ok) {
-      const kwData = await keywordsResponse.json();
-      topKeywords = (kwData.rows || []).map(r => r.keys[0]).join(', ');
+      const gscData = await gscResponse.json();
+      const row = gscData.rows?.[0] || {};
+
+      // Fetch top keywords
+      const keywordsResponse = await fetch(
+        `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site_url)}/searchAnalytics/query`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            startDate: range.start,
+            endDate: range.end,
+            dimensions: ['query'],
+            rowLimit: 10,
+            orderBy: [{ fieldName: 'clicks', sortOrder: 'DESCENDING' }],
+          }),
+        }
+      );
+
+      let topKeywords = '';
+      if (keywordsResponse.ok) {
+        const kwData = await keywordsResponse.json();
+        topKeywords = (kwData.rows || []).map(r => r.keys[0]).join(', ');
+      }
+
+      // Save to SEOData entity
+      const seoRecord = await base44.entities.SEOData.create({
+        client_id,
+        report_date: range.end,
+        organic_clicks: Math.round(row.clicks || 0),
+        organic_impressions: Math.round(row.impressions || 0),
+        avg_position: row.position ? Math.round(row.position * 10) / 10 : null,
+        ctr: row.ctr ? Math.round(row.ctr * 10000) / 100 : null,
+        top_keywords: topKeywords,
+        notes: `Auto-synced from GSC. Period: ${range.start} to ${range.end}`,
+      });
+
+      results.push(seoRecord);
     }
 
-    // Save to SEOData entity
-    const seoRecord = await base44.entities.SEOData.create({
-      client_id,
-      report_date: toDate,
-      organic_clicks: Math.round(row.clicks || 0),
-      organic_impressions: Math.round(row.impressions || 0),
-      avg_position: row.position ? Math.round(row.position * 10) / 10 : null,
-      ctr: row.ctr ? Math.round(row.ctr * 10000) / 100 : null,
-      top_keywords: topKeywords,
-      notes: `Auto-synced from GSC. Period: ${fromDate} to ${toDate}`,
-    });
-
-    return Response.json({ success: true, data: seoRecord });
+    return Response.json({ success: true, synced: results.length, data: results });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
