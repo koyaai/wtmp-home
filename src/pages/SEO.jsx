@@ -107,6 +107,16 @@ export default function SEO() {
           </select>
           {canEdit && (
             <>
+              <select
+                value={syncMonths}
+                onChange={e => setSyncMonths(Number(e.target.value))}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value={1}>Last 1 Month</option>
+                <option value={3}>Last 3 Months</option>
+                <option value={6}>Last 6 Months</option>
+                <option value={12}>Last 12 Months</option>
+              </select>
               <Button size="sm" variant="outline" onClick={handleGSCSync} disabled={syncing}>
                 <RefreshCw className={`w-4 h-4 mr-1 ${syncing ? "animate-spin" : ""}`} />
                 {syncing ? "Syncing..." : "Sync GSC"}
