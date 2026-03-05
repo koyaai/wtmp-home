@@ -17,7 +17,7 @@ Deno.serve(async (req) => {
         const appId = Deno.env.get('BASE44_APP_ID');
 
         // Redirect URI - the callback function URL
-        const redirectUri = `https://${appId}.base44.app/api/functions/gbpAuthCallback`;
+        const redirectUri = `https://${appId}.base44.app/api/apps/${appId}/functions/gbpAuthCallback`;
 
         const scopes = [
             'https://www.googleapis.com/auth/business.manage',
