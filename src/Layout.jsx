@@ -24,7 +24,13 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { label: "Command Center", icon: LayoutDashboard, page: "Dashboard", roles: ["admin", "leadership", "team_lead", "seo_specialist", "ppc_specialist", "social_media", "csm", "web_designer"] },
   { label: "Clients", icon: Users, page: "Clients", roles: ["admin", "leadership", "team_lead", "seo_specialist", "ppc_specialist", "social_media", "csm", "web_designer"] },
-  { label: "SEO", icon: Search, page: "SEO", roles: ["admin", "leadership", "team_lead", "seo_specialist"] },
+  {
+    label: "SEO", icon: Search, page: "SEO", roles: ["admin", "leadership", "team_lead", "seo_specialist"],
+    children: [
+      { label: "GBP Profiles", icon: MapPin, page: "GBPProfiles", roles: ["admin", "leadership", "team_lead", "seo_specialist"] },
+      { label: "GBP Calendar", icon: Sparkles, page: "GenerateGBPCalendar", roles: ["admin", "leadership", "team_lead", "seo_specialist"] },
+    ]
+  },
   { label: "PPC", icon: MousePointerClick, page: "PPC", roles: ["admin", "leadership", "team_lead", "ppc_specialist"] },
   {
     label: "Social Media", icon: CalendarDays, page: "SocialMedia", roles: ["admin", "leadership", "team_lead", "social_media"],
