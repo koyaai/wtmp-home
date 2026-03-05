@@ -45,7 +45,10 @@ export default function Layout({ children, currentPageName }) {
   }, []);
 
   const userRole = user?.role === "admin" ? "leadership" : (user?.role || "leadership");
-  const visibleNav = navItems.filter(item => item.roles.includes(userRole));
+  const visibleNav = navItems.filter(item => item.roles.includes(userRole)).map(item => ({
+    ...item,
+    children: item.children?.filter(c => c.roles.includes(userRole)) || [],
+  }));
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
