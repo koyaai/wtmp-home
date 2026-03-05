@@ -30,7 +30,7 @@ const navItems = [
     children: [
       { label: "GBP Profiles", icon: MapPin, page: "GBPProfiles", roles: ["admin", "leadership", "team_lead", "seo_specialist"] },
       { label: "GBP Calendar", icon: Sparkles, page: "GenerateGBPCalendar", roles: ["admin", "leadership", "team_lead", "seo_specialist"] },
-      { label: "GBP Connect", icon: Link, page: "GBPConnect", roles: ["admin"] },
+      { label: "GBP Connect", icon: Link2, page: "GBPConnect", roles: ["admin"] },
     ]
   },
   { label: "PPC", icon: MousePointerClick, page: "PPC", roles: ["admin", "leadership", "team_lead", "ppc_specialist"] },
