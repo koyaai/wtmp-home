@@ -1,4 +1,4 @@
-import { createClient } from 'npm:@base44/sdk@0.8.20';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
 Deno.serve(async (req) => {
     try {
@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
         const error = url.searchParams.get('error');
 
         if (error || !code) {
-            return new Response(`<html><body><script>window.opener.postMessage({type:'GBP_AUTH_ERROR', error: '${error || 'No code received'}'}, '*'); window.close();</script></body></html>`, {
+            return new Response(`<html><body><script>window.opener && window.opener.postMessage({type:'GBP_AUTH_ERROR', error: '${error || 'No code received'}'}, '*'); window.close();</script></body></html>`, {
                 headers: { 'Content-Type': 'text/html' }
             });
         }
@@ -33,13 +33,13 @@ Deno.serve(async (req) => {
         const tokens = await tokenRes.json();
 
         if (tokens.error) {
-            return new Response(`<html><body><script>window.opener.postMessage({type:'GBP_AUTH_ERROR', error: '${tokens.error}'}, '*'); window.close();</script></body></html>`, {
+            return new Response(`<html><body><script>window.opener && window.opener.postMessage({type:'GBP_AUTH_ERROR', error: '${tokens.error}'}, '*'); window.close();</script></body></html>`, {
                 headers: { 'Content-Type': 'text/html' }
             });
         }
 
-        // Use service role client (no user auth needed for callback)
-        const base44 = createClient({ appId });
+        // createClientFromRequest works even without a user session for asServiceRole
+        const base44 = createClientFromRequest(req);
 
         const settingsData = {
             access_token: tokens.access_token,
@@ -56,11 +56,15 @@ Deno.serve(async (req) => {
             await base44.asServiceRole.entities.GBPSettings.create(settingsData);
         }
 
-        return new Response(`<html><body><script>window.opener.postMessage({type:'GBP_AUTH_SUCCESS'}, '*'); window.close();</script></body></html>`, {
+        return new Response(`<html><body><script>window.opener && window.opener.postMessage({type:'GBP_AUTH_SUCCESS'}, '*'); window.close();</script></body></html>`, {
             headers: { 'Content-Type': 'text/html' }
         });
-    } catch (error) {
-        return new Response(`<html><body><script>window.opener.postMessage({type:'GBP_AUTH_ERROR', error: '${error.message}'}, '*'); window.close();</script></body></html>`, {
+    } catch (err) {
+        const msg = err.message || 'Unknown error';
+        return new Response(`<html><body>
+            <p>Error: ${msg}</p>
+            <script>window.opener && window.opener.postMessage({type:'GBP_AUTH_ERROR', error: '${msg}'}, '*'); window.close();</script>
+        </body></html>`, {
             headers: { 'Content-Type': 'text/html' }
         });
     }
