@@ -15,7 +15,8 @@ import {
   Settings,
   Menu,
   X,
-  Blinds
+  Blinds,
+  Sparkles
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
