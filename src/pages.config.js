@@ -56,6 +56,7 @@ import SocialMedia from './pages/SocialMedia';
 import GenerateCalendar from './pages/GenerateCalendar';
 import GBPProfiles from './pages/GBPProfiles';
 import GenerateGBPCalendar from './pages/GenerateGBPCalendar';
+import GBPConnect from './pages/GBPConnect';
 import __Layout from './Layout.jsx';
 
 
@@ -69,6 +70,7 @@ export const PAGES = {
     "GenerateCalendar": GenerateCalendar,
     "GBPProfiles": GBPProfiles,
     "GenerateGBPCalendar": GenerateGBPCalendar,
+    "GBPConnect": GBPConnect,
 }
 
 export const pagesConfig = {
