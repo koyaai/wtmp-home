@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
+import { createClient } from 'npm:@base44/sdk@0.8.20';
 
 Deno.serve(async (req) => {
     try {
@@ -38,10 +38,9 @@ Deno.serve(async (req) => {
             });
         }
 
-        const base44 = createClientFromRequest(req);
+        // Use service role client (no user auth needed for callback)
+        const base44 = createClient({ appId });
 
-        // Store tokens in app settings entity
-        const existingSettings = await base44.asServiceRole.entities.GBPSettings.filter({});
         const settingsData = {
             access_token: tokens.access_token,
             refresh_token: tokens.refresh_token,
@@ -50,6 +49,7 @@ Deno.serve(async (req) => {
             connected_at: new Date().toISOString(),
         };
 
+        const existingSettings = await base44.asServiceRole.entities.GBPSettings.filter({});
         if (existingSettings.length > 0) {
             await base44.asServiceRole.entities.GBPSettings.update(existingSettings[0].id, settingsData);
         } else {
