@@ -17,7 +17,8 @@ import {
   X,
   Blinds,
   Sparkles,
-  MapPin
+  MapPin,
+  Link
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
