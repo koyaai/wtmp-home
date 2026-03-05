@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { client_id, site_url, start_date, end_date } = await req.json();
+    const { client_id, site_url, sync_months } = await req.json();
 
     if (!client_id || !site_url) {
       return Response.json({ error: 'client_id and site_url are required' }, { status: 400 });
