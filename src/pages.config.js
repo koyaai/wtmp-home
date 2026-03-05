@@ -54,6 +54,8 @@ import PPC from './pages/PPC';
 import SEO from './pages/SEO';
 import SocialMedia from './pages/SocialMedia';
 import GenerateCalendar from './pages/GenerateCalendar';
+import GBPProfiles from './pages/GBPProfiles';
+import GenerateGBPCalendar from './pages/GenerateGBPCalendar';
 import __Layout from './Layout.jsx';
 
 
@@ -65,6 +67,8 @@ export const PAGES = {
     "SEO": SEO,
     "SocialMedia": SocialMedia,
     "GenerateCalendar": GenerateCalendar,
+    "GBPProfiles": GBPProfiles,
+    "GenerateGBPCalendar": GenerateGBPCalendar,
 }
 
 export const pagesConfig = {
