@@ -53,6 +53,7 @@ import Leads from './pages/Leads';
 import PPC from './pages/PPC';
 import SEO from './pages/SEO';
 import SocialMedia from './pages/SocialMedia';
+import GenerateCalendar from './pages/GenerateCalendar';
 import __Layout from './Layout.jsx';
 
 
@@ -63,6 +64,7 @@ export const PAGES = {
     "PPC": PPC,
     "SEO": SEO,
     "SocialMedia": SocialMedia,
+    "GenerateCalendar": GenerateCalendar,
 }
 
 export const pagesConfig = {
