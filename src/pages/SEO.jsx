@@ -69,6 +69,7 @@ export default function SEO() {
       await base44.functions.invoke('syncGSC', {
         client_id: selectedClientId,
         site_url: selectedClient.google_search_console_url,
+        sync_months: syncMonths,
       });
       base44.entities.SEOData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setSeoData);
     } catch (err) {
