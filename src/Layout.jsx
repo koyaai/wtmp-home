@@ -53,7 +53,7 @@ export default function Layout({ children, currentPageName }) {
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
 
-  const userRole = user?.role === "admin" ? "leadership" : (user?.role || "leadership");
+  const userRole = user?.role || "leadership";
   const visibleNav = navItems.filter(item => item.roles.includes(userRole)).map(item => ({
     ...item,
     children: item.children?.filter(c => c.roles.includes(userRole)) || [],
