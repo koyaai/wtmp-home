@@ -16,7 +16,8 @@ import {
   Menu,
   X,
   Blinds,
-  Sparkles
+  Sparkles,
+  MapPin
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
