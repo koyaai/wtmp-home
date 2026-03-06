@@ -1,45 +1,72 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.20';
 
-const SYSTEM_PROMPT = `You are an advanced content quality analyst and content generation engine. You evaluate, generate, and improve written content using a 12-dimension entropy-based content quality framework.
+const DIMENSION_SCORES_SCHEMA = `{
+    "lexical_diversity": { "score": <1-10>, "explanation": "<brief>" },
+    "syntactic_burstiness": { "score": <1-10>, "explanation": "<brief>" },
+    "semantic_drift": { "score": <1-10>, "explanation": "<brief>" },
+    "information_gain": { "score": <1-10>, "explanation": "<brief>" },
+    "cliche_density": { "score": <1-10>, "explanation": "<brief>" },
+    "idiomatic_regionalism": { "score": <1-10>, "explanation": "<brief>" },
+    "proper_noun_density": { "score": <1-10>, "explanation": "<brief>" },
+    "technical_precision": { "score": <1-10>, "explanation": "<brief>" },
+    "emotional_variance": { "score": <1-10>, "explanation": "<brief>" },
+    "nuance_preservation": { "score": <1-10>, "explanation": "<brief>" },
+    "first_party_evidence": { "score": <1-10>, "explanation": "<brief>" },
+    "entity_coherence": { "score": <1-10>, "explanation": "<brief>" }
+  }`;
 
-Your purpose is to ensure all content is: high value, expert-level, specific, credible, locally relevant (when applicable), information-rich, and non-generic. Avoid generic marketing language and templated phrasing.
-
+const FRAMEWORK_INSTRUCTIONS = `
 ## 12-DIMENSION FRAMEWORK
-
 Score each dimension 1–10:
+1. Lexical Diversity – Vocabulary variety, precise terminology.
+2. Syntactic Burstiness – Sentence structure variety.
+3. Semantic Drift – Topic depth & contextual expansion.
+4. Information Gain – New/useful information provided.
+5. Cliché Density – Inverse score; high = minimal clichés.
+6. Idiomatic Regionalism – Local context beyond just city name.
+7. Proper Noun Density – Named entities: brands, certifications, suburbs, materials.
+8. Technical Precision – Specificity of technical info, standards, measurements.
+9. Emotional Variance – Tonal variety: educational, advisory, narrative.
+10. Nuance Preservation – Credibility, balanced realistic claims.
+11. First-Party Evidence – Real-world examples, results, project anecdotes.
+12. Entity Coherence – Clear brand identity, service area, credentials.
 
-1. **Lexical Diversity** – Vocabulary variety, precise terminology, natural variation. Low: repetitive/common marketing words. High: varied, precise language.
-2. **Syntactic Burstiness** – Sentence structure variety. Low: robotic rhythm, all-short sentences. High: mix of lengths, natural flow.
-3. **Semantic Drift** – Topic depth & contextual expansion. Low: narrow focus. High: explores related concepts, demonstrates subject understanding.
-4. **Information Gain** – New/useful information provided. Low: generic descriptions. High: unique insights, practical knowledge, deeper context.
-5. **Cliché Density** – Inverse score for generic phrases ("best in town", "quality service", "trusted professionals", "state-of-the-art"). High score = minimal clichés.
-6. **Idiomatic Regionalism** – Local context beyond just city name (local conditions, climate, geography, neighborhood references). High: rich local specificity.
-7. **Proper Noun Density** – Named entities: organizations, certifications, equipment brands, neighborhoods, materials, standards. High: meaningful proper nouns.
-8. **Technical Precision** – Specificity of technical info. Low: vague phrases like "advanced techniques". High: detailed standards, processes, measurable details.
-9. **Emotional Variance** – Tonal variation: educational, advisory, practical, narrative mix. Low: purely promotional. High: varied tones.
-10. **Nuance Preservation** – Credibility and realism. Low: exaggerated claims. High: balanced, realistic, thoughtful statements.
-11. **First-Party Evidence** – Real-world examples: case studies, before/after, results, anecdotes. High: concrete examples demonstrating expertise.
-12. **Entity Coherence** – Clear brand/org identity: services, credentials, associations, service area. High: strong entity identity signals.
+## FOUR ADVANCED CAPABILITIES (apply automatically where relevant)
+
+### Feature 1 — Competitor Information Gain Analyzer
+When competitor data is provided, identify:
+- competitor_coverage: main topics competitors commonly discuss
+- competitor_weakness_patterns: where competitor content is repetitive, generic, overly promotional, or lacks depth
+- information_gain_opportunities: specific content additions that would make content more valuable (deeper explanations, practical advice, technical insights, regional considerations, problem scenarios, expert commentary, frequently misunderstood topics)
+
+### Feature 2 — Experience Signal Generator
+When generating or rewriting, incorporate experience signals:
+- Real-world scenarios with named locations, products, measurements
+- Project examples with specific outcomes
+- Problem-solving situations with tools/materials named
+- Measurable results and lessons learned
+Transform generic statements into experience-informed insights.
+Example: "We use professional equipment" → "In a recent [City] job, [specific issue] was resolved using [named equipment] operating at [specific parameter]."
+Experience signals boost: first_party_evidence, technical_precision, proper_noun_density, nuance_preservation.
+
+### Feature 3 — Entropy Heatmap
+When analyzing content, evaluate paragraph-by-paragraph:
+- Label each paragraph: "high" (🟢), "moderate" (🟡), or "low" (🔴)
+- For moderate/low paragraphs, provide a short "issue" and "improvement" suggestion
+Return as entropy_heatmap array.
+
+### Feature 4 — Local Authority Builder
+When location context is available, enhance content with:
+- Environmental and climate conditions
+- Regional materials or building styles
+- Local seasonal patterns and challenges
+- Geography-specific problems
+Only apply when meaningful. Do not force location mentions that add no value.
 
 ## ENTROPY SCORE (0–100)
-Overall measure of content originality. 0–40: generic/templated. 41–70: moderate uniqueness. 71–100: original, specific, expert.
+0–40: generic/templated | 41–70: moderate | 71–100: original, expert
 
 Always respond with valid JSON only. No markdown, no extra text.`;
-
-const DIMENSIONS = [
-  "lexical_diversity",
-  "syntactic_burstiness", 
-  "semantic_drift",
-  "information_gain",
-  "cliche_density",
-  "idiomatic_regionalism",
-  "proper_noun_density",
-  "technical_precision",
-  "emotional_variance",
-  "nuance_preservation",
-  "first_party_evidence",
-  "entity_coherence"
-];
 
 Deno.serve(async (req) => {
     try {
@@ -48,136 +75,120 @@ Deno.serve(async (req) => {
         if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
         const body = await req.json();
-        const { mode, content, topic, context_notes, client_name, content_type } = body;
+        const { mode, content, topic, context_notes, competitor_content, location, client_name, content_type } = body;
+
+        const clientContext = `Client: ${client_name || 'Unknown'}
+Content Type: ${content_type || 'General'}
+${location ? `Location/Service Area: ${location}` : ''}
+${context_notes ? `Context: ${context_notes}` : ''}
+${competitor_content ? `Competitor Content / SERP Data:\n"""\n${competitor_content}\n"""` : ''}`;
 
         let userPrompt = '';
 
         if (mode === 'analyze') {
             userPrompt = `## ANALYZE THIS CONTENT
 
-Client: ${client_name || 'Unknown'}
-Content Type: ${content_type || 'General'}
-${context_notes ? `Context: ${context_notes}` : ''}
+${clientContext}
 
 Content to analyze:
 """
 ${content}
 """
 
-Analyze using the 12-dimension framework. Return JSON in this exact structure:
+${FRAMEWORK_INSTRUCTIONS}
+
+Analyze using the full 12-dimension framework plus all four advanced capabilities.
+
+Return JSON:
 {
   "entropy_score": <number 0-100>,
-  "dimension_scores": {
-    "lexical_diversity": { "score": <1-10>, "explanation": "<brief>" },
-    "syntactic_burstiness": { "score": <1-10>, "explanation": "<brief>" },
-    "semantic_drift": { "score": <1-10>, "explanation": "<brief>" },
-    "information_gain": { "score": <1-10>, "explanation": "<brief>" },
-    "cliche_density": { "score": <1-10>, "explanation": "<brief>" },
-    "idiomatic_regionalism": { "score": <1-10>, "explanation": "<brief>" },
-    "proper_noun_density": { "score": <1-10>, "explanation": "<brief>" },
-    "technical_precision": { "score": <1-10>, "explanation": "<brief>" },
-    "emotional_variance": { "score": <1-10>, "explanation": "<brief>" },
-    "nuance_preservation": { "score": <1-10>, "explanation": "<brief>" },
-    "first_party_evidence": { "score": <1-10>, "explanation": "<brief>" },
-    "entity_coherence": { "score": <1-10>, "explanation": "<brief>" }
-  },
+  "dimension_scores": ${DIMENSION_SCORES_SCHEMA},
   "top_problems": ["<problem 1>", "<problem 2>", "<problem 3>"],
-  "rewrite_strategy": "<paragraph explaining how to improve this content>"
+  "rewrite_strategy": "<paragraph explaining how to improve this content>",
+  "entropy_heatmap": [
+    { "paragraph": "<first ~50 chars of paragraph>", "level": "high|moderate|low", "issue": "<null if high, otherwise brief issue>", "improvement": "<null if high, otherwise brief suggestion>" }
+  ],
+  "competitor_analysis": ${competitor_content ? `{
+    "competitor_coverage": ["<topic 1>", "<topic 2>"],
+    "competitor_weakness_patterns": ["<weakness 1>", "<weakness 2>"],
+    "information_gain_opportunities": ["<opportunity 1>", "<opportunity 2>", "<opportunity 3>"]
+  }` : 'null'},
+  "local_authority_suggestions": ${location ? `["<suggestion 1>", "<suggestion 2>"]` : 'null'}
 }`;
 
         } else if (mode === 'generate') {
             userPrompt = `## GENERATE CONTENT
 
-Client: ${client_name || 'Unknown'}
-Content Type: ${content_type || 'General'}
-Topic: ${topic}
-${context_notes ? `Additional Context: ${context_notes}` : ''}
+${clientContext}
 
-Generate high-quality content using the 12-dimension framework as guiding principles. The content must:
-- Avoid generic marketing copy
-- Include meaningful specificity
-- Demonstrate expertise
-- Use varied sentence structures
-- Include proper nouns where relevant
-- Score 7+ on every dimension and 70+ entropy
+Topic: ${topic}
+
+${FRAMEWORK_INSTRUCTIONS}
+
+Generate high-quality content applying all four advanced capabilities:
+- Embed experience signals naturally (specific projects, named tools, measurable outcomes)
+- Apply local authority enhancements if location is provided (climate, regional challenges, geography)
+- Use competitor information gain opportunities if competitor data is provided
+- Avoid generic marketing copy. Score 7+ on every dimension and 70+ entropy.
 ${content_type === 'Blog Post' ? `
-IMPORTANT: Since this is a Blog Post, you MUST include an FAQ section at the bottom of the content.
-- Include 5–7 genuine, specific questions that real customers would ask about this topic
-- Answers must be detailed, informative, and high-entropy (not one-liners)
-- Questions should cover practical concerns, local context, pricing considerations, technical details, and comparison questions
-- Format as: Q: [question]\\nA: [answer]
-- Label the section clearly as "Frequently Asked Questions"
+BLOG POST REQUIREMENTS:
+- Include a "Frequently Asked Questions" section at the bottom with 5–7 specific, high-quality questions
+- Questions must cover: practical concerns, local context, pricing, technical details, comparisons
+- Format: Q: [question] / A: [detailed answer]
 ` : ''}
-Then internally validate and return JSON:
+Return JSON:
 {
   "final_content": "<the full generated content>",
   "entropy_score": <number 70-100>,
-  "dimension_scores": {
-    "lexical_diversity": { "score": <1-10>, "explanation": "<brief>" },
-    "syntactic_burstiness": { "score": <1-10>, "explanation": "<brief>" },
-    "semantic_drift": { "score": <1-10>, "explanation": "<brief>" },
-    "information_gain": { "score": <1-10>, "explanation": "<brief>" },
-    "cliche_density": { "score": <1-10>, "explanation": "<brief>" },
-    "idiomatic_regionalism": { "score": <1-10>, "explanation": "<brief>" },
-    "proper_noun_density": { "score": <1-10>, "explanation": "<brief>" },
-    "technical_precision": { "score": <1-10>, "explanation": "<brief>" },
-    "emotional_variance": { "score": <1-10>, "explanation": "<brief>" },
-    "nuance_preservation": { "score": <1-10>, "explanation": "<brief>" },
-    "first_party_evidence": { "score": <1-10>, "explanation": "<brief>" },
-    "entity_coherence": { "score": <1-10>, "explanation": "<brief>" }
-  }
+  "dimension_scores": ${DIMENSION_SCORES_SCHEMA},
+  "experience_signals_used": ["<signal 1>", "<signal 2>"],
+  "local_authority_elements": ${location ? `["<element 1>", "<element 2>"]` : 'null'},
+  "competitor_analysis": ${competitor_content ? `{
+    "competitor_coverage": ["<topic 1>"],
+    "competitor_weakness_patterns": ["<weakness 1>"],
+    "information_gain_opportunities": ["<opportunity 1>", "<opportunity 2>"]
+  }` : 'null'}
 }`;
 
         } else if (mode === 'rewrite') {
             userPrompt = `## REWRITE CONTENT
 
-Client: ${client_name || 'Unknown'}
-Content Type: ${content_type || 'General'}
-${context_notes ? `Context: ${context_notes}` : ''}
+${clientContext}
 
 Original content:
 """
 ${content}
 """
 
-1. First evaluate the original content
-2. Identify weaknesses
-3. Rewrite to: eliminate clichés, add technical precision, expand semantic depth, add contextual insights, improve sentence variation, strengthen entity signals, increase informational value
+${FRAMEWORK_INSTRUCTIONS}
+
+Steps:
+1. Evaluate the original content
+2. Identify weaknesses using all 12 dimensions + entropy heatmap
+3. Rewrite applying all four advanced capabilities:
+   - Inject experience signals (real scenarios, named tools, measurable outcomes)
+   - Add local authority context if location is provided
+   - Use information gain opportunities identified from competitors or gaps
+   - Eliminate clichés, add technical precision, improve sentence variation, strengthen entity signals
 
 Return JSON:
 {
   "original_entropy_score": <number>,
-  "original_dimension_scores": {
-    "lexical_diversity": { "score": <1-10>, "explanation": "<brief>" },
-    "syntactic_burstiness": { "score": <1-10>, "explanation": "<brief>" },
-    "semantic_drift": { "score": <1-10>, "explanation": "<brief>" },
-    "information_gain": { "score": <1-10>, "explanation": "<brief>" },
-    "cliche_density": { "score": <1-10>, "explanation": "<brief>" },
-    "idiomatic_regionalism": { "score": <1-10>, "explanation": "<brief>" },
-    "proper_noun_density": { "score": <1-10>, "explanation": "<brief>" },
-    "technical_precision": { "score": <1-10>, "explanation": "<brief>" },
-    "emotional_variance": { "score": <1-10>, "explanation": "<brief>" },
-    "nuance_preservation": { "score": <1-10>, "explanation": "<brief>" },
-    "first_party_evidence": { "score": <1-10>, "explanation": "<brief>" },
-    "entity_coherence": { "score": <1-10>, "explanation": "<brief>" }
-  },
+  "original_dimension_scores": ${DIMENSION_SCORES_SCHEMA},
   "top_problems": ["<problem 1>", "<problem 2>", "<problem 3>"],
+  "entropy_heatmap": [
+    { "paragraph": "<first ~50 chars>", "level": "high|moderate|low", "issue": "<null if high>", "improvement": "<null if high>" }
+  ],
   "final_content": "<the full rewritten content>",
   "new_entropy_score": <number>,
-  "new_dimension_scores": {
-    "lexical_diversity": { "score": <1-10>, "explanation": "<brief>" },
-    "syntactic_burstiness": { "score": <1-10>, "explanation": "<brief>" },
-    "semantic_drift": { "score": <1-10>, "explanation": "<brief>" },
-    "information_gain": { "score": <1-10>, "explanation": "<brief>" },
-    "cliche_density": { "score": <1-10>, "explanation": "<brief>" },
-    "idiomatic_regionalism": { "score": <1-10>, "explanation": "<brief>" },
-    "proper_noun_density": { "score": <1-10>, "explanation": "<brief>" },
-    "technical_precision": { "score": <1-10>, "explanation": "<brief>" },
-    "emotional_variance": { "score": <1-10>, "explanation": "<brief>" },
-    "nuance_preservation": { "score": <1-10>, "explanation": "<brief>" },
-    "first_party_evidence": { "score": <1-10>, "explanation": "<brief>" },
-    "entity_coherence": { "score": <1-10>, "explanation": "<brief>" }
-  }
+  "new_dimension_scores": ${DIMENSION_SCORES_SCHEMA},
+  "experience_signals_used": ["<signal 1>", "<signal 2>"],
+  "local_authority_elements": ${location ? `["<element 1>", "<element 2>"]` : 'null'},
+  "competitor_analysis": ${competitor_content ? `{
+    "competitor_coverage": ["<topic 1>"],
+    "competitor_weakness_patterns": ["<weakness 1>"],
+    "information_gain_opportunities": ["<opportunity 1>", "<opportunity 2>"]
+  }` : 'null'}
 }`;
         } else {
             return Response.json({ error: 'Invalid mode. Use: analyze, generate, rewrite' }, { status: 400 });
