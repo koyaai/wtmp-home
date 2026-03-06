@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, BarChart2, RefreshCw, Save, Copy, Check, MapPin, Users } from "lucide-react";
+import { Loader2, Sparkles, BarChart2, RefreshCw, Save, Copy, Check, MapPin, Users, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import EntropyScoreGauge from "./EntropyScoreGauge";
 import DimensionScores from "./DimensionScores";
