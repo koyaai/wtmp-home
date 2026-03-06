@@ -27,6 +27,7 @@ export default function ContentWorkspace({ client, onSaved }) {
     const [inputContent, setInputContent] = useState("");
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [applying, setApplying] = useState(false);
     const [copied, setCopied] = useState(false);
 
     const reset = (newMode) => {
