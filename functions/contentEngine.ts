@@ -151,6 +151,7 @@ Analyze using the full 12-dimension framework plus all four advanced capabilitie
 Return JSON:
 {
   ${GENERIC_PHRASE_SCHEMA},
+  ${CLAIM_VERIFIABILITY_SCHEMA},
   "entropy_score": <number 0-100>,
   "dimension_scores": ${DIMENSION_SCORES_SCHEMA},
   "top_problems": ["<problem 1>", "<problem 2>", "<problem 3>"],
