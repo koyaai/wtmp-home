@@ -15,7 +15,28 @@ const DIMENSION_SCORES_SCHEMA = `{
     "entity_coherence": { "score": <1-10>, "explanation": "<brief>" }
   }`;
 
+const GENERIC_PHRASE_SCHEMA = `"generic_phrase_detection": {
+    "detected_phrases": [
+      { "phrase": "<exact phrase>", "sentence": "<full sentence containing it>", "reason": "<why it weakens the content>" }
+    ],
+    "total_detected": <number>,
+    "scoring_impact": "<brief description of how these phrases affected the entropy and dimension scores>"
+  }`;
+
 const FRAMEWORK_INSTRUCTIONS = `
+## STEP 0 — GENERIC PHRASE DETECTION PASS (run FIRST, before any scoring)
+Before evaluating or scoring content, scan the entire text for generic, templated, or low-information marketing language in these categories:
+
+1. Marketing Clichés: "best in town", "trusted professionals", "quality service", "highly trained technicians", "industry-leading", "state-of-the-art", "top-notch service", "competitive pricing", "satisfaction guaranteed", "we take pride in", "your trusted partner", "unmatched quality", "reliable solutions", "exceptional service"
+2. Vague Descriptive Language: "advanced technology", "cutting-edge methods", "innovative solutions", "customized services", "tailored approach", "modern equipment", "superior results", "professional-grade tools", "high-quality materials"
+3. Generic Service Descriptions: "we provide professional services", "we are committed to excellence", "our team is dedicated to customer satisfaction", "we deliver outstanding results", "we work hard to exceed expectations"
+
+For each detected phrase record: the phrase, the full sentence it appears in, and a reason why it reduces informational value.
+
+SCORING IMPACT RULE: Each detected generic phrase applies a penalty. 1–2 phrases: minor penalty to cliche_density. 3–5 phrases: moderate penalty to cliche_density, lexical_diversity, information_gain, and entropy_score. 6+ phrases: strong penalty across all four — content with this many clichés must be considered low entropy regardless of other qualities.
+
+When rewriting or generating, replace every detected generic phrase with: specific technical explanations, practical insights, measurable details, or real-world examples.
+
 ## 12-DIMENSION FRAMEWORK
 Score each dimension 1–10:
 1. Lexical Diversity – Vocabulary variety, precise terminology.
