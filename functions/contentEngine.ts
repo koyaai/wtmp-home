@@ -50,6 +50,21 @@ SCORING IMPACT RULE: Each detected generic phrase applies a penalty. 1–2 phras
 
 When rewriting or generating, replace every detected generic phrase with: specific technical explanations, practical insights, measurable details, or real-world examples.
 
+## STEP 1 — CLAIM VERIFIABILITY & EVIDENCE PASS (run SECOND, before scoring)
+Scan the content for statements that make claims without sufficient evidence, specificity, or credibility signals. Detect claims in these four categories:
+
+1. **Absolute Claims** — assert superiority, perfection, or certainty without evidence: "best in town", "number one provider", "most advanced method", "guaranteed results", "unmatched quality", "leading company", "top solution". These are unverifiable and reduce credibility.
+
+2. **Statistical Claims** — include numbers/data but lack context or source: "99% stain removal rate", "trusted by thousands of customers", "over 20 years of experience", "serving hundreds of homeowners". Should include clarifying details or context.
+
+3. **Authority Claims** — imply expertise but lack specific credentials or identifiable entities: "industry experts", "professional technicians", "certified specialists", "highly trained team", "experienced professionals". Should reference specific certifications, organizations, tools, or training standards. Example fix: "certified technicians" → "IICRC-certified carpet cleaning technicians trained in hot water extraction and fiber-safe cleaning methods."
+
+4. **Process Claims** — describe a process but remain vague: "advanced cleaning techniques", "modern equipment", "cutting-edge methods", "innovative solutions". Should include specific technical detail. Example fix: "We use advanced cleaning methods." → "We use truck-mounted hot water extraction systems that inject heated water into carpet fibers and extract embedded dust, allergens, and residue."
+
+SCORING IMPACT RULE: Each unverifiable claim applies a penalty to: nuance_preservation, technical_precision, first_party_evidence, entity_coherence. 1–2 claims: minor penalty. 3–5 claims: moderate penalty. 6+ claims: strong penalty — content with this many unsupported claims must receive lower credibility scores.
+
+When rewriting or generating, replace weak claims with: specific explanations, measurable details, identifiable entities, real processes, and experience-based insights. Avoid exaggerated language unless clearly supported by context or evidence.
+
 ## 12-DIMENSION FRAMEWORK
 Score each dimension 1–10:
 1. Lexical Diversity – Vocabulary variety, precise terminology.
