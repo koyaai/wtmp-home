@@ -92,6 +92,36 @@ export default function ContentWorkspace({ client, onSaved }) {
         onSaved?.();
     };
 
+    const handleApplyRecommendations = async () => {
+        setApplying(true);
+        try {
+            const res = await base44.functions.invoke('contentEngine', {
+                mode: 'apply_recommendations',
+                content: inputContent || result?.final_content || "",
+                context_notes: contextNotes,
+                location: location || undefined,
+                competitor_content: competitorContent || undefined,
+                client_name: client.name,
+                content_type: contentType,
+                generic_phrases: result?.generic_phrase_detection?.detected_phrases || [],
+                claims: result?.claim_verifiability?.detected_claims || [],
+                top_problems: result?.top_problems || [],
+                rewrite_strategy: result?.rewrite_strategy || "",
+            });
+            setResult(prev => ({
+                ...prev,
+                ...res.data,
+                // keep original scores for comparison
+                original_entropy_score: prev.original_entropy_score ?? prev.entropy_score,
+                original_dimension_scores: prev.original_dimension_scores ?? prev.dimension_scores,
+            }));
+            toast.success("Recommendations applied!");
+        } catch (err) {
+            toast.error(err.message);
+        }
+        setApplying(false);
+    };
+
     const handleCopy = () => {
         navigator.clipboard.writeText(result?.final_content || "");
         setCopied(true);
