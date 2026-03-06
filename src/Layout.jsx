@@ -18,7 +18,8 @@ import {
   Blinds,
   Sparkles,
   MapPin,
-  Link2
+  Link2,
+  PenTool
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
