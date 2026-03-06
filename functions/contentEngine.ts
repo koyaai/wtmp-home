@@ -100,7 +100,14 @@ Generate high-quality content using the 12-dimension framework as guiding princi
 - Use varied sentence structures
 - Include proper nouns where relevant
 - Score 7+ on every dimension and 70+ entropy
-
+${content_type === 'Blog Post' ? `
+IMPORTANT: Since this is a Blog Post, you MUST include an FAQ section at the bottom of the content.
+- Include 5–7 genuine, specific questions that real customers would ask about this topic
+- Answers must be detailed, informative, and high-entropy (not one-liners)
+- Questions should cover practical concerns, local context, pricing considerations, technical details, and comparison questions
+- Format as: Q: [question]\\nA: [answer]
+- Label the section clearly as "Frequently Asked Questions"
+` : ''}
 Then internally validate and return JSON:
 {
   "final_content": "<the full generated content>",
