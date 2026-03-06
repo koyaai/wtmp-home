@@ -49,28 +49,30 @@
  */
 import Clients from './pages/Clients';
 import Dashboard from './pages/Dashboard';
+import GBPConnect from './pages/GBPConnect';
+import GBPProfiles from './pages/GBPProfiles';
+import GenerateCalendar from './pages/GenerateCalendar';
+import GenerateGBPCalendar from './pages/GenerateGBPCalendar';
 import Leads from './pages/Leads';
 import PPC from './pages/PPC';
 import SEO from './pages/SEO';
 import SocialMedia from './pages/SocialMedia';
-import GenerateCalendar from './pages/GenerateCalendar';
-import GBPProfiles from './pages/GBPProfiles';
-import GenerateGBPCalendar from './pages/GenerateGBPCalendar';
-import GBPConnect from './pages/GBPConnect';
+import Content from './pages/Content';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Clients": Clients,
     "Dashboard": Dashboard,
+    "GBPConnect": GBPConnect,
+    "GBPProfiles": GBPProfiles,
+    "GenerateCalendar": GenerateCalendar,
+    "GenerateGBPCalendar": GenerateGBPCalendar,
     "Leads": Leads,
     "PPC": PPC,
     "SEO": SEO,
     "SocialMedia": SocialMedia,
-    "GenerateCalendar": GenerateCalendar,
-    "GBPProfiles": GBPProfiles,
-    "GenerateGBPCalendar": GenerateGBPCalendar,
-    "GBPConnect": GBPConnect,
+    "Content": Content,
 }
 
 export const pagesConfig = {
