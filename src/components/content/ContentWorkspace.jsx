@@ -327,6 +327,27 @@ export default function ContentWorkspace({ client, onSaved }) {
                                 <DimensionScores scores={result.new_dimension_scores} title="Improved Scores" />
                             )}
 
+                            {/* Apply Recommendations */}
+                            {(result?.generic_phrase_detection?.detected_phrases?.length > 0 || result?.claim_verifiability?.detected_claims?.length > 0 || result?.top_problems?.length > 0) && (
+                                <Button onClick={handleApplyRecommendations} disabled={applying} className="bg-indigo-600 hover:bg-indigo-700 text-white w-full">
+                                    {applying
+                                        ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Applying recommendations...</>
+                                        : <><Wand2 className="w-4 h-4 mr-2" /> Apply Recommendations</>}
+                                </Button>
+                            )}
+
+                            {/* Improvements applied */}
+                            {result?.improvements_applied?.length > 0 && (
+                                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                                    <p className="text-xs font-semibold text-indigo-700 mb-1">Improvements Applied</p>
+                                    <ul className="space-y-0.5">
+                                        {result.improvements_applied.map((s, i) => (
+                                            <li key={i} className="text-xs text-indigo-800 flex gap-1.5"><Wand2 className="w-3 h-3 flex-shrink-0 mt-0.5" />{s}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
+
                             {/* Save */}
                             <Button onClick={handleSave} variant="outline" className="border-green-300 text-green-700 hover:bg-green-50">
                                 <Save className="w-4 h-4 mr-2" /> Save to {client.name}'s Library
