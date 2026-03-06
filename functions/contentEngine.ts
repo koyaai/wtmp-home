@@ -160,6 +160,7 @@ BLOG POST REQUIREMENTS:
 ` : ''}
 Return JSON:
 {
+  ${GENERIC_PHRASE_SCHEMA},
   "final_content": "<the full generated content>",
   "entropy_score": <number 70-100>,
   "dimension_scores": ${DIMENSION_SCORES_SCHEMA},
