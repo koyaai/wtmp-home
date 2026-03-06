@@ -51,24 +51,28 @@ Deno.serve(async (req) => {
             headers: { Authorization: `Bearer ${accessToken}` }
         });
         const accountsData = await accountsRes.json();
+        console.log('Accounts response:', JSON.stringify(accountsData));
 
         if (!accountsData.accounts?.length) {
-            return Response.json({ locations: [] });
+            return Response.json({ locations: [], debug: { accounts_response: accountsData } });
         }
 
         // Get all locations across all accounts
         const allLocations = [];
+        const locDebug = [];
         for (const account of accountsData.accounts) {
             const locRes = await fetch(`https://mybusinessbusinessinformation.googleapis.com/v1/${account.name}/locations?readMask=name,title,storefrontAddress,websiteUri,primaryPhone,regularHours,primaryCategory`, {
                 headers: { Authorization: `Bearer ${accessToken}` }
             });
             const locData = await locRes.json();
+            console.log(`Locations for ${account.name}:`, JSON.stringify(locData));
+            locDebug.push({ account: account.name, response: locData });
             if (locData.locations) {
                 allLocations.push(...locData.locations.map(l => ({ ...l, accountName: account.name })));
             }
         }
 
-        return Response.json({ locations: allLocations });
+        return Response.json({ locations: allLocations, debug: { accounts: accountsData.accounts?.map(a => a.name), locations_debug: locDebug } });
     } catch (error) {
         return Response.json({ error: error.message }, { status: 500 });
     }
