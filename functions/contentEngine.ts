@@ -245,8 +245,51 @@ Return JSON:
     "information_gain_opportunities": ["<opportunity 1>", "<opportunity 2>"]
   }` : 'null'}
 }`;
+        } else if (mode === 'apply_recommendations') {
+            const { generic_phrases, claims, top_problems, rewrite_strategy } = body;
+            userPrompt = `## APPLY RECOMMENDATIONS TO CONTENT
+
+${clientContext}
+
+Original content:
+"""
+${content}
+"""
+
+The following issues were detected by the framework. Apply ALL of them to produce improved content:
+
+${generic_phrases?.length ? `### Generic Phrases to Replace:
+${generic_phrases.map(p => `- "${p.phrase}" — ${p.reason}`).join('\n')}` : ''}
+
+${claims?.length ? `### Unverifiable Claims to Fix:
+${claims.map(c => `- [${c.claim_type}] "${c.claim}" → ${c.suggested_improvement}`).join('\n')}` : ''}
+
+${top_problems?.length ? `### Top Problems to Address:
+${top_problems.map(p => `- ${p}`).join('\n')}` : ''}
+
+${rewrite_strategy ? `### Rewrite Strategy:\n${rewrite_strategy}` : ''}
+
+${FRAMEWORK_INSTRUCTIONS}
+
+Instructions:
+- Apply every fix listed above. Replace every generic phrase with specific, technical, measurable alternatives.
+- Fix every unverifiable claim using the suggested improvements.
+- Preserve the original content structure, length, and intent — only improve the problematic parts.
+- Do NOT add new sections or drastically expand the content unless the rewrite strategy requires it.
+- Score 7+ on all dimensions and 70+ entropy.
+
+Return JSON:
+{
+  ${GENERIC_PHRASE_SCHEMA},
+  ${CLAIM_VERIFIABILITY_SCHEMA},
+  "final_content": "<the full improved content>",
+  "entropy_score": <number 0-100>,
+  "dimension_scores": ${DIMENSION_SCORES_SCHEMA},
+  "improvements_applied": ["<brief description of each change made>"]
+}`;
+
         } else {
-            return Response.json({ error: 'Invalid mode. Use: analyze, generate, rewrite' }, { status: 400 });
+            return Response.json({ error: 'Invalid mode. Use: analyze, generate, rewrite, apply_recommendations' }, { status: 400 });
         }
 
         const res = await base44.integrations.Core.InvokeLLM({
