@@ -23,6 +23,19 @@ const GENERIC_PHRASE_SCHEMA = `"generic_phrase_detection": {
     "scoring_impact": "<brief description of how these phrases affected the entropy and dimension scores>"
   }`;
 
+const CLAIM_VERIFIABILITY_SCHEMA = `"claim_verifiability": {
+    "detected_claims": [
+      {
+        "claim": "<full statement from content>",
+        "claim_type": "Absolute Claim|Statistical Claim|Authority Claim|Process Claim",
+        "issue": "<why this claim is weak, vague, exaggerated, or unverifiable>",
+        "suggested_improvement": "<stronger alternative with specific details, measurable info, entities, or experience signals>"
+      }
+    ],
+    "total_detected": <number>,
+    "scoring_impact": "<brief description of how these claims affected nuance_preservation, technical_precision, first_party_evidence, entity_coherence scores>"
+  }`;
+
 const FRAMEWORK_INSTRUCTIONS = `
 ## STEP 0 — GENERIC PHRASE DETECTION PASS (run FIRST, before any scoring)
 Before evaluating or scoring content, scan the entire text for generic, templated, or low-information marketing language in these categories:
