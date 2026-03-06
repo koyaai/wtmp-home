@@ -196,6 +196,7 @@ Steps:
 
 Return JSON:
 {
+  ${GENERIC_PHRASE_SCHEMA},
   "original_entropy_score": <number>,
   "original_dimension_scores": ${DIMENSION_SCORES_SCHEMA},
   "top_problems": ["<problem 1>", "<problem 2>", "<problem 3>"],
