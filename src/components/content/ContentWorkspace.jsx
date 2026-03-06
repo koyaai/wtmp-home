@@ -211,6 +211,9 @@ export default function ContentWorkspace({ client, onSaved }) {
                             {/* Generic Phrase Detection — shown first */}
                             <GenericPhraseDetection data={result.generic_phrase_detection} />
 
+                            {/* Claim Verifiability Review — shown second */}
+                            <ClaimVerifiability data={result.claim_verifiability} />
+
                             {/* Competitor Analysis */}
                             <CompetitorAnalysis analysis={result.competitor_analysis} />
 
