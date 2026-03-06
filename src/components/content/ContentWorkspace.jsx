@@ -12,6 +12,7 @@ import DimensionScores from "./DimensionScores";
 import EntropyHeatmap from "./EntropyHeatmap";
 import CompetitorAnalysis from "./CompetitorAnalysis";
 import GenericPhraseDetection from "./GenericPhraseDetection";
+import ClaimVerifiability from "./ClaimVerifiability";
 
 const CONTENT_TYPES = ["Blog Post", "GBP Post", "Service Page", "Landing Page", "Social Caption", "Email", "Other"];
 
