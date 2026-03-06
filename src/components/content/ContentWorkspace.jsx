@@ -207,6 +207,9 @@ export default function ContentWorkspace({ client, onSaved }) {
                                 )}
                             </div>
 
+                            {/* Generic Phrase Detection — shown first */}
+                            <GenericPhraseDetection data={result.generic_phrase_detection} />
+
                             {/* Competitor Analysis */}
                             <CompetitorAnalysis analysis={result.competitor_analysis} />
 
