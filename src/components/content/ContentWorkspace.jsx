@@ -194,7 +194,7 @@ export default function ContentWorkspace({ client, onSaved }) {
                     {/* Context */}
                     <div>
                         <label className="text-xs font-medium text-slate-600 mb-1 block">Additional Context <span className="text-slate-400">(optional)</span></label>
-                        <Textarea placeholder="E.g. Perth-based flooring company, premium brands, service radius 50km, target: homeowners..." value={contextNotes} onChange={e => setContextNotes(e.target.value)} className="min-h-[60px] text-sm" />
+                        <Textarea placeholder="E.g. Dallas-based flooring company, premium brands, service radius 30 miles, target: homeowners..." value={contextNotes} onChange={e => setContextNotes(e.target.value)} className="min-h-[60px] text-sm" />
                     </div>
 
                     {/* Location — Feature 4: Local Authority */}
