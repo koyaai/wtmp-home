@@ -180,7 +180,7 @@ export default function ContentWorkspace({ client, onSaved }) {
                     {mode === "generate" && (
                         <div>
                             <label className="text-xs font-medium text-slate-600 mb-1 block">Topic / Brief *</label>
-                            <Input placeholder="E.g. Vinyl plank flooring installation for Perth homeowners" value={topic} onChange={e => setTopic(e.target.value)} />
+                            <Input placeholder="E.g. Vinyl plank flooring installation for Dallas homeowners" value={topic} onChange={e => setTopic(e.target.value)} />
                         </div>
                     )}
 
