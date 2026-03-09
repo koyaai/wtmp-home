@@ -164,7 +164,7 @@ export default function ContentWorkspace({ client, onSaved }) {
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="text-xs font-medium text-slate-600 mb-1 block">Title *</label>
-                            <Input placeholder="E.g. Carpet Installation Perth" value={title} onChange={e => setTitle(e.target.value)} />
+                            <Input placeholder="E.g. Carpet Installation Austin, TX" value={title} onChange={e => setTitle(e.target.value)} />
                         </div>
                         <div>
                             <label className="text-xs font-medium text-slate-600 mb-1 block">Content Type</label>
