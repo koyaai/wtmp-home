@@ -286,6 +286,7 @@ Instructions:
 - Fix every unverifiable claim using the suggested improvements.
 - Preserve the original content structure, length, and intent — only improve the problematic parts.
 - Do NOT add new sections or drastically expand the content unless the rewrite strategy requires it.
+${content_type === 'Blog Post' ? `- Ensure the blog has: (1) an Overview/intro summary at the start, (2) max 5 FAQs, (3) a CTA paragraph at the end referencing the client/business.` : ''}
 - Score 7+ on all dimensions and 70+ entropy.
 
 Return JSON:
