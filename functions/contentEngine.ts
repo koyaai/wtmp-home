@@ -183,9 +183,11 @@ Generate high-quality content applying all four advanced capabilities:
 - Avoid generic marketing copy. Score 7+ on every dimension and 70+ entropy.
 ${content_type === 'Blog Post' ? `
 BLOG POST REQUIREMENTS:
-- Include a "Frequently Asked Questions" section at the bottom with 5–7 specific, high-quality questions
-- Questions must cover: practical concerns, local context, pricing, technical details, comparisons
+- Open with a 2–3 sentence summary paragraph (labeled "Overview" or as a natural intro paragraph) that tells the reader exactly what the blog covers and why it matters. This goes BEFORE the main body.
+- Include a "Frequently Asked Questions" section near the bottom with EXACTLY 3–5 specific, high-quality questions (no more than 5).
+- Questions must cover: practical concerns, local context, pricing, technical details, or comparisons.
 - Format: Q: [question] / A: [detailed answer]
+- End with a strong, specific Call to Action (CTA) paragraph after the FAQ section. The CTA must reference the client/business name and include a clear next step (e.g., "Call us today", "Book a free measure and quote", "Get in touch"). Make it action-oriented and relevant to the content.
 ` : ''}
 Return JSON:
 {
