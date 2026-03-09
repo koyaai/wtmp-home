@@ -202,7 +202,7 @@ export default function ContentWorkspace({ client, onSaved }) {
                         <label className="text-xs font-medium text-slate-600 mb-1 flex items-center gap-1 block">
                             <MapPin className="w-3 h-3 text-slate-400" /> Location / Service Area <span className="text-slate-400">(optional — enables local authority signals)</span>
                         </label>
-                        <Input placeholder="E.g. Perth, WA — hot/dry climate, coastal suburbs" value={location} onChange={e => setLocation(e.target.value)} />
+                        <Input placeholder="E.g. Phoenix, AZ — hot/dry climate, suburban neighborhoods" value={location} onChange={e => setLocation(e.target.value)} />
                     </div>
 
                     {/* Competitor Content — Feature 1: Competitor Analyzer */}
