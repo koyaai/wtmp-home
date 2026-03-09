@@ -112,6 +112,14 @@ When location context is available, enhance content with:
 - Geography-specific problems
 Only apply when meaningful. Do not force location mentions that add no value.
 
+## PRODUCT & BRAND ACCURACY RULE (CRITICAL)
+NEVER invent, fabricate, or assume product names, brand names, model numbers, certifications, or specifications that are not explicitly provided in the client context or content.
+- Only mention real, verifiable products and brands that you have high confidence exist.
+- If a product detail or brand is not provided and you are uncertain whether it exists, use a generic but descriptive reference instead (e.g., "nylon-blend broadloom carpet" rather than inventing a brand name).
+- If certifications or standards are mentioned (e.g., "IICRC-certified"), only include them if they are real industry standards you can confirm exist.
+- When in doubt, omit the specific name and describe the type/category of product instead.
+- This rule applies to: product models, brand names, chemical formulas, certification bodies, equipment models, software names.
+
 ## ENTROPY SCORE (0–100)
 0–40: generic/templated | 41–70: moderate | 71–100: original, expert
 
