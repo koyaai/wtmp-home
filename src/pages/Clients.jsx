@@ -11,6 +11,7 @@ export default function Clients() {
   const [clients, setClients] = useState([]);
   const [selectedClient, setSelectedClient] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [showBatchUpload, setShowBatchUpload] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
