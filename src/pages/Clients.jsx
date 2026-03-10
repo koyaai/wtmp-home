@@ -105,6 +105,14 @@ export default function Clients() {
         )}
       </div>
 
+      {/* Batch Upload Modal */}
+      {showBatchUpload && (
+        <ClientBatchUpload
+          onClose={() => setShowBatchUpload(false)}
+          onUploaded={() => { setShowBatchUpload(false); loadClients(); }}
+        />
+      )}
+
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
