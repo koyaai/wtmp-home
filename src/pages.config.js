@@ -48,6 +48,7 @@
  * The mainPage value must match a key in the PAGES object exactly.
  */
 import Clients from './pages/Clients';
+import Content from './pages/Content';
 import Dashboard from './pages/Dashboard';
 import GBPConnect from './pages/GBPConnect';
 import GBPProfiles from './pages/GBPProfiles';
@@ -57,12 +58,12 @@ import Leads from './pages/Leads';
 import PPC from './pages/PPC';
 import SEO from './pages/SEO';
 import SocialMedia from './pages/SocialMedia';
-import Content from './pages/Content';
 import __Layout from './Layout.jsx';
 
 
 export const PAGES = {
     "Clients": Clients,
+    "Content": Content,
     "Dashboard": Dashboard,
     "GBPConnect": GBPConnect,
     "GBPProfiles": GBPProfiles,
@@ -72,7 +73,6 @@ export const PAGES = {
     "PPC": PPC,
     "SEO": SEO,
     "SocialMedia": SocialMedia,
-    "Content": Content,
 }
 
 export const pagesConfig = {
