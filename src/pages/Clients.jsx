@@ -70,10 +70,15 @@ export default function Clients() {
         <div className="flex items-center justify-between px-4 py-4 border-b border-slate-100">
           <h1 className="font-bold text-slate-800">Clients</h1>
           {canEdit && (
-            <Button size="sm" onClick={() => { setEditingClient(null); setShowForm(true); }}
-              className="bg-blue-600 hover:bg-blue-700 text-white h-8 text-xs">
-              <Plus className="w-3.5 h-3.5 mr-1" /> Add
-            </Button>
+            <div className="flex items-center gap-1.5">
+              <Button size="sm" variant="outline" onClick={() => setShowBatchUpload(true)} className="h-8 text-xs">
+                <Upload className="w-3.5 h-3.5 mr-1" /> Import
+              </Button>
+              <Button size="sm" onClick={() => { setEditingClient(null); setShowForm(true); }}
+                className="bg-blue-600 hover:bg-blue-700 text-white h-8 text-xs">
+                <Plus className="w-3.5 h-3.5 mr-1" /> Add
+              </Button>
+            </div>
           )}
         </div>
         <ClientList clients={clients} selectedId={selectedClient?.id} onSelect={setSelectedClient} />
