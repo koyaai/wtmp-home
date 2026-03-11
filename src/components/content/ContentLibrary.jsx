@@ -142,7 +142,7 @@ function ContentCard({ item, client }) {
     );
 }
 
-export default function ContentLibrary({ clientId }) {
+export default function ContentLibrary({ clientId, client }) {
     const { data: items = [], isLoading } = useQuery({
         queryKey: ['contentItems', clientId],
         queryFn: () => base44.entities.ContentItem.filter({ client_id: clientId }, "-created_date", 50),
@@ -160,7 +160,7 @@ export default function ContentLibrary({ clientId }) {
 
     return (
         <div className="space-y-3">
-            {items.map(item => <ContentCard key={item.id} item={item} />)}
+            {items.map(item => <ContentCard key={item.id} item={item} client={client} />)}
         </div>
     );
 }

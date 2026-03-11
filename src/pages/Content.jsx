@@ -66,7 +66,7 @@ export default function Content() {
                                 onSaved={() => queryClient.invalidateQueries({ queryKey: ['contentItems', selectedClientId] })}
                             />
                         ) : (
-                            <ContentLibrary clientId={selectedClientId} />
+                            <ContentLibrary clientId={selectedClientId} client={selectedClient} />
                         )}
                     </div>
                 </>
