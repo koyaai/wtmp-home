@@ -22,9 +22,10 @@ const STATUS_COLORS = {
     published: "bg-blue-100 text-blue-700",
 };
 
-function ContentCard({ item, onDelete }) {
+function ContentCard({ item, client }) {
     const [expanded, setExpanded] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [showWpModal, setShowWpModal] = useState(false);
     const queryClient = useQueryClient();
 
     const handleDelete = async () => {
@@ -64,6 +65,12 @@ function ContentCard({ item, onDelete }) {
                             <p className="text-xs text-slate-400">entropy</p>
                         </div>
                     )}
+                    {item.final_content && client?.wordpress_url && (
+                        <button onClick={() => setShowWpModal(true)} title="Publish to WordPress"
+                            className="text-slate-300 hover:text-blue-500 p-1 transition-colors">
+                            <Globe className="w-4 h-4" />
+                        </button>
+                    )}
                     <button onClick={() => setExpanded(!expanded)} className="text-slate-400 hover:text-slate-600 p-1">
                         {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
@@ -72,6 +79,10 @@ function ContentCard({ item, onDelete }) {
                     </button>
                 </div>
             </div>
+
+            {showWpModal && (
+                <WordPressPublishModal item={item} client={client} onClose={() => setShowWpModal(false)} />
+            )}
 
             {expanded && (
                 <div className="px-4 pb-4 border-t border-slate-100 pt-3 space-y-4">
