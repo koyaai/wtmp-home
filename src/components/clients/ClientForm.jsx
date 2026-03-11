@@ -20,7 +20,8 @@ export default function ClientForm({ initial, onSave, onCancel }) {
     website: "", location: "", status: "active", services: [],
     retainer_fee: "", start_date: "", csm_assigned: "",
     google_search_console_url: "", gbp_url: "", ghl_location_id: "",
-    google_ads_account_id: "", notes: "",
+    google_ads_account_id: "", wordpress_url: "", wordpress_username: "",
+    wordpress_app_password: "", notes: "",
     ...initial,
     retainer_fee: initial?.retainer_fee || "",
   });
@@ -95,6 +96,19 @@ export default function ClientForm({ initial, onSave, onCancel }) {
           <Field label="Google Ads Account ID" name="google_ads_account_id" placeholder="123-456-7890" value={form.google_ads_account_id} onChange={set} />
           <Field label="Google Search Console URL" name="google_search_console_url" placeholder="https://..." value={form.google_search_console_url} onChange={set} />
           <Field label="Google Business Profile URL" name="gbp_url" placeholder="https://..." value={form.gbp_url} onChange={set} />
+        </div>
+      </div>
+
+      {/* WordPress */}
+      <div>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">WordPress Integration</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <Field label="WordPress Site URL" name="wordpress_url" placeholder="https://clientsite.com" value={form.wordpress_url} onChange={set} />
+          <Field label="WordPress Username" name="wordpress_username" placeholder="admin" value={form.wordpress_username} onChange={set} />
+          <div className="sm:col-span-2">
+            <Field label="Application Password" name="wordpress_app_password" placeholder="xxxx xxxx xxxx xxxx xxxx xxxx" value={form.wordpress_app_password} onChange={set} />
+            <p className="text-xs text-slate-400 mt-1">Generate in WP Admin → Users → Profile → Application Passwords</p>
+          </div>
         </div>
       </div>
 

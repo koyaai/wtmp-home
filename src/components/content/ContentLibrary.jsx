@@ -3,11 +3,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, ChevronDown, ChevronUp, Copy, Check } from "lucide-react";
+import { Trash2, ChevronDown, ChevronUp, Copy, Check, Globe } from "lucide-react";
 import { toast } from "sonner";
 import EntropyScoreGauge from "./EntropyScoreGauge";
 import DimensionScores from "./DimensionScores";
 import { format } from "date-fns";
+import WordPressPublishModal from "./WordPressPublishModal";
 
 const MODE_COLORS = {
     generated: "bg-purple-100 text-purple-700",
