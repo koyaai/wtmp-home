@@ -103,7 +103,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
         {tabs.map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`flex-1 text-sm py-2 rounded-lg font-medium capitalize transition-colors ${activeTab === tab ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-            {tab === "updates" ? "CSM Updates" : tab === "tracker" ? "Tracker" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === "updates" ? "CSM Updates" : tab === "tracker" ? "Tracker" : tab === "snapshot" ? "Snapshot" : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
