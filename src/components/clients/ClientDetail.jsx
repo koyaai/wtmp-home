@@ -24,7 +24,7 @@ const serviceColors = {
 };
 
 export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit, userRole }) {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("snapshot");
 
   const showFinancials = ["leadership"].includes(userRole);
 
