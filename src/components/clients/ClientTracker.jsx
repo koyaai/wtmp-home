@@ -166,49 +166,35 @@ export default function ClientTracker({ clientId }) {
           color={{ bg: "bg-red-50", border: "border-red-100", icon: "text-red-500", title: "text-red-700", badge: "bg-red-100 text-red-700" }}
         />
         {flagsOpen && (
-          <div className="p-4 space-y-2">
-            {tab === "active" && filtered.redFlags.length === 0 && showEmpty(filtered.redFlags) && (
-              <p className="text-sm text-slate-400 text-center py-2">No open red flags — great!</p>
-            )}
-            {filtered.redFlags.map((item, i) => (
-              <TrackerItemRow
-                key={`flag-${item.insightId}-${item.index}`}
-                item={item}
-                type="red_flags"
-                canEdit={canEdit}
-                onSave={(newItem) => updateItem(item.insightRef, "red_flags", item.index, newItem)}
-                onDelete={canEdit ? () => deleteItem(item.insightRef, "red_flags", item.index) : null}
-                onToggleResolved={() => toggleResolved(item.insightRef, "red_flags", item.index)}
-              />
-            ))}
-            {/* Active tab: resolved flags collapsible */}
+          <div>
+            <TableSection
+              items={filtered.redFlags}
+              type="red_flags"
+              emptyMsg={tab === "active" ? "No open red flags — great!" : searchQuery ? "No results." : "No resolved red flags yet."}
+              canEdit={canEdit}
+              onSave={(item, newItem) => updateItem(item.insightRef, "red_flags", item.index, newItem)}
+              onDelete={(item) => deleteItem(item.insightRef, "red_flags", item.index)}
+              onToggle={(item) => toggleResolved(item.insightRef, "red_flags", item.index)}
+            />
             {tab === "active" && allItems.redFlags.filter(f => f.resolved).length > 0 && (
-              <details className="mt-2">
-                <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-600">
+              <details className="border-t border-slate-100">
+                <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-600 px-4 py-2">
                   {allItems.redFlags.filter(f => f.resolved).length} resolved
                 </summary>
-                <div className="space-y-2 mt-2">
-                  {allItems.redFlags.filter(f => f.resolved).map((item) => (
-                    <TrackerItemRow
-                      key={`rflag-${item.insightId}-${item.index}`}
-                      item={item}
-                      type="red_flags"
-                      canEdit={canEdit}
-                      onSave={(newItem) => updateItem(item.insightRef, "red_flags", item.index, newItem)}
-                      onDelete={canEdit ? () => deleteItem(item.insightRef, "red_flags", item.index) : null}
-                      onToggleResolved={() => toggleResolved(item.insightRef, "red_flags", item.index)}
-                    />
-                  ))}
-                </div>
+                <TableSection
+                  items={allItems.redFlags.filter(f => f.resolved)}
+                  type="red_flags"
+                  canEdit={canEdit}
+                  onSave={(item, newItem) => updateItem(item.insightRef, "red_flags", item.index, newItem)}
+                  onDelete={(item) => deleteItem(item.insightRef, "red_flags", item.index)}
+                  onToggle={(item) => toggleResolved(item.insightRef, "red_flags", item.index)}
+                />
               </details>
             )}
             {canEdit && tab === "active" && (
-              <button onClick={() => addItem("red_flags")} className="w-full text-xs text-red-400 hover:text-red-600 border border-dashed border-red-200 rounded-lg py-2 flex items-center justify-center gap-1 mt-1">
+              <button onClick={() => addItem("red_flags")} className="w-full text-xs text-red-400 hover:text-red-600 border-t border-dashed border-red-200 py-2.5 flex items-center justify-center gap-1">
                 <Plus className="w-3 h-3" /> Add Red Flag
               </button>
-            )}
-            {tab === "history" && filtered.redFlags.length === 0 && (
-              <p className="text-sm text-slate-400 text-center py-2">{searchQuery ? "No results." : "No resolved red flags yet."}</p>
             )}
           </div>
         )}
