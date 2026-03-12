@@ -95,6 +95,7 @@ export default function Dashboard() {
           <StatCard title="Monthly MRR" value={`$${totalMRR.toLocaleString()}`} subtitle="Active clients only" icon={DollarSign} color="bg-emerald-500" />
         )}
         <StatCard title="Churn Risks" value={churnRisks.length} subtitle="Flagged by CSMs" icon={AlertTriangle} color="bg-red-500" />
+        <StatCard title="Red Flag Clients" value={redFlagClientCount} subtitle="With open red flags" icon={AlertTriangle} color="bg-orange-500" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
