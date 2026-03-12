@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckSquare, MessageSquare, AlertTriangle, ChevronDown, ChevronUp, Trash2, Archive } from "lucide-react";
-import { format } from "date-fns";
+import { CheckSquare, MessageSquare, AlertTriangle, ChevronDown, ChevronUp, Trash2, Archive, Pencil, Check, X, Plus, Calendar } from "lucide-react";
+import { format, isPast, differenceInDays, parseISO } from "date-fns";
 
 const statusColors = {
   new: "bg-blue-100 text-blue-700",
@@ -18,8 +17,86 @@ const sourceColors = {
   "Other": "bg-slate-100 text-slate-600"
 };
 
+function normalizeItem(item) {
+  if (typeof item === "string") return { text: item, date: null, resolved: false };
+  return item;
+}
+
+function DeadlineBadge({ date }) {
+  if (!date) return null;
+  const d = parseISO(date);
+  const diff = differenceInDays(d, new Date());
+  if (isPast(d) && diff < 0) return <span className="text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full">Overdue</span>;
+  if (diff <= 3) return <span className="text-xs bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">Due in {diff}d</span>;
+  return <span className="text-xs text-slate-400">{format(d, "MMM d")}</span>;
+}
+
+function EditableItem({ item, onSave, onDelete, colorScheme }) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(item.text);
+  const [date, setDate] = useState(item.date || "");
+
+  const save = () => {
+    onSave({ ...item, text, date: date || null });
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <li className={`text-sm rounded-lg border px-3 py-2 space-y-2 ${colorScheme.bg}`}>
+        <input
+          className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm"
+          value={text}
+          onChange={e => setText(e.target.value)}
+          autoFocus
+        />
+        <div className="flex items-center gap-2">
+          <input type="date" value={date} onChange={e => setDate(e.target.value)}
+            className="border border-slate-200 rounded px-2 py-1 text-xs bg-white" />
+          <button onClick={save} className="text-emerald-600 hover:text-emerald-800"><Check className="w-4 h-4" /></button>
+          <button onClick={() => setEditing(false)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+        </div>
+      </li>
+    );
+  }
+
+  return (
+    <li className={`flex items-start gap-2 text-sm rounded-lg border px-3 py-2 group ${colorScheme.bg}`}>
+      <span className={`flex-1 ${colorScheme.text}`}>{item.text}</span>
+      <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+        <DeadlineBadge date={item.date} />
+        <button onClick={() => setEditing(true)} className="text-slate-400 hover:text-slate-600"><Pencil className="w-3 h-3" /></button>
+        <button onClick={onDelete} className="text-red-400 hover:text-red-600"><X className="w-3 h-3" /></button>
+      </div>
+      {item.date && <div className="opacity-100 group-hover:opacity-0 flex-shrink-0"><DeadlineBadge date={item.date} /></div>}
+    </li>
+  );
+}
+
 export default function InsightCard({ insight, onUpdate }) {
   const [expanded, setExpanded] = useState(false);
+
+  const updateItems = async (field, newItems) => {
+    await base44.entities.ClientInsight.update(insight.id, { [field]: newItems });
+    onUpdate();
+  };
+
+  const handleItemSave = (field, index, newItem) => {
+    const items = (insight[field] || []).map(normalizeItem);
+    items[index] = newItem;
+    updateItems(field, items);
+  };
+
+  const handleItemDelete = (field, index) => {
+    const items = (insight[field] || []).map(normalizeItem).filter((_, i) => i !== index);
+    updateItems(field, items);
+  };
+
+  const handleAddItem = (field) => {
+    const items = (insight[field] || []).map(normalizeItem);
+    items.push({ text: "New item", date: null, resolved: false });
+    updateItems(field, items);
+  };
 
   const handleStatus = async (status) => {
     await base44.entities.ClientInsight.update(insight.id, { status });
@@ -31,21 +108,19 @@ export default function InsightCard({ insight, onUpdate }) {
     onUpdate();
   };
 
+  const todos = (insight.todos || []).map(normalizeItem);
+  const redFlags = (insight.red_flags || []).map(normalizeItem);
+
   return (
     <div className={`bg-white border rounded-xl overflow-hidden transition-all ${insight.status === "archived" ? "opacity-60" : ""}`}>
       {/* Header */}
-      <div
-        className="flex items-center gap-3 px-5 py-4 cursor-pointer hover:bg-slate-50"
-        onClick={() => setExpanded(!expanded)}
-      >
+      <div className="flex items-center gap-3 px-5 py-4 cursor-pointer hover:bg-slate-50" onClick={() => setExpanded(!expanded)}>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${sourceColors[insight.source_type] || "bg-slate-100 text-slate-600"}`}>
               {insight.source_type}
             </span>
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[insight.status]}`}>
-              {insight.status}
-            </span>
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${statusColors[insight.status]}`}>{insight.status}</span>
             {insight.meeting_date && (
               <span className="text-xs text-slate-400">{format(new Date(insight.meeting_date), "MMM d, yyyy")}</span>
             )}
@@ -53,14 +128,14 @@ export default function InsightCard({ insight, onUpdate }) {
           <p className="text-sm text-slate-700 mt-1 line-clamp-2">{insight.summary || "No summary available."}</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-          {insight.red_flags?.length > 0 && (
+          {redFlags.length > 0 && (
             <span className="flex items-center gap-1 text-xs text-red-600 font-medium bg-red-50 px-2 py-0.5 rounded-full">
-              <AlertTriangle className="w-3 h-3" /> {insight.red_flags.length}
+              <AlertTriangle className="w-3 h-3" /> {redFlags.length}
             </span>
           )}
-          {insight.todos?.length > 0 && (
+          {todos.length > 0 && (
             <span className="flex items-center gap-1 text-xs text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded-full">
-              <CheckSquare className="w-3 h-3" /> {insight.todos.length}
+              <CheckSquare className="w-3 h-3" /> {todos.length}
             </span>
           )}
           {expanded ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
@@ -70,32 +145,56 @@ export default function InsightCard({ insight, onUpdate }) {
       {/* Expanded body */}
       {expanded && (
         <div className="border-t border-slate-100 px-5 py-4 space-y-4">
-          {insight.red_flags?.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 text-red-600 font-semibold text-sm mb-2">
+
+          {/* Red Flags */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-red-600 font-semibold text-sm">
                 <AlertTriangle className="w-4 h-4" /> Red Flags
               </div>
+              <button onClick={() => handleAddItem("red_flags")} className="text-xs text-red-400 hover:text-red-600 flex items-center gap-1">
+                <Plus className="w-3 h-3" /> Add
+              </button>
+            </div>
+            {redFlags.length === 0 ? <p className="text-xs text-slate-400">None</p> : (
               <ul className="space-y-1">
-                {insight.red_flags.map((flag, i) => (
-                  <li key={i} className="text-sm text-red-700 bg-red-50 border border-red-100 rounded-lg px-3 py-2">{flag}</li>
+                {redFlags.map((flag, i) => (
+                  <EditableItem
+                    key={i} item={flag}
+                    colorScheme={{ bg: "bg-red-50 border-red-100", text: "text-red-700" }}
+                    onSave={(newItem) => handleItemSave("red_flags", i, newItem)}
+                    onDelete={() => handleItemDelete("red_flags", i)}
+                  />
                 ))}
               </ul>
-            </div>
-          )}
+            )}
+          </div>
 
-          {insight.todos?.length > 0 && (
-            <div>
-              <div className="flex items-center gap-2 text-blue-600 font-semibold text-sm mb-2">
+          {/* To-Dos */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2 text-blue-600 font-semibold text-sm">
                 <CheckSquare className="w-4 h-4" /> To-Dos
               </div>
+              <button onClick={() => handleAddItem("todos")} className="text-xs text-blue-400 hover:text-blue-600 flex items-center gap-1">
+                <Plus className="w-3 h-3" /> Add
+              </button>
+            </div>
+            {todos.length === 0 ? <p className="text-xs text-slate-400">None</p> : (
               <ul className="space-y-1">
-                {insight.todos.map((todo, i) => (
-                  <li key={i} className="text-sm text-slate-700 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2">✓ {todo}</li>
+                {todos.map((todo, i) => (
+                  <EditableItem
+                    key={i} item={todo}
+                    colorScheme={{ bg: "bg-blue-50 border-blue-100", text: "text-slate-700" }}
+                    onSave={(newItem) => handleItemSave("todos", i, newItem)}
+                    onDelete={() => handleItemDelete("todos", i)}
+                  />
                 ))}
               </ul>
-            </div>
-          )}
+            )}
+          </div>
 
+          {/* Requests */}
           {insight.requests?.length > 0 && (
             <div>
               <div className="flex items-center gap-2 text-amber-600 font-semibold text-sm mb-2">

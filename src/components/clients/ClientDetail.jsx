@@ -4,6 +4,7 @@ import { ArrowLeft, Edit, Trash2, Globe, Phone, Mail, MapPin, DollarSign, Plus, 
 import { Button } from "@/components/ui/button";
 import MeetingNotes from "@/components/clients/MeetingNotes";
 import CSMUpdates from "@/components/clients/CSMUpdates";
+import ClientTracker from "@/components/clients/ClientTracker";
 
 const statusColors = {
   active: "bg-emerald-100 text-emerald-700",
