@@ -88,7 +88,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard title="Total Clients" value={clients.length} subtitle={`${activeClients.length} active`} icon={Users} color="bg-blue-500" />
         <StatCard title="Onboarding" value={onboardingClients.length} subtitle="In progress" icon={Clock} color="bg-amber-500" />
         {showFinancials && (
