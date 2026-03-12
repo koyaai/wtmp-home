@@ -24,30 +24,33 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+const ALL_ROLES = ["admin", "leadership", "team_lead", "csm", "seo_specialist", "ppc_specialist", "social_media", "web_designer"];
+const ADMIN_LIKE = ["admin", "leadership", "team_lead", "csm"];
+
 const navItems = [
-  { label: "Command Center", icon: LayoutDashboard, page: "Dashboard", roles: ["admin", "leadership", "team_lead", "seo_specialist", "ppc_specialist", "social_media", "csm", "web_designer"] },
-  { label: "Clients", icon: Users, page: "Clients", roles: ["admin", "leadership", "team_lead", "seo_specialist", "ppc_specialist", "social_media", "csm", "web_designer"] },
+  { label: "Command Center", icon: LayoutDashboard, page: "Dashboard", roles: ALL_ROLES },
+  { label: "Clients", icon: Users, page: "Clients", roles: ALL_ROLES },
   {
-    label: "SEO", icon: Search, page: "SEO", roles: ["admin", "leadership", "team_lead", "seo_specialist"],
+    label: "SEO", icon: Search, page: "SEO", roles: [...ADMIN_LIKE, "seo_specialist"],
     children: [
-      { label: "GBP Profiles", icon: MapPin, page: "GBPProfiles", roles: ["admin", "leadership", "team_lead", "seo_specialist"] },
-      { label: "GBP Calendar", icon: Sparkles, page: "GenerateGBPCalendar", roles: ["admin", "leadership", "team_lead", "seo_specialist"] },
-      { label: "GBP Connect", icon: Link2, page: "GBPConnect", roles: ["admin"] },
+      { label: "GBP Profiles", icon: MapPin, page: "GBPProfiles", roles: [...ADMIN_LIKE, "seo_specialist"] },
+      { label: "GBP Calendar", icon: Sparkles, page: "GenerateGBPCalendar", roles: [...ADMIN_LIKE, "seo_specialist"] },
+      { label: "GBP Connect", icon: Link2, page: "GBPConnect", roles: ADMIN_LIKE },
     ]
   },
-  { label: "PPC", icon: MousePointerClick, page: "PPC", roles: ["admin", "leadership", "team_lead", "ppc_specialist"] },
+  { label: "PPC", icon: MousePointerClick, page: "PPC", roles: [...ADMIN_LIKE, "ppc_specialist"] },
   {
-    label: "Social Media", icon: CalendarDays, page: "SocialMedia", roles: ["admin", "leadership", "team_lead", "social_media"],
+    label: "Social Media", icon: CalendarDays, page: "SocialMedia", roles: [...ADMIN_LIKE, "social_media"],
     children: [
-      { label: "Content Calendar", icon: Sparkles, page: "GenerateCalendar", roles: ["admin", "leadership", "team_lead", "social_media"] },
+      { label: "Content Calendar", icon: Sparkles, page: "GenerateCalendar", roles: [...ADMIN_LIKE, "social_media"] },
     ]
   },
-  { label: "Content Studio", icon: PenTool, page: "Content", roles: ["admin", "leadership", "team_lead", "seo_specialist", "social_media", "csm"],
+  { label: "Content Studio", icon: PenTool, page: "Content", roles: [...ADMIN_LIKE, "seo_specialist", "social_media"],
     children: [
-      { label: "Web Copy Builder", icon: Globe, page: "WebsiteContentCreator", roles: ["admin", "leadership", "team_lead", "seo_specialist", "social_media"] }
+      { label: "Web Copy Builder", icon: Globe, page: "WebsiteContentCreator", roles: [...ADMIN_LIKE, "seo_specialist", "social_media"] }
     ]
   },
-  { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: ["admin", "leadership", "team_lead", "csm"] },
+  { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: ADMIN_LIKE },
 ];
 
 export default function Layout({ children, currentPageName }) {
