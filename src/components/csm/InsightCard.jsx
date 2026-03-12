@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { CheckSquare, MessageSquare, AlertTriangle, ChevronDown, ChevronUp, Trash2, Archive, Pencil, Check, X, Plus, Calendar } from "lucide-react";
+import { CheckSquare, MessageSquare, AlertTriangle, ChevronDown, ChevronUp, Trash2, Archive, Pencil, Check, X, Plus } from "lucide-react";
+import { TEAMS } from "@/components/clients/TrackerItemRow";
 import { format, isPast, differenceInDays, parseISO } from "date-fns";
 
 const statusColors = {
