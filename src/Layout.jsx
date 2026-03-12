@@ -20,7 +20,8 @@ import {
   MapPin,
   Link2,
   PenTool,
-  Globe
+  Globe,
+  HeartHandshake
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
