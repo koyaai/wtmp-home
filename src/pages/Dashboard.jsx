@@ -55,6 +55,17 @@ export default function Dashboard() {
   const totalMRR = clients.filter(c => c.status === "active").reduce((sum, c) => sum + (c.retainer_fee || 0), 0);
   const churnRisks = updates.filter(u => u.update_type === "churn_risk");
 
+  // Clients with at least one unresolved red flag
+  const clientsWithRedFlags = new Set(
+    insights
+      .filter(ins => (ins.red_flags || []).some(f => {
+        const item = typeof f === "string" ? { resolved: false } : f;
+        return !item.resolved;
+      }))
+      .map(ins => ins.client_id)
+  );
+  const redFlagClientCount = clientsWithRedFlags.size;
+
   const userRole = user?.role;
   const showFinancials = ["leadership"].includes(userRole);
 
