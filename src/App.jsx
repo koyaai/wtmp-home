@@ -60,6 +60,7 @@ const AuthenticatedApp = () => {
         />
       ))}
       <Route path="/WebsiteContentCreator" element={<LayoutWrapper currentPageName="WebsiteContentCreator"><WebsiteContentCreator /></LayoutWrapper>} />
+      <Route path="/CSMHub" element={<LayoutWrapper currentPageName="CSMHub"><CSMHub /></LayoutWrapper>} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
