@@ -50,6 +50,7 @@ const navItems = [
       { label: "Web Copy Builder", icon: Globe, page: "WebsiteContentCreator", roles: [...ADMIN_LIKE, "seo_specialist", "social_media"] }
     ]
   },
+  { label: "Client Insights", icon: Brain, page: "ClientInsights", roles: ADMIN_LIKE },
   { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: ADMIN_LIKE },
 ];
 
