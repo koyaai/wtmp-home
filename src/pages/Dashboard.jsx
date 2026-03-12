@@ -31,6 +31,7 @@ const statusColors = {
 export default function Dashboard() {
   const [clients, setClients] = useState([]);
   const [updates, setUpdates] = useState([]);
+  const [insights, setInsights] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -38,10 +39,12 @@ export default function Dashboard() {
     Promise.all([
       base44.entities.Client.list("-created_date", 100),
       base44.entities.CSMUpdate.list("-created_date", 10),
+      base44.entities.ClientInsight.list("-created_date", 200),
       base44.auth.me().catch(() => null),
-    ]).then(([c, u, me]) => {
+    ]).then(([c, u, ins, me]) => {
       setClients(c);
       setUpdates(u);
+      setInsights(ins);
       setUser(me);
       setLoading(false);
     });
