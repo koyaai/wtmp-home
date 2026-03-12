@@ -41,7 +41,11 @@ const navItems = [
       { label: "Content Calendar", icon: Sparkles, page: "GenerateCalendar", roles: ["admin", "leadership", "team_lead", "social_media"] },
     ]
   },
-  { label: "Content Studio", icon: PenTool, page: "Content", roles: ["admin", "leadership", "team_lead", "seo_specialist", "social_media", "csm"] },
+  { label: "Content Studio", icon: PenTool, page: "Content", roles: ["admin", "leadership", "team_lead", "seo_specialist", "social_media", "csm"],
+    children: [
+      { label: "Web Copy Builder", icon: Globe, page: "WebsiteContentCreator", roles: ["admin", "leadership", "team_lead", "seo_specialist", "social_media"] }
+    ]
+  },
   { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: ["admin", "leadership", "team_lead", "csm"] },
 ];
 
