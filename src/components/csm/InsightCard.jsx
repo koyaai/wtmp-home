@@ -32,28 +32,28 @@ function DeadlineBadge({ date }) {
   return <span className="text-xs text-slate-400">{format(d, "MMM d")}</span>;
 }
 
-function EditableItem({ item, onSave, onDelete, colorScheme }) {
+function EditableItem({ item, onSave, onDelete, colorScheme, isFlag }) {
   const [editing, setEditing] = useState(false);
-  const [text, setText] = useState(item.text);
-  const [date, setDate] = useState(item.date || "");
+  const [form, setForm] = useState({ text: item.text, date: item.date || "", team: item.team || "", point_person: item.point_person || "" });
 
   const save = () => {
-    onSave({ ...item, text, date: date || null });
+    onSave({ ...item, ...form, date: form.date || null });
     setEditing(false);
   };
 
   if (editing) {
     return (
       <li className={`text-sm rounded-lg border px-3 py-2 space-y-2 ${colorScheme.bg}`}>
-        <input
-          className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm"
-          value={text}
-          onChange={e => setText(e.target.value)}
-          autoFocus
-        />
+        <input className="w-full bg-white border border-slate-200 rounded px-2 py-1 text-sm" value={form.text} onChange={e => setForm(f => ({ ...f, text: e.target.value }))} autoFocus />
+        <div className="grid grid-cols-2 gap-1.5">
+          <select value={form.team} onChange={e => setForm(f => ({ ...f, team: e.target.value }))} className="border border-slate-200 rounded px-2 py-1 text-xs bg-white">
+            <option value="">No team</option>
+            {TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <input placeholder="Point person" value={form.point_person} onChange={e => setForm(f => ({ ...f, point_person: e.target.value }))} className="border border-slate-200 rounded px-2 py-1 text-xs" />
+        </div>
         <div className="flex items-center gap-2">
-          <input type="date" value={date} onChange={e => setDate(e.target.value)}
-            className="border border-slate-200 rounded px-2 py-1 text-xs bg-white" />
+          <input type="date" value={form.date} onChange={e => setForm(f => ({ ...f, date: e.target.value }))} className="border border-slate-200 rounded px-2 py-1 text-xs bg-white" />
           <button onClick={save} className="text-emerald-600 hover:text-emerald-800"><Check className="w-4 h-4" /></button>
           <button onClick={() => setEditing(false)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
         </div>
@@ -63,13 +63,18 @@ function EditableItem({ item, onSave, onDelete, colorScheme }) {
 
   return (
     <li className={`flex items-start gap-2 text-sm rounded-lg border px-3 py-2 group ${colorScheme.bg}`}>
-      <span className={`flex-1 ${colorScheme.text}`}>{item.text}</span>
+      <div className="flex-1 min-w-0">
+        <span className={colorScheme.text}>{item.text}</span>
+        <div className="flex flex-wrap gap-1 mt-1">
+          {item.team && <span className="text-xs bg-white border border-slate-200 text-slate-600 px-1.5 py-0.5 rounded-full">{item.team}</span>}
+          {item.point_person && <span className="text-xs text-slate-400">@ {item.point_person}</span>}
+          <DeadlineBadge date={item.date} />
+        </div>
+      </div>
       <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-        <DeadlineBadge date={item.date} />
         <button onClick={() => setEditing(true)} className="text-slate-400 hover:text-slate-600"><Pencil className="w-3 h-3" /></button>
         <button onClick={onDelete} className="text-red-400 hover:text-red-600"><X className="w-3 h-3" /></button>
       </div>
-      {item.date && <div className="opacity-100 group-hover:opacity-0 flex-shrink-0"><DeadlineBadge date={item.date} /></div>}
     </li>
   );
 }
