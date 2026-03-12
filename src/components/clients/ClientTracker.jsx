@@ -5,6 +5,41 @@ import TrackerItemRow from "./TrackerItemRow";
 
 const ALLOWED_ROLES = ["admin", "leadership", "team_lead", "csm"];
 
+function TableSection({ items, type, emptyMsg, canEdit, onSave, onDelete, onToggle }) {
+  if (items.length === 0 && emptyMsg) {
+    return <p className="text-sm text-slate-400 text-center py-4">{emptyMsg}</p>;
+  }
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="text-xs text-slate-400 uppercase tracking-wide border-b border-slate-100">
+            <th className="pl-4 pr-2 py-2 w-8"></th>
+            <th className="px-3 py-2 text-left font-medium">Task</th>
+            <th className="px-3 py-2 text-left font-medium w-36">Team</th>
+            <th className="px-3 py-2 text-left font-medium w-32">Point Person</th>
+            <th className="px-3 py-2 text-left font-medium w-36">Deadline</th>
+            <th className="pr-4 pl-2 py-2 w-8"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <TrackerItemRow
+              key={`${type}-${item.insightId}-${item.index}`}
+              item={item}
+              type={type}
+              canEdit={canEdit}
+              onSave={(newItem) => onSave(item, newItem)}
+              onDelete={() => onDelete(item)}
+              onToggleResolved={() => onToggle(item)}
+            />
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 function normalizeItem(item) {
   if (typeof item === "string") return { text: item, date: null, resolved: false, team: null, point_person: null, solution: null };
   return item;
