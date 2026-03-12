@@ -24,9 +24,9 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
       source_type: sourceType,
       meeting_date: meetingDate || undefined,
       summary,
-      todos,
+      todos: (todos || []).map(t => ({ text: t, resolved: false, date: null, team: "", point_person: "" })),
       requests,
-      red_flags,
+      red_flags: (red_flags || []).map(f => ({ text: f, resolved: false, date: null, team: "", point_person: "", solution: "" })),
       status: "new"
     });
 
