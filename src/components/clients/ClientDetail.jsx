@@ -27,7 +27,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
 
   const showFinancials = ["leadership"].includes(userRole);
 
-  const tabs = ["overview", "meetings", "updates"];
+  const tabs = ["overview", "tracker", "meetings", "updates"];
 
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
@@ -102,7 +102,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
         {tabs.map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`flex-1 text-sm py-2 rounded-lg font-medium capitalize transition-colors ${activeTab === tab ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-            {tab === "updates" ? "CSM Updates" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === "updates" ? "CSM Updates" : tab === "tracker" ? "Tracker" : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
@@ -138,6 +138,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
         </div>
       )}
 
+      {activeTab === "tracker" && <ClientTracker clientId={client.id} />}
       {activeTab === "meetings" && <MeetingNotes clientId={client.id} canEdit={canEdit} />}
       {activeTab === "updates" && <CSMUpdates clientId={client.id} canEdit={canEdit} />}
     </div>
