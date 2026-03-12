@@ -51,7 +51,7 @@ const navItems = [
       { label: "Web Copy Builder", icon: Globe, page: "WebsiteContentCreator", roles: [...ADMIN_LIKE, "seo_specialist", "social_media"] }
     ]
   },
-  { label: "CSM Hub", icon: Users, page: "CSMHub", roles: ADMIN_LIKE },
+  { label: "CSM Hub", icon: HeartHandshake, page: "CSMHub", roles: ADMIN_LIKE },
   { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: ADMIN_LIKE },
 ];
 
