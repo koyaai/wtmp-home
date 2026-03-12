@@ -19,7 +19,8 @@ import {
   Sparkles,
   MapPin,
   Link2,
-  PenTool
+  PenTool,
+  Globe
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
