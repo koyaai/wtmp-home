@@ -402,6 +402,18 @@ export default function Reporting() {
                       >
                         <Link2 className="w-4 h-4" />
                       </button>
+                      <button
+                        onClick={async () => {
+                          if (!confirm(`Delete the ${r.month} ${r.year} report for ${r.client_name}?`)) return;
+                          await base44.entities.MonthlyReport.delete(r.id);
+                          toast.success("Report deleted.");
+                          loadSavedReports();
+                        }}
+                        title="Delete report"
+                        className="px-4 py-3.5 text-slate-400 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </div>
                   ))}
                 </div>
