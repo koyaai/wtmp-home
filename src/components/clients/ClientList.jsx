@@ -8,15 +8,23 @@ const statusColors = {
   churned: "bg-red-400",
 };
 
+const programColors = {
+  Growth: "bg-emerald-100 text-emerald-700",
+  Outshine: "bg-violet-100 text-violet-700",
+  Rocketfuel: "bg-orange-100 text-orange-700",
+};
+
 export default function ClientList({ clients, selectedId, onSelect }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [programFilter, setProgramFilter] = useState("all");
 
   const filtered = clients.filter(c => {
     const matchSearch = c.name?.toLowerCase().includes(search.toLowerCase()) ||
       c.location?.toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === "all" || c.status === filter;
-    return matchSearch && matchFilter;
+    const matchProgram = programFilter === "all" || c.program === programFilter;
+    return matchSearch && matchFilter && matchProgram;
   });
 
   return (

@@ -57,13 +57,23 @@ export default function ClientForm({ initial, onSave, onCancel }) {
       {/* Account Info */}
       <div>
         <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Account</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
             <select value={form.status} onChange={e => set("status", e.target.value)}
               className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20">
               {["active", "onboarding", "paused", "churned"].map(s => (
                 <option key={s} value={s} className="capitalize">{s}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Program</label>
+            <select value={form.program || ""} onChange={e => set("program", e.target.value)}
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+              <option value="">— None —</option>
+              {["Growth", "Outshine", "Rocketfuel"].map(p => (
+                <option key={p} value={p}>{p}</option>
               ))}
             </select>
           </div>
