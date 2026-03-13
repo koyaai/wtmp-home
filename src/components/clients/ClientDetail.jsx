@@ -109,6 +109,8 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
       </div>
 
       {/* Tab Content */}
+      {activeTab === "snapshot" && <ClientSnapshot clientId={client.id} />}
+
       {activeTab === "overview" && (
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
           {client.csm_assigned && (
