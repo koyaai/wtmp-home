@@ -47,6 +47,14 @@ export default function ClientList({ clients, selectedId, onSelect }) {
             </button>
           ))}
         </div>
+        <div className="flex gap-1">
+          {["all", "Growth", "Outshine", "Rocketfuel"].map(p => (
+            <button key={p} onClick={() => setProgramFilter(p)}
+              className={`flex-1 text-xs py-1 rounded-lg font-medium transition-colors ${programFilter === p ? "bg-slate-700 text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}`}>
+              {p === "all" ? "All" : p}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto divide-y divide-slate-50">
@@ -60,9 +68,14 @@ export default function ClientList({ clients, selectedId, onSelect }) {
                 </div>
                 <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${statusColors[client.status] || "bg-slate-400"}`} />
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-slate-800 truncate">{client.name}</p>
-                <p className="text-xs text-slate-400 truncate">{client.location || "No location"}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <p className="text-xs text-slate-400 truncate">{client.location || "No location"}</p>
+                  {client.program && (
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium flex-shrink-0 ${programColors[client.program]}`}>{client.program}</span>
+                  )}
+                </div>
               </div>
             </div>
           </button>
