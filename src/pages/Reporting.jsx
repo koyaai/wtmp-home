@@ -287,6 +287,11 @@ export default function Reporting() {
       ]);
 
       const clientData = clients.find(c => c.id === selectedClient.id) || {};
+
+      // Fetch the client score for this month/year if it exists
+      const scoreResults = await base44.entities.ClientScore.filter({ client_id: selectedClient.id, month, year });
+      const clientScore = scoreResults[0] || null;
+
       const res = await base44.functions.invoke("generateCombinedReport", {
         seo_file_url: seoUpload.file_url,
         ppc_file_url: ppcUpload.file_url,
@@ -298,6 +303,7 @@ export default function Reporting() {
           website: clientData.website,
           csm_assigned: clientData.csm_assigned,
         },
+        client_score: clientScore,
       });
 
       const reportData = res.data;
