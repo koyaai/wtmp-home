@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import MeetingNotes from "@/components/clients/MeetingNotes";
 import CSMUpdates from "@/components/clients/CSMUpdates";
 import ClientTracker from "@/components/clients/ClientTracker";
-import ClientSnapshot from "@/components/clients/ClientSnapshot";
 
 const statusColors = {
   active: "bg-emerald-100 text-emerald-700",
@@ -24,11 +23,11 @@ const serviceColors = {
 };
 
 export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit, userRole }) {
-  const [activeTab, setActiveTab] = useState("snapshot");
+  const [activeTab, setActiveTab] = useState("overview");
 
   const showFinancials = ["leadership"].includes(userRole);
 
-  const tabs = ["snapshot", "overview", "tracker", "meetings", "updates"];
+  const tabs = ["overview", "tracker", "meetings", "updates"];
 
   return (
     <div className="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
@@ -103,14 +102,12 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
         {tabs.map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`flex-1 text-sm py-2 rounded-lg font-medium capitalize transition-colors ${activeTab === tab ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-            {tab === "updates" ? "CSM Updates" : tab === "tracker" ? "Tracker" : tab === "snapshot" ? "Snapshot" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === "updates" ? "CSM Updates" : tab === "tracker" ? "Tracker" : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
 
       {/* Tab Content */}
-      {activeTab === "snapshot" && <ClientSnapshot client={client} />}
-
       {activeTab === "overview" && (
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
           {client.csm_assigned && (
