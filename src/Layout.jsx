@@ -48,7 +48,7 @@ const navItems = [
   },
   { label: "Content Studio", icon: PenTool, page: "Content", roles: [...ADMIN_LIKE, "seo_specialist", "social_media"],
     children: [
-      { label: "Web Copy Builder", icon: Globe, page: "WebsiteContentCreator", roles: [...ADMIN_LIKE, "seo_specialist", "social_media"] }
+      { label: "Web Copy Builder", icon: Globe, page: "WebsiteContentCreator", roles: [...ADMIN_LIKE, "team_lead", "seo_specialist", "social_media"] }
     ]
   },
   { label: "Client Insights", icon: Brain, page: "ClientInsights", roles: ADMIN_LIKE },
