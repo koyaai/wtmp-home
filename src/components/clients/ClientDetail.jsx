@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import MeetingNotes from "@/components/clients/MeetingNotes";
 import CSMUpdates from "@/components/clients/CSMUpdates";
 import ClientTracker from "@/components/clients/ClientTracker";
+import ClientSnapshot from "@/components/clients/ClientSnapshot";
 
 const statusColors = {
   active: "bg-emerald-100 text-emerald-700",
