@@ -8,6 +8,12 @@ import ClientTracker from "@/components/clients/ClientTracker";
 import ClientSnapshot from "@/components/clients/ClientSnapshot";
 import ClientScore from "@/components/clients/ClientScore";
 
+const programColors = {
+  Growth: "bg-emerald-100 text-emerald-700",
+  Outshine: "bg-violet-100 text-violet-700",
+  Rocketfuel: "bg-orange-100 text-orange-700",
+};
+
 const statusColors = {
   active: "bg-emerald-100 text-emerald-700",
   onboarding: "bg-blue-100 text-blue-700",
@@ -49,7 +55,8 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
               <h1 className="text-xl font-bold text-slate-800">{client.name}</h1>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium capitalize ${statusColors[client.status]}`}>{client.status}</span>
-                {client.location && <span className="text-xs text-slate-500 flex items-center gap-1"><MapPin className="w-3 h-3" />{client.location}</span>}
+                  {client.program && <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${programColors[client.program]}`}>{client.program}</span>}
+                  {client.location && <span className="text-xs text-slate-500 flex items-center gap-1"><MapPin className="w-3 h-3" />{client.location}</span>}
               </div>
             </div>
           </div>
