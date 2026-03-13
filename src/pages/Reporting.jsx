@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, ArrowRight, Download, ChevronLeft, BarChart2, Plus, Link2 } from "lucide-react";
+import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, ArrowRight, Download, ChevronLeft, BarChart2, Plus, Link2, Star } from "lucide-react";
 import { toast } from "sonner";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -78,6 +78,53 @@ function UploadBox({ label, icon: Icon, color, file, onFile, loading }) {
   );
 }
 
+const GRADE_COLORS = {
+  A: { bg: "bg-emerald-500", text: "text-emerald-700", light: "bg-emerald-50", border: "border-emerald-200" },
+  B: { bg: "bg-blue-500", text: "text-blue-700", light: "bg-blue-50", border: "border-blue-200" },
+  C: { bg: "bg-amber-500", text: "text-amber-700", light: "bg-amber-50", border: "border-amber-200" },
+  D: { bg: "bg-orange-500", text: "text-orange-700", light: "bg-orange-50", border: "border-orange-200" },
+  F: { bg: "bg-red-500", text: "text-red-700", light: "bg-red-50", border: "border-red-200" },
+};
+
+function ScorecardBanner({ scorecard }) {
+  if (!scorecard?.overall_grade) return null;
+  const colors = GRADE_COLORS[scorecard.overall_grade] || GRADE_COLORS["C"];
+  return (
+    <div className={`rounded-2xl border ${colors.border} ${colors.light} p-5 space-y-3`}>
+      <div className="flex items-center gap-4">
+        <div className={`w-16 h-16 rounded-2xl ${colors.bg} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+          <span className="text-white text-3xl font-black">{scorecard.overall_grade}</span>
+        </div>
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-0.5">Client Engagement Score</p>
+          <p className={`text-base font-bold ${colors.text}`}>
+            {scorecard.overall_grade === "A" ? "Excellent Collaboration" :
+             scorecard.overall_grade === "B" ? "Good Partnership" :
+             scorecard.overall_grade === "C" ? "Needs Improvement" :
+             scorecard.overall_grade === "D" ? "At Risk" : "Critical Action Needed"}
+          </p>
+        </div>
+      </div>
+      {scorecard.grade_summary && (
+        <p className="text-sm text-slate-700 leading-relaxed">{scorecard.grade_summary}</p>
+      )}
+      {scorecard.improvement_tips?.length > 0 && (
+        <div className="mt-2">
+          <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">How to improve your results</p>
+          <ul className="space-y-1.5">
+            {scorecard.improvement_tips.map((tip, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-slate-700">
+                <Star className={`w-3.5 h-3.5 mt-0.5 flex-shrink-0 ${colors.text}`} />
+                {tip}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Report View ───────────────────────────────────────────────────
 function ReportView({ report, clientName, dateRange, onCopy }) {
   if (!report) return null;
@@ -98,6 +145,8 @@ function ReportView({ report, clientName, dateRange, onCopy }) {
           <p className="text-slate-200 text-sm mt-4 leading-relaxed border-t border-white/10 pt-4">{report.executive_summary}</p>
         )}
       </div>
+
+      <ScorecardBanner scorecard={report.client_scorecard} />
 
       {report.wins?.length > 0 && (
         <Section title="Key Wins This Period" icon={CheckCircle2} color={{ border: "border-emerald-100", bg: "bg-emerald-50", icon: "text-emerald-600", text: "text-emerald-700" }}>
