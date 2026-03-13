@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, ArrowRight, Download, ChevronLeft, BarChart2, Plus } from "lucide-react";
+import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, ArrowRight, Download, ChevronLeft, BarChart2, Plus, Link2 } from "lucide-react";
 import { toast } from "sonner";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -325,17 +325,29 @@ export default function Reporting() {
                 </div>
                 <div className="divide-y divide-slate-50">
                   {reports.map(r => (
-                    <button
-                      key={r.id}
-                      onClick={() => handleOpenReport(r)}
-                      className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition-colors text-left"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-slate-700">{r.month} {r.year}</p>
-                        {r.date_range && <p className="text-xs text-slate-400">{r.date_range}</p>}
-                      </div>
-                      <span className="text-xs text-blue-600 font-medium">View →</span>
-                    </button>
+                    <div key={r.id} className="flex items-center hover:bg-slate-50 transition-colors">
+                      <button
+                        onClick={() => handleOpenReport(r)}
+                        className="flex-1 flex items-center justify-between px-5 py-3.5 text-left"
+                      >
+                        <div>
+                          <p className="text-sm font-medium text-slate-700">{r.month} {r.year}</p>
+                          {r.date_range && <p className="text-xs text-slate-400">{r.date_range}</p>}
+                        </div>
+                        <span className="text-xs text-blue-600 font-medium">View →</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          const url = `${window.location.origin}/report/${r.client_id}`;
+                          navigator.clipboard.writeText(url);
+                          toast.success("Client link copied!");
+                        }}
+                        title="Copy client report link"
+                        className="px-4 py-3.5 text-slate-400 hover:text-blue-600 transition-colors"
+                      >
+                        <Link2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   ))}
                 </div>
               </div>
