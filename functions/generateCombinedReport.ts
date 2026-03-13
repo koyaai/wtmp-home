@@ -5,13 +5,26 @@ Deno.serve(async (req) => {
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { seo_file_url, ppc_file_url, client_name, date_range } = await req.json();
+  const { seo_file_url, ppc_file_url, client_name, date_range, client_score } = await req.json();
+
+  const scoreSection = client_score ? `
+
+CLIENT SCORECARD (CSM/CSA Evaluation for this period):
+- Overall Grade: ${client_score.overall_grade || "N/A"}
+- Attended Meetings: ${client_score.attended_meetings || "N/A"}
+- Responsiveness & Portal Engagement: ${client_score.responsiveness || "N/A"}
+- Project Posts Submission: ${client_score.project_posts_submission || "N/A"}
+- Lead Handling: ${client_score.lead_handling || "N/A"}
+- CSM Notes: ${client_score.notes || "None"}
+- Roadblocks: ${client_score.roadblocks || "None"}
+
+Based on this scorecard, generate a client_scorecard block in the JSON with a friendly, professional 2-3 sentence explanation of why the client received this grade, and 2-4 specific, actionable improvement tips written directly to the client (use "you/your" tone). Be honest but encouraging.` : "";
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt: `You are a senior digital marketing analyst for a window treatment marketing agency. You have been given two reports for the client "${client_name}" covering the period "${date_range}":
 1. An SEO performance report (first file)
 2. A PPC/Google Ads performance report (second file)
-
+${scoreSection}
 Analyze both reports thoroughly and generate a comprehensive combined marketing performance report in JSON format.
 
 Extract all the key data points you can find and synthesize insights across both channels.`,
@@ -71,7 +84,15 @@ Extract all the key data points you can find and synthesize insights across both
             }
           }
         },
-        next_period_focus: { type: "array", items: { type: "string" } }
+        next_period_focus: { type: "array", items: { type: "string" } },
+        client_scorecard: {
+          type: "object",
+          properties: {
+            overall_grade: { type: "string", description: "The overall grade letter (A, B, C, D, F)" },
+            grade_summary: { type: "string", description: "2-3 sentence friendly explanation of why the client received this grade, written to the client" },
+            improvement_tips: { type: "array", items: { type: "string" }, description: "2-4 specific actionable improvement tips written directly to the client" }
+          }
+        }
       }
     }
   });
