@@ -21,7 +21,8 @@ import {
   Link2,
   PenTool,
   Globe,
-  Brain
+  Brain,
+  BarChart2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -52,6 +53,7 @@ const navItems = [
     ]
   },
   { label: "Client Insights", icon: Brain, page: "ClientInsights", roles: ADMIN_LIKE },
+  { label: "Reporting", icon: BarChart2, page: "Reporting", roles: ADMIN_LIKE },
   { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: ADMIN_LIKE },
 ];
 
