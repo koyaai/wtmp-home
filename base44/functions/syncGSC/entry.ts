@@ -103,10 +103,36 @@ Deno.serve(async (req) => {
       let topKeywords = '';
       if (keywordsResponse.ok) {
         const kwData = await keywordsResponse.json();
-        topKeywords = (kwData.rows || []).map(r => r.keys[0]).join(', ');
+        topKeywords = JSON.stringify((kwData.rows || []).map(r => ({ query: r.keys[0], clicks: Math.round(r.clicks), impressions: Math.round(r.impressions), position: Math.round(r.position * 10) / 10 })));
+      }
+
+      // Fetch top pages
+      const pagesResponse = await fetch(
+        `https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(site_url)}/searchAnalytics/query`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            startDate: range.start,
+            endDate: range.end,
+            dimensions: ['page'],
+            rowLimit: 10,
+            orderBy: [{ fieldName: 'clicks', sortOrder: 'DESCENDING' }],
+          }),
+        }
+      );
+
+      let topPages = '';
+      if (pagesResponse.ok) {
+        const pgData = await pagesResponse.json();
+        topPages = JSON.stringify((pgData.rows || []).map(r => ({ page: r.keys[0], clicks: Math.round(r.clicks), impressions: Math.round(r.impressions), position: Math.round(r.position * 10) / 10 })));
       }
 
       // Save to SEOData entity
+
       const seoRecord = await base44.entities.SEOData.create({
         client_id,
         report_date: range.end,
@@ -115,6 +141,7 @@ Deno.serve(async (req) => {
         avg_position: row.position ? Math.round(row.position * 10) / 10 : null,
         ctr: row.ctr ? Math.round(row.ctr * 10000) / 100 : null,
         top_keywords: topKeywords,
+        top_pages: topPages,
         notes: `Auto-synced from GSC. Period: ${range.start} to ${range.end}`,
       });
 
