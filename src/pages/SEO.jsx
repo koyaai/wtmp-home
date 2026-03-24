@@ -32,19 +32,10 @@ export default function SEO() {
   const [syncMonths, setSyncMonths] = useState(1);
 
   useEffect(() => {
-    base44.entities.Client.filter({ services: "SEO" }).then(c => {
-      // fallback: get all if filter doesn't support array
-      base44.entities.Client.list().then(all => {
-        const seoClients = all.filter(c => c.services?.includes("SEO"));
-        setClients(seoClients);
-        if (seoClients.length > 0) setSelectedClientId(seoClients[0].id);
-      });
-    }).catch(() => {
-      base44.entities.Client.list().then(all => {
-        const seoClients = all.filter(c => c.services?.includes("SEO"));
-        setClients(seoClients);
-        if (seoClients.length > 0) setSelectedClientId(seoClients[0].id);
-      });
+    base44.entities.Client.list().then(all => {
+      const seoClients = all.filter(c => c.services?.includes("SEO"));
+      setClients(seoClients);
+      if (seoClients.length > 0) setSelectedClientId(seoClients[0].id);
     });
     base44.auth.me().then(setUser).catch(() => {});
   }, []);
