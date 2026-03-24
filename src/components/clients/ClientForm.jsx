@@ -20,7 +20,7 @@ export default function ClientForm({ initial, onSave, onCancel }) {
     website: "", location: "", status: "active", services: [],
     retainer_fee: "", start_date: "", csm_assigned: "",
     google_search_console_url: "", gbp_url: "", ghl_location_id: "",
-    google_ads_account_id: "", wordpress_url: "", wordpress_username: "",
+    google_ads_account_id: "", ga_property_id: "", wordpress_url: "", wordpress_username: "",
     wordpress_app_password: "", notes: "",
     ...initial,
     retainer_fee: initial?.retainer_fee || "",
@@ -106,6 +106,7 @@ export default function ClientForm({ initial, onSave, onCancel }) {
           <Field label="Google Ads Account ID" name="google_ads_account_id" placeholder="123-456-7890" value={form.google_ads_account_id} onChange={set} />
           <Field label="Google Search Console URL" name="google_search_console_url" placeholder="https://..." value={form.google_search_console_url} onChange={set} />
           <Field label="Google Business Profile URL" name="gbp_url" placeholder="https://..." value={form.gbp_url} onChange={set} />
+          <Field label="GA4 Property ID" name="ga_property_id" placeholder="e.g. 123456789" value={form.ga_property_id} onChange={set} />
         </div>
       </div>
 
