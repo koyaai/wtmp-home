@@ -215,14 +215,44 @@ export default function SEO() {
         </div>
       )}
 
-      {seoData.length === 0 && !showForm && (
-        <div className="text-center py-16 text-slate-400">
-          <BarChart2 className="w-10 h-10 mx-auto mb-3 text-slate-300" />
-          <p className="text-sm">No SEO data yet. Log a report to get started.</p>
+      {/* Top Keywords & Pages */}
+      {latest && (latest.top_keywords || latest.top_pages) && (
+        <div className="grid md:grid-cols-2 gap-4">
+          {latest.top_keywords && (() => {
+            let kws = [];
+            try { kws = JSON.parse(latest.top_keywords); } catch { kws = latest.top_keywords.split(',').map(k => ({ query: k.trim() })); }
+            return (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100"><h2 className="font-semibold text-slate-800">Top Keywords</h2></div>
+                <table className="w-full text-sm">
+                  <thead><tr className="bg-slate-50 text-xs text-slate-500 font-semibold"><th className="px-4 py-2 text-left">Query</th><th className="px-4 py-2 text-right">Clicks</th><th className="px-4 py-2 text-right">Pos</th></tr></thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {kws.map((k, i) => <tr key={i} className="hover:bg-slate-50"><td className="px-4 py-2 text-slate-700 truncate max-w-[180px]">{k.query}</td><td className="px-4 py-2 text-right text-slate-800">{k.clicks ?? '—'}</td><td className="px-4 py-2 text-right text-slate-500">{k.position ? `#${k.position}` : '—'}</td></tr>)}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
+          {latest.top_pages && (() => {
+            let pages = [];
+            try { pages = JSON.parse(latest.top_pages); } catch { pages = []; }
+            return (
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+                <div className="px-5 py-4 border-b border-slate-100"><h2 className="font-semibold text-slate-800">Top Pages</h2></div>
+                <table className="w-full text-sm">
+                  <thead><tr className="bg-slate-50 text-xs text-slate-500 font-semibold"><th className="px-4 py-2 text-left">Page</th><th className="px-4 py-2 text-right">Clicks</th><th className="px-4 py-2 text-right">Pos</th></tr></thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {pages.map((p, i) => <tr key={i} className="hover:bg-slate-50"><td className="px-4 py-2 text-slate-700 truncate max-w-[180px]" title={p.page}>{p.page?.replace(/^https?:\/\/[^\/]+/, '') || p.page}</td><td className="px-4 py-2 text-right text-slate-800">{p.clicks ?? '—'}</td><td className="px-4 py-2 text-right text-slate-500">{p.position ? `#${p.position}` : '—'}</td></tr>)}
+                  </tbody>
+                </table>
+              </div>
+            );
+          })()}
         </div>
       )}
 
-      {/* Log Report Modal */}
+      {seoData.length === 0 && !showForm && (
+
       {showForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
