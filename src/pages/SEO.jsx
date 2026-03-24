@@ -252,6 +252,11 @@ export default function SEO() {
       )}
 
       {seoData.length === 0 && !showForm && (
+        <div className="text-center py-16 text-slate-400">
+          <BarChart2 className="w-10 h-10 mx-auto mb-3 text-slate-300" />
+          <p className="text-sm">No SEO data yet. Log a report to get started.</p>
+        </div>
+      )}
 
       {showForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
