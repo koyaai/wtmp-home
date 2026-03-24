@@ -141,6 +141,7 @@ export default function SEO() {
 
       {activeTab === "analytics" && <GADashboard client={selectedClient} />}
 
+      {activeTab === "seo" && <>
       {/* Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard label="Organic Clicks" value={latest?.organic_clicks?.toLocaleString()} icon={MousePointer} color="bg-blue-500" />
@@ -275,6 +276,8 @@ export default function SEO() {
           <p className="text-sm">No SEO data yet. Log a report to get started.</p>
         </div>
       )}
+      </>
+      }
 
       {showForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
