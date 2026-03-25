@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, DollarSign, MousePointer, TrendingUp, Target, X } from "lucide-react";
+import { Plus, DollarSign, MousePointer, TrendingUp, Target, X, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
@@ -28,6 +28,9 @@ export default function PPC() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ platform: "Google Ads" });
   const [user, setUser] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState("");
+  const [syncMonths, setSyncMonths] = useState(1);
 
   useEffect(() => {
     base44.entities.Client.list().then(all => {
@@ -44,17 +47,27 @@ export default function PPC() {
   }, [selectedClientId]);
 
   const latest = ppcData[0];
-  const canEdit = ["leadership", "team_lead", "ppc_specialist"].includes(user?.role);
+  const canEdit = ["admin", "leadership", "team_lead", "ppc_specialist"].includes(user?.role);
+  const selectedClient = clients.find(c => c.id === selectedClientId);
 
-  const handleSave = async () => {
-    const parsed = { ...form, client_id: selectedClientId };
-    ["impressions", "clicks", "conversions", "spend", "cpc", "ctr", "cost_per_conversion", "roas", "budget"].forEach(k => {
-      if (parsed[k]) parsed[k] = parseFloat(parsed[k]);
-    });
-    await base44.entities.PPCData.create(parsed);
-    setShowForm(false);
-    setForm({ platform: "Google Ads" });
-    base44.entities.PPCData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setPpcData);
+  const handleGoogleAdsSync = async () => {
+    if (!selectedClient?.google_ads_account_id) {
+      setSyncError("No Google Ads Account ID set for this client. Add it in the client profile.");
+      return;
+    }
+    setSyncing(true);
+    setSyncError("");
+    try {
+      await base44.functions.invoke('syncGoogleAds', {
+        client_id: selectedClientId,
+        customer_id: selectedClient.google_ads_account_id,
+        sync_months: syncMonths,
+      });
+      base44.entities.PPCData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setPpcData);
+    } catch (err) {
+      setSyncError(err?.response?.data?.error || "Sync failed. Check the Google Ads Account ID and credentials.");
+    }
+    setSyncing(false);
   };
 
   const chartData = [...ppcData].reverse().map(d => ({
@@ -77,11 +90,31 @@ export default function PPC() {
             {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           {canEdit && (
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setShowForm(true)}>
-              <Plus className="w-4 h-4 mr-1" /> Log Report
-            </Button>
+            <>
+              <select
+                value={syncMonths}
+                onChange={e => setSyncMonths(Number(e.target.value))}
+                className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+              >
+                <option value={1}>Last 1 Month</option>
+                <option value={3}>Last 3 Months</option>
+                <option value={6}>Last 6 Months</option>
+                <option value={12}>Last 12 Months</option>
+              </select>
+              <Button size="sm" variant="outline" onClick={handleGoogleAdsSync} disabled={syncing}>
+                <RefreshCw className={`w-4 h-4 mr-1 ${syncing ? "animate-spin" : ""}`} />
+                {syncing ? "Syncing..." : "Sync Google Ads"}
+              </Button>
+              <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setShowForm(true)}>
+                <Plus className="w-4 h-4 mr-1" /> Log Report
+              </Button>
+            </>
           )}
         </div>
+        {syncError && <p className="text-xs text-red-500 mt-1 w-full">{syncError}</p>}
+        {!selectedClient?.google_ads_account_id && canEdit && (
+          <p className="text-xs text-amber-600 w-full">⚠ Add a Google Ads Account ID in the client profile to enable sync.</p>
+        )}
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
