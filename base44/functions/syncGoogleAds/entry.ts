@@ -1,4 +1,5 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { GoogleAdsApi } from 'npm:google-ads-api@16.0.0';
 
 Deno.serve(async (req) => {
   try {
@@ -17,34 +18,20 @@ Deno.serve(async (req) => {
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET') || Deno.env.get('google_oauth_client_secret');
     const refreshToken = Deno.env.get('GOOGLE_ADS_REFRESH_TOKEN');
 
-    // Get access token
-    const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: clientId,
-        client_secret: clientSecret,
-        refresh_token: refreshToken,
-        grant_type: 'refresh_token',
-      }),
-    });
-    const tokenData = await tokenRes.json();
-    if (!tokenData.access_token) {
-      return Response.json({ error: 'Failed to get access token', details: tokenData }, { status: 500 });
-    }
-    const accessToken = tokenData.access_token;
-
     const cleanCustomerId = customer_id.replace(/-/g, '');
     const cleanManagerId = managerCustomerId ? managerCustomerId.replace(/-/g, '') : null;
 
-    const headers = {
-      'Authorization': `Bearer ${accessToken}`,
-      'developer-token': developerToken,
-      'Content-Type': 'application/json',
-    };
-    if (cleanManagerId) {
-      headers['login-customer-id'] = cleanManagerId;
-    }
+    const client = new GoogleAdsApi({
+      client_id: clientId,
+      client_secret: clientSecret,
+      developer_token: developerToken,
+    });
+
+    const customer = client.Customer({
+      customer_id: cleanCustomerId,
+      login_customer_id: cleanManagerId || cleanCustomerId,
+      refresh_token: refreshToken,
+    });
 
     const results = [];
 
@@ -57,38 +44,20 @@ Deno.serve(async (req) => {
       const periodStart = fmt(startDate);
       const periodEnd = fmt(endDate);
 
-      const query = `SELECT metrics.impressions, metrics.clicks, metrics.conversions, metrics.cost_micros, metrics.ctr, metrics.average_cpc, metrics.conversions_value FROM campaign WHERE segments.date BETWEEN '${periodStart}' AND '${periodEnd}'`;
+      const query = `
+        SELECT
+          metrics.impressions,
+          metrics.clicks,
+          metrics.conversions,
+          metrics.cost_micros,
+          metrics.ctr,
+          metrics.average_cpc,
+          metrics.conversions_value
+        FROM campaign
+        WHERE segments.date BETWEEN '${periodStart}' AND '${periodEnd}'
+      `;
 
-      const adsRes = await fetch(
-        `https://googleads.googleapis.com/v19/customers/${cleanCustomerId}/googleAds:search`,
-        {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({ query }),
-        }
-      );
-
-      const rawText = await adsRes.text();
-
-      if (rawText.trim().startsWith('<')) {
-        return Response.json({ error: `HTML error from Google Ads (${adsRes.status}) - check developer token and customer ID`, rawResponse: rawText.slice(0, 500) }, { status: 500 });
-      }
-
-      let adsData;
-      try { adsData = JSON.parse(rawText); } catch (e) {
-        return Response.json({ error: 'Cannot parse Google Ads response', rawResponse: rawText.slice(0, 500) }, { status: 500 });
-      }
-
-      if (!adsRes.ok) {
-        return Response.json({
-          error: adsData?.error?.message || `Google Ads API error (${adsRes.status})`,
-          details: adsData?.error,
-          debugInfo: { cleanCustomerId, cleanManagerId, statusCode: adsRes.status },
-          fullRaw: rawText.slice(0, 2000),
-        }, { status: 500 });
-      }
-
-      const rows = adsData.results || [];
+      const rows = await customer.query(query);
 
       let impressions = 0, clicks = 0, conversions = 0, costMicros = 0, convValue = 0;
       let ctrSum = 0, ctrCount = 0;
@@ -97,8 +66,8 @@ Deno.serve(async (req) => {
         impressions += parseInt(row.metrics?.impressions || 0);
         clicks += parseInt(row.metrics?.clicks || 0);
         conversions += parseFloat(row.metrics?.conversions || 0);
-        costMicros += parseInt(row.metrics?.costMicros || row.metrics?.cost_micros || 0);
-        convValue += parseFloat(row.metrics?.conversionsValue || row.metrics?.conversions_value || 0);
+        costMicros += parseInt(row.metrics?.cost_micros || 0);
+        convValue += parseFloat(row.metrics?.conversions_value || 0);
         if (row.metrics?.ctr) { ctrSum += parseFloat(row.metrics.ctr); ctrCount++; }
       }
 
@@ -139,6 +108,6 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, synced: results.length, results });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message, details: error.errors || null }, { status: 500 });
   }
 });
