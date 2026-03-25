@@ -101,9 +101,7 @@ Deno.serve(async (req) => {
         try { const parsed = JSON.parse(line); return parsed.results || []; } catch { return []; }
       });
 
-      const rows = adsData;
 
-      const rows = adsData.results || [];
 
       // Aggregate all rows for this month
       let impressions = 0, clicks = 0, conversions = 0, costMicros = 0, convValue = 0;
