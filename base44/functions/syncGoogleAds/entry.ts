@@ -56,20 +56,7 @@ Deno.serve(async (req) => {
       const periodStart = fmt(startDate);
       const periodEnd = fmt(endDate);
 
-      const query = `
-        SELECT
-          metrics.impressions,
-          metrics.clicks,
-          metrics.conversions,
-          metrics.cost_micros,
-          metrics.ctr,
-          metrics.average_cpc,
-          metrics.conversions_value,
-          segments.date
-        FROM campaign
-        WHERE segments.date BETWEEN '${periodStart}' AND '${periodEnd}'
-          AND campaign.status = 'ENABLED'
-      `;
+      const query = `SELECT metrics.impressions, metrics.clicks, metrics.conversions, metrics.cost_micros, metrics.ctr, metrics.average_cpc, metrics.conversions_value FROM campaign WHERE segments.date BETWEEN '${periodStart}' AND '${periodEnd}'`;
 
       const adsRes = await fetch(
         `https://googleads.googleapis.com/v19/customers/${cleanCustomerId}/googleAds:searchStream`,
