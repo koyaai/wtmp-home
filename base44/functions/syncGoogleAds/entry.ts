@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
       `;
 
       const adsRes = await fetch(
-        `https://googleads.googleapis.com/v18/customers/${cleanCustomerId}/googleAds:search`,
+        `https://googleads.googleapis.com/v17/customers/${cleanCustomerId}/googleAds:searchStream`,
         {
           method: 'POST',
           headers,
@@ -91,11 +91,17 @@ Deno.serve(async (req) => {
         }
       );
 
-      const adsData = await adsRes.json();
-
-      if (adsData.error) {
-        return Response.json({ error: adsData.error.message || 'Google Ads API error', details: adsData.error }, { status: 500 });
+      const rawText = await adsRes.text();
+      if (!adsRes.ok || rawText.trim().startsWith('<')) {
+        return Response.json({ error: `Google Ads API error (${adsRes.status})`, rawResponse: rawText.slice(0, 500) }, { status: 500 });
       }
+
+      // searchStream returns newline-delimited JSON objects
+      const adsData = rawText.trim().split('\n').flatMap(line => {
+        try { const parsed = JSON.parse(line); return parsed.results || []; } catch { return []; }
+      });
+
+      const rows = adsData;
 
       const rows = adsData.results || [];
 
