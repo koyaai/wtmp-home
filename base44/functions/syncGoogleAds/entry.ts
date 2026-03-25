@@ -17,6 +17,18 @@ Deno.serve(async (req) => {
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET');
     const refreshToken = Deno.env.get('GOOGLE_ADS_REFRESH_TOKEN');
 
+    // Debug: check secrets are present
+    const secretsPresent = {
+      developerToken: !!developerToken,
+      managerCustomerId: !!managerCustomerId,
+      clientId: !!clientId,
+      clientSecret: !!clientSecret,
+      refreshToken: !!refreshToken,
+      clientIdPrefix: clientId?.substring(0, 10),
+      refreshTokenPrefix: refreshToken?.substring(0, 10),
+    };
+    console.log('Secrets check:', JSON.stringify(secretsPresent));
+
     // Get access token
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
@@ -30,7 +42,7 @@ Deno.serve(async (req) => {
     });
     const tokenData = await tokenRes.json();
     if (!tokenData.access_token) {
-      return Response.json({ error: 'Failed to get access token', details: tokenData }, { status: 500 });
+      return Response.json({ error: 'Failed to get access token', details: tokenData, secretsPresent }, { status: 500 });
     }
     const accessToken = tokenData.access_token;
 
