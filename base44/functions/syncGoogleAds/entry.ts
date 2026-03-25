@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
       `;
 
       const adsRes = await fetch(
-        `https://googleads.googleapis.com/v17/customers/${cleanCustomerId}/googleAds:search`,
+        `https://googleads.googleapis.com/v19/customers/${cleanCustomerId}/googleAds:search`,
         {
           method: 'POST',
           headers,
