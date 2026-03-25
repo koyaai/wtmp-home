@@ -38,6 +38,7 @@ Deno.serve(async (req) => {
       'Authorization': `Bearer ${accessToken}`,
       'developer-token': developerToken,
       'Content-Type': 'application/json',
+      'x-goog-api-client': 'gl-js/v19',
     };
     if (managerCustomerId) {
       headers['login-customer-id'] = managerCustomerId.replace(/-/g, '');
