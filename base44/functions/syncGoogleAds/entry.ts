@@ -17,18 +17,6 @@ Deno.serve(async (req) => {
     const clientSecret = Deno.env.get('GOOGLE_CLIENT_SECRET') || Deno.env.get('google_oauth_client_secret');
     const refreshToken = Deno.env.get('GOOGLE_ADS_REFRESH_TOKEN');
 
-    // Debug: check secrets are present
-    const secretsPresent = {
-      developerToken: !!developerToken,
-      managerCustomerId: !!managerCustomerId,
-      clientId: !!clientId,
-      clientSecret: !!clientSecret,
-      refreshToken: !!refreshToken,
-      clientIdPrefix: clientId?.substring(0, 10),
-      refreshTokenPrefix: refreshToken?.substring(0, 10),
-    };
-    console.log('Secrets check:', JSON.stringify(secretsPresent));
-
     // Get access token
     const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
       method: 'POST',
