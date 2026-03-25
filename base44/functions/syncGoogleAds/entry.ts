@@ -84,14 +84,15 @@ Deno.serve(async (req) => {
       if (rawText.trim().startsWith('<')) {
         return Response.json({ error: `Google Ads API HTML error (${adsRes.status})`, rawResponse: rawText.slice(0, 300) }, { status: 500 });
       }
-      const adsData = JSON.parse(rawText);
+      const adsJson = JSON.parse(rawText);
       if (!adsRes.ok) {
-        return Response.json({ error: adsData.error?.message || `Google Ads API error (${adsRes.status})`, details: adsData.error }, { status: 500 });
+        const errDetail = Array.isArray(adsJson) ? adsJson[0]?.error : adsJson?.error;
+        return Response.json({ error: errDetail?.message || `Google Ads API error (${adsRes.status})`, details: errDetail }, { status: 500 });
       }
 
-
-
-      const rows = adsData.results || [];
+      // searchStream returns an array of batch objects: [{results: [...]}, ...]
+      const rows = (Array.isArray(adsJson) ? adsJson : [adsJson])
+        .flatMap(batch => batch?.results || []);
 
       // Aggregate all rows for this month
       let impressions = 0, clicks = 0, conversions = 0, costMicros = 0, convValue = 0;
