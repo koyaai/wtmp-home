@@ -34,17 +34,18 @@ Deno.serve(async (req) => {
     }
     const accessToken = tokenData.access_token;
 
+    const cleanCustomerId = customer_id.replace(/-/g, '');
+    const cleanManagerId = managerCustomerId ? managerCustomerId.replace(/-/g, '') : null;
+
     const headers = {
       'Authorization': `Bearer ${accessToken}`,
       'developer-token': developerToken,
       'Content-Type': 'application/json',
-      'x-goog-api-client': 'gl-js/v19',
     };
-    if (managerCustomerId) {
-      headers['login-customer-id'] = managerCustomerId.replace(/-/g, '');
+    if (cleanManagerId) {
+      headers['login-customer-id'] = cleanManagerId;
     }
 
-    const cleanCustomerId = customer_id.replace(/-/g, '');
     const results = [];
 
     for (let m = 0; m < sync_months; m++) {
@@ -59,7 +60,7 @@ Deno.serve(async (req) => {
       const query = `SELECT metrics.impressions, metrics.clicks, metrics.conversions, metrics.cost_micros, metrics.ctr, metrics.average_cpc, metrics.conversions_value FROM campaign WHERE segments.date BETWEEN '${periodStart}' AND '${periodEnd}'`;
 
       const adsRes = await fetch(
-        `https://googleads.googleapis.com/v19/customers/${cleanCustomerId}/googleAds:searchStream`,
+        `https://googleads.googleapis.com/v19/customers/${cleanCustomerId}/googleAds:search`,
         {
           method: 'POST',
           headers,
@@ -68,39 +69,45 @@ Deno.serve(async (req) => {
       );
 
       const rawText = await adsRes.text();
+
       if (rawText.trim().startsWith('<')) {
-        return Response.json({ error: `Google Ads API HTML error (${adsRes.status})`, rawResponse: rawText.slice(0, 300) }, { status: 500 });
+        return Response.json({ error: `HTML error from Google Ads (${adsRes.status}) - check developer token and customer ID`, rawResponse: rawText.slice(0, 500) }, { status: 500 });
       }
-      const adsJson = JSON.parse(rawText);
+
+      let adsData;
+      try { adsData = JSON.parse(rawText); } catch (e) {
+        return Response.json({ error: 'Cannot parse Google Ads response', rawResponse: rawText.slice(0, 500) }, { status: 500 });
+      }
+
       if (!adsRes.ok) {
-        const errDetail = Array.isArray(adsJson) ? adsJson[0]?.error : adsJson?.error;
-        return Response.json({ error: errDetail?.message || `Google Ads API error (${adsRes.status})`, details: errDetail }, { status: 500 });
+        return Response.json({
+          error: adsData?.error?.message || `Google Ads API error (${adsRes.status})`,
+          details: adsData?.error,
+          debugInfo: { cleanCustomerId, cleanManagerId, statusCode: adsRes.status },
+          fullRaw: rawText.slice(0, 2000),
+        }, { status: 500 });
       }
 
-      // searchStream returns an array of batch objects: [{results: [...]}, ...]
-      const rows = (Array.isArray(adsJson) ? adsJson : [adsJson])
-        .flatMap(batch => batch?.results || []);
+      const rows = adsData.results || [];
 
-      // Aggregate all rows for this month
       let impressions = 0, clicks = 0, conversions = 0, costMicros = 0, convValue = 0;
-      let ctrTotal = 0, ctrCount = 0;
+      let ctrSum = 0, ctrCount = 0;
 
       for (const row of rows) {
         impressions += parseInt(row.metrics?.impressions || 0);
         clicks += parseInt(row.metrics?.clicks || 0);
         conversions += parseFloat(row.metrics?.conversions || 0);
-        costMicros += parseInt(row.metrics?.costMicros || 0);
-        convValue += parseFloat(row.metrics?.conversionsValue || 0);
-        if (row.metrics?.ctr) { ctrTotal += parseFloat(row.metrics.ctr); ctrCount++; }
+        costMicros += parseInt(row.metrics?.costMicros || row.metrics?.cost_micros || 0);
+        convValue += parseFloat(row.metrics?.conversionsValue || row.metrics?.conversions_value || 0);
+        if (row.metrics?.ctr) { ctrSum += parseFloat(row.metrics.ctr); ctrCount++; }
       }
 
       const spend = costMicros / 1_000_000;
-      const cpc = clicks > 0 ? spend / clicks : 0;
-      const ctr = ctrCount > 0 ? parseFloat((ctrTotal / ctrCount * 100).toFixed(2)) : null;
+      const cpc = clicks > 0 ? parseFloat((spend / clicks).toFixed(2)) : 0;
+      const ctr = ctrCount > 0 ? parseFloat((ctrSum / ctrCount * 100).toFixed(2)) : null;
       const roas = spend > 0 ? parseFloat((convValue / spend).toFixed(2)) : null;
       const costPerConversion = conversions > 0 ? parseFloat((spend / conversions).toFixed(2)) : null;
 
-      // Check if record exists for this period
       const existing = await base44.asServiceRole.entities.PPCData.filter({
         client_id,
         report_date: periodStart,
@@ -110,14 +117,12 @@ Deno.serve(async (req) => {
       const record = {
         client_id,
         report_date: periodStart,
-        period_start: periodStart,
-        period_end: periodEnd,
         platform: 'Google Ads',
         impressions,
         clicks,
         conversions: parseFloat(conversions.toFixed(1)),
         spend: parseFloat(spend.toFixed(2)),
-        cpc: parseFloat(cpc.toFixed(2)),
+        cpc,
         ctr,
         roas,
         cost_per_conversion: costPerConversion,
