@@ -30,7 +30,7 @@ Deno.serve(async (req) => {
     });
     const tokenData = await tokenRes.json();
     if (!tokenData.access_token) {
-      return Response.json({ error: 'Failed to get access token', details: tokenData, secretsPresent }, { status: 500 });
+      return Response.json({ error: 'Failed to get access token', details: tokenData }, { status: 500 });
     }
     const accessToken = tokenData.access_token;
 
