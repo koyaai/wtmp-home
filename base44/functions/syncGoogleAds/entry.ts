@@ -88,6 +88,8 @@ Deno.serve(async (req) => {
 
 
 
+      const rows = adsData.results || [];
+
       // Aggregate all rows for this month
       let impressions = 0, clicks = 0, conversions = 0, costMicros = 0, convValue = 0;
       let ctrTotal = 0, ctrCount = 0;
