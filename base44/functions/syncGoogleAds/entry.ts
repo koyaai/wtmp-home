@@ -80,11 +80,13 @@ Deno.serve(async (req) => {
       );
 
       const rawText = await adsRes.text();
-      if (!adsRes.ok || rawText.trim().startsWith('<')) {
-        return Response.json({ error: `Google Ads API error (${adsRes.status})`, rawResponse: rawText.slice(0, 500) }, { status: 500 });
+      if (rawText.trim().startsWith('<')) {
+        return Response.json({ error: `Google Ads API HTML error (${adsRes.status})`, rawResponse: rawText.slice(0, 300) }, { status: 500 });
       }
-
       const adsData = JSON.parse(rawText);
+      if (!adsRes.ok) {
+        return Response.json({ error: adsData.error?.message || `Google Ads API error (${adsRes.status})`, details: adsData.error }, { status: 500 });
+      }
 
 
 
