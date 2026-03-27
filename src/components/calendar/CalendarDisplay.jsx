@@ -29,40 +29,49 @@ export default function CalendarDisplay({ calendar }) {
         <CardTitle>Generated Calendar Preview</CardTitle>
         <CardDescription>Review the AI-generated content schedule for the month.</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-8">
         {calendar.weeks.map((week, weekIndex) => (
-          <div key={weekIndex} className="border-b pb-5 last:border-b-0 last:pb-0">
-            <h3 className="font-semibold text-base text-slate-700 mb-3">Week {week.week_number}</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {week.days.map((day, dayIndex) => (
-                <div key={dayIndex} className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-xs font-semibold text-slate-600">{weekdays[day.day_of_week]}, {day.date}</p>
-                    {day.is_holiday && <Badge variant="outline" className="text-xs">Holiday</Badge>}
-                  </div>
-                  {day.posts.length > 0 ? (
-                    <div className="space-y-2">
+          <div key={weekIndex}>
+            <h3 className="font-bold text-sm text-slate-500 uppercase tracking-wider mb-3">
+              Week {week.week_number}
+            </h3>
+            <div className="space-y-2">
+              {week.days.map((day, dayIndex) => {
+                if (!day.posts || day.posts.length === 0) return null;
+                return (
+                  <div key={dayIndex} className="border border-slate-200 rounded-xl overflow-hidden">
+                    <div className="bg-slate-50 px-4 py-2 border-b border-slate-200 flex items-center justify-between">
+                      <p className="text-sm font-semibold text-slate-700">
+                        {weekdays[day.day_of_week]}, {day.date}
+                      </p>
+                      {day.is_holiday && <Badge variant="outline" className="text-xs">Holiday</Badge>}
+                    </div>
+                    <div className="divide-y divide-slate-100">
                       {day.posts.map((post, postIndex) => (
-                        <div key={postIndex} className="border-l-2 border-blue-500 pl-2 bg-white rounded-r-md p-2">
-                          <p className="text-xs font-semibold text-slate-800 leading-tight">{post.title}</p>
-                          <div className="flex items-center gap-1 mt-1">
-                            <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${platformColors[post.primary_platform] || 'bg-slate-100 text-slate-600'}`}>
-                              {post.primary_platform}
-                            </span>
-                            <span className="text-xs text-slate-400">{post.format}</span>
+                        <div key={postIndex} className="p-4">
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <p className="text-sm font-semibold text-slate-800 leading-snug flex-1">{post.title}</p>
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${platformColors[post.primary_platform] || 'bg-slate-100 text-slate-600'}`}>
+                                {post.primary_platform}
+                              </span>
+                              {post.format && (
+                                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full whitespace-nowrap">{post.format}</span>
+                              )}
+                            </div>
                           </div>
-                          <p className="text-xs text-slate-500 mt-1 line-clamp-2">{post.caption_idea}</p>
+                          {post.caption_idea && (
+                            <p className="text-sm text-slate-600 leading-relaxed">{post.caption_idea}</p>
+                          )}
                           {post.hashtags?.length > 0 && (
-                            <p className="text-xs text-blue-400 mt-1 truncate">{post.hashtags.slice(0, 3).join(' ')}</p>
+                            <p className="text-xs text-blue-500 mt-2">{post.hashtags.slice(0, 5).join(' ')}</p>
                           )}
                         </div>
                       ))}
                     </div>
-                  ) : (
-                    <p className="text-xs text-slate-400 italic">No posts scheduled</p>
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         ))}
