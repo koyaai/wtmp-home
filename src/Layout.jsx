@@ -27,7 +27,8 @@ import {
 import { cn } from "@/lib/utils";
 
 const ALL_ROLES = ["admin", "leadership", "team_lead", "csm", "seo_specialist", "ppc_specialist", "social_media", "web_designer"];
-const ADMIN_LIKE = ["admin", "leadership", "team_lead", "csm"];
+const ADMIN_LIKE = ["admin", "leadership", "team_lead"];
+const CSM_ROLES = ["admin", "leadership", "team_lead", "csm"];
 
 const navItems = [
   { label: "Command Center", icon: LayoutDashboard, page: "Dashboard", roles: ALL_ROLES },
@@ -47,14 +48,14 @@ const navItems = [
       { label: "Content Calendar", icon: Sparkles, page: "GenerateCalendar", roles: [...ADMIN_LIKE, "social_media"] },
     ]
   },
-  { label: "Content Studio", icon: PenTool, page: "Content", roles: [...ADMIN_LIKE, "seo_specialist", "social_media"],
+  { label: "Content Studio", icon: PenTool, page: "Content", roles: [...ADMIN_LIKE, "seo_specialist", "social_media", "web_designer"],
     children: [
-      { label: "Web Copy Builder", icon: Globe, page: "WebsiteContentCreator", roles: [...ADMIN_LIKE, "team_lead", "seo_specialist", "social_media"] }
+      { label: "Web Copy Builder", icon: Globe, page: "WebsiteContentCreator", roles: [...ADMIN_LIKE, "seo_specialist", "social_media", "web_designer"] }
     ]
   },
-  { label: "Client Insights", icon: Brain, page: "ClientInsights", roles: ADMIN_LIKE },
-  { label: "Reporting", icon: BarChart2, page: "Reporting", roles: ADMIN_LIKE },
-  { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: ADMIN_LIKE },
+  { label: "Client Insights", icon: Brain, page: "ClientInsights", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist"] },
+  { label: "Reporting", icon: BarChart2, page: "Reporting", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist"] },
+  { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: CSM_ROLES },
 ];
 
 export default function Layout({ children, currentPageName }) {
