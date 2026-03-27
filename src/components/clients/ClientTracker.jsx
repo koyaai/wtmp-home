@@ -19,6 +19,7 @@ function TableSection({ items, type, emptyMsg, canEdit, onSave, onDelete, onTogg
             <th className="px-3 py-2 text-left font-medium w-36">Team</th>
             <th className="px-3 py-2 text-left font-medium w-32">Point Person</th>
             <th className="px-3 py-2 text-left font-medium w-36">Deadline</th>
+            <th className="px-3 py-2 text-left font-medium w-10">Slack</th>
             <th className="pr-4 pl-2 py-2 w-8"></th>
           </tr>
         </thead>

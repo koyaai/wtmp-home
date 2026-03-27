@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, Pencil, Trash2, Check, X, Clock, Calendar } from "lucide-react";
+import { CheckCircle2, Pencil, Trash2, Check, X, Clock, Calendar, Link2 } from "lucide-react";
 import { format, isPast, differenceInDays, parseISO } from "date-fns";
 
 export const TEAMS = [
@@ -38,6 +38,7 @@ export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleR
     team: item.team || "",
     point_person: item.point_person || "",
     solution: item.solution || "",
+    slack_link: item.slack_link || "",
   });
 
   const isFlag = type === "red_flags";
@@ -106,6 +107,12 @@ export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleR
                   className="border border-slate-200 rounded px-2 py-1.5 text-xs bg-white focus:outline-none"
                 />
               )}
+              <input
+                placeholder="Slack thread link (optional)"
+                value={form.slack_link}
+                onChange={e => setForm(f => ({ ...f, slack_link: e.target.value }))}
+                className="border border-slate-200 rounded px-2 py-1.5 text-xs bg-white focus:outline-none col-span-2"
+              />
             </div>
             <div className="flex gap-2 items-center">
               <button onClick={handleSave} className="text-xs bg-emerald-500 text-white px-3 py-1.5 rounded-md hover:bg-emerald-600 flex items-center gap-1">
@@ -174,11 +181,22 @@ export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleR
           <DeadlineBadge date={item.date} />
         </td>
 
+        {/* Slack */}
+        <td className="px-3 py-3 w-10 text-center">
+          {item.slack_link ? (
+            <a href={item.slack_link} target="_blank" rel="noopener noreferrer" title="Open Slack thread" className="inline-flex items-center justify-center text-purple-400 hover:text-purple-600 transition-colors">
+              <Link2 className="w-3.5 h-3.5" />
+            </a>
+          ) : (
+            <span className="text-slate-200 text-xs">—</span>
+          )}
+        </td>
+
         {/* Actions */}
         <td className="pr-4 pl-2 py-3 w-8 text-right">
           {canEdit && (
             <button
-              onClick={() => { setForm({ text: item.text || "", date: item.date || "", team: item.team || "", point_person: item.point_person || "", solution: item.solution || "" }); setEditing(true); }}
+              onClick={() => { setForm({ text: item.text || "", date: item.date || "", team: item.team || "", point_person: item.point_person || "", solution: item.solution || "", slack_link: item.slack_link || "" }); setEditing(true); }}
               className="text-slate-300 hover:text-slate-600 transition-colors opacity-0 group-hover:opacity-100"
             >
               <Pencil className="w-3.5 h-3.5" />
