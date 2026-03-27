@@ -125,7 +125,7 @@ Deno.serve(async (req) => {
             }
         });
 
-        return Response.json(response.data, { status: 200 });
+        return Response.json(response, { status: 200 });
 
     } catch (error) {
         console.error('Error generating GBP calendar:', error);
