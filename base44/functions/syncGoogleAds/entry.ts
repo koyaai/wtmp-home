@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
 
       // searchStream is the correct REST endpoint for Google Ads query API
       const adsRes = await fetch(
-        `https://googleads.googleapis.com/v19/customers/${cleanCustomerId}/googleAds:searchStream`,
+        `https://googleads.googleapis.com/v23/customers/${cleanCustomerId}/googleAds:searchStream`,
         {
           method: 'POST',
           headers,
