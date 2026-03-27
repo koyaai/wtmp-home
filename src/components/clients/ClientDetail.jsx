@@ -39,7 +39,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
   const tabs = ["snapshot", "overview", "tracker", "meetings", "updates", "score", ...(client.ghl_location_id ? ["leads"] : [])];
 
   return (
-    <div className="max-w-3xl mx-auto p-4 md:p-6 space-y-5">
+    <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-5">
       {/* Mobile Back */}
       <button onClick={onBack} className="md:hidden flex items-center gap-1 text-sm text-blue-600 font-medium">
         <ArrowLeft className="w-4 h-4" /> Back to clients
