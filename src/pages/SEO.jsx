@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, TrendingUp, Eye, MousePointer, BarChart2, X, RefreshCw, Users, Clock, Search, Activity } from "lucide-react";
+import { Plus, TrendingUp, Eye, MousePointer, BarChart2, X, RefreshCw, Users, Clock, Search, Activity, CalendarClock } from "lucide-react";
+import SyncScheduleModal from "@/components/seo/SyncScheduleModal";
 import { Button } from "@/components/ui/button";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
@@ -55,6 +56,7 @@ export default function SEO() {
   const [syncingGA, setSyncingGA] = useState(false);
   const [syncError, setSyncError] = useState("");
   const [syncMonths, setSyncMonths] = useState(3);
+  const [showSyncModal, setShowSyncModal] = useState(false);
 
   useEffect(() => {
     base44.entities.Client.list().then(all => {
@@ -179,6 +181,9 @@ export default function SEO() {
               </Button>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setShowForm(true)}>
                 <Plus className="w-3.5 h-3.5 mr-1" /> Log SEO
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => setShowSyncModal(true)}>
+                <CalendarClock className="w-3.5 h-3.5 mr-1" /> Auto-Sync
               </Button>
             </>
           )}
@@ -455,6 +460,11 @@ export default function SEO() {
           <BarChart2 className="w-10 h-10 mx-auto mb-3 text-slate-300" />
           <p className="text-sm">No data yet. Sync GSC & GA4 to populate this dashboard.</p>
         </div>
+      )}
+
+      {/* Sync Schedule Modal */}
+      {showSyncModal && selectedClient && (
+        <SyncScheduleModal client={selectedClient} onClose={() => setShowSyncModal(false)} />
       )}
 
       {/* Manual Log Form */}

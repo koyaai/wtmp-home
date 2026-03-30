@@ -1,0 +1,48 @@
+{
+  "name": "SyncSettings",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "frequency": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "weekly",
+        "monthly"
+      ],
+      "default": "weekly",
+      "description": "How often to auto-sync"
+    },
+    "data_range_months": {
+      "type": "number",
+      "default": 3,
+      "description": "How many months of data to pull each sync (1, 3, 6, or 12)"
+    },
+    "sync_gsc": {
+      "type": "boolean",
+      "default": true
+    },
+    "sync_ga4": {
+      "type": "boolean",
+      "default": true
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "last_synced_at": {
+      "type": "string",
+      "description": "ISO timestamp of last successful sync"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name"
+  ]
+}
