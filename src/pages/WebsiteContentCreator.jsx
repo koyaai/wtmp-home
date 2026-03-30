@@ -26,31 +26,49 @@ export default function WebsiteContentCreator() {
     setProjects(p);
   };
 
-  const handleGenerate = async (questionnaire) => {
+  const handleGenerate = async (questionnaire, existingProjectId = null) => {
     setGenerating(true);
     const selectedClient = clients.find(c => c.id === selectedClientId);
-    const project = await base44.entities.WebsiteProject.create({
-      client_id: selectedClientId || null,
-      client_name: selectedClient?.name || questionnaire.business_name,
-      project_name: `${questionnaire.business_name} Website Copy`,
-      questionnaire,
-      status: 'generating',
-    });
 
-    const response = await base44.functions.invoke('generateWebsiteContent', { questionnaire });
-    const pages = response.data?.pages || [];
+    let project;
+    if (existingProjectId) {
+      // Retry: reset existing project
+      await base44.entities.WebsiteProject.update(existingProjectId, { status: 'generating', error_message: null });
+      project = projects.find(p => p.id === existingProjectId);
+    } else {
+      project = await base44.entities.WebsiteProject.create({
+        client_id: selectedClientId || null,
+        client_name: selectedClient?.name || questionnaire.business_name,
+        project_name: `${questionnaire.business_name} Website Copy`,
+        questionnaire,
+        status: 'generating',
+      });
+    }
 
-    await base44.entities.WebsiteProject.update(project.id, {
-      generated_pages: pages,
-      pages_count: pages.length,
-      status: 'complete',
-    });
+    try {
+      const response = await base44.functions.invoke('generateWebsiteContent', { questionnaire: questionnaire || project.questionnaire });
+      const pages = response.data?.pages || [];
 
-    const fullProject = { ...project, generated_pages: pages, pages_count: pages.length, status: 'complete' };
-    setSelectedProject(fullProject);
-    setView('results');
+      if (pages.length === 0) throw new Error('No pages were returned by the AI. Please try again.');
+
+      await base44.entities.WebsiteProject.update(project.id, {
+        generated_pages: pages,
+        pages_count: pages.length,
+        status: 'complete',
+        error_message: null,
+      });
+
+      const fullProject = { ...project, generated_pages: pages, pages_count: pages.length, status: 'complete' };
+      setSelectedProject(fullProject);
+      setView('results');
+      toast.success(`Generated ${pages.length} pages!`);
+    } catch (err) {
+      const msg = err?.response?.data?.error || err.message || 'Generation failed';
+      await base44.entities.WebsiteProject.update(project.id, { status: 'error', error_message: msg });
+      toast.error(`Generation failed: ${msg}`);
+    }
+
     setGenerating(false);
-    toast.success(`Generated ${pages.length} pages!`);
     loadProjects();
   };
 
@@ -133,13 +151,21 @@ export default function WebsiteContentCreator() {
             <div className="grid gap-3">
               {projects.map(p => (
                 <div key={p.id}
-                  className="border border-slate-200 rounded-xl p-4 bg-white hover:border-blue-300 transition-colors cursor-pointer"
-                  onClick={() => { setSelectedProject(p); setView('results'); }}>
+                  className={`border rounded-xl p-4 bg-white transition-colors ${
+                    p.status === 'error' ? 'border-red-200' :
+                    p.status === 'generating' ? 'border-yellow-200' :
+                    'border-slate-200 hover:border-blue-300 cursor-pointer'
+                  }`}
+                  onClick={() => p.status === 'complete' && (setSelectedProject(p), setView('results'))}>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-slate-900 text-sm">{p.project_name}</h3>
-                        <Badge className={p.status === 'complete' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}>
+                        <Badge className={
+                          p.status === 'complete' ? 'bg-green-100 text-green-700' :
+                          p.status === 'error' ? 'bg-red-100 text-red-700' :
+                          'bg-yellow-100 text-yellow-700'
+                        }>
                           {p.status}
                         </Badge>
                       </div>
@@ -148,12 +174,21 @@ export default function WebsiteContentCreator() {
                         {p.pages_count || 0} pages generated
                         {p.created_date ? ` · ${format(new Date(p.created_date), 'MMM d, yyyy')}` : ''}
                       </p>
+                      {p.error_message && <p className="text-xs text-red-500 mt-1">{p.error_message}</p>}
                     </div>
-                    <button
-                      onClick={e => { e.stopPropagation(); handleDeleteProject(p.id); }}
-                      className="text-slate-300 hover:text-red-500 p-1 ml-3 transition-colors">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-2 ml-3">
+                      {(p.status === 'error' || p.status === 'generating') && (
+                        <Button size="sm" variant="outline" className="text-xs h-7"
+                          onClick={e => { e.stopPropagation(); handleGenerate(p.questionnaire, p.id); }}>
+                          Retry
+                        </Button>
+                      )}
+                      <button
+                        onClick={e => { e.stopPropagation(); handleDeleteProject(p.id); }}
+                        className="text-slate-300 hover:text-red-500 p-1 transition-colors">
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
