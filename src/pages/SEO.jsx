@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, TrendingUp, Eye, MousePointer, BarChart2, X, RefreshCw } from "lucide-react";
-import GADashboard from "@/components/seo/GADashboard";
+import { Plus, TrendingUp, Eye, MousePointer, BarChart2, X, RefreshCw, Users, Clock, Search, Activity } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  LineChart, Line, Cell, Legend
+} from "recharts";
 
-function MetricCard({ label, value, icon: Icon, color }) {
+function MetricCard({ label, value, icon: Icon, color, sub }) {
   return (
     <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-xs text-slate-500">{label}</p>
           <p className="text-2xl font-bold text-slate-800 mt-0.5">{value ?? "—"}</p>
+          {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
         </div>
         <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${color}`}>
           <Icon className="w-4 h-4 text-white" />
@@ -21,17 +24,37 @@ function MetricCard({ label, value, icon: Icon, color }) {
   );
 }
 
+function SectionLabel({ children, color = "bg-blue-500" }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className={`w-1 h-5 rounded-full ${color}`} />
+      <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-wide">{children}</h2>
+    </div>
+  );
+}
+
+function fmtDuration(secs) {
+  if (!secs) return "—";
+  const m = Math.floor(secs / 60);
+  const s = Math.round(secs % 60);
+  return `${m}m ${s}s`;
+}
+
+const SOURCE_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444", "#06b6d4"];
+
 export default function SEO() {
   const [clients, setClients] = useState([]);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [seoData, setSeoData] = useState([]);
+  const [gaData, setGaData] = useState([]);
   const [showForm, setShowForm] = useState(false);
-  const [activeTab, setActiveTab] = useState("seo");
   const [form, setForm] = useState({});
   const [user, setUser] = useState(null);
-  const [syncing, setSyncing] = useState(false);
+
+  const [syncingGSC, setSyncingGSC] = useState(false);
+  const [syncingGA, setSyncingGA] = useState(false);
   const [syncError, setSyncError] = useState("");
-  const [syncMonths, setSyncMonths] = useState(1);
+  const [syncMonths, setSyncMonths] = useState(3);
 
   useEffect(() => {
     base44.entities.Client.list().then(all => {
@@ -45,18 +68,20 @@ export default function SEO() {
   useEffect(() => {
     if (!selectedClientId) return;
     base44.entities.SEOData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setSeoData);
+    base44.entities.GAData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setGaData);
   }, [selectedClientId]);
 
-  const latest = seoData[0];
+  const selectedClient = clients.find(c => c.id === selectedClientId);
+  const latestSEO = seoData[0];
+  const latestGA = gaData[0];
   const canEdit = !user || ["admin", "leadership", "team_lead", "seo_specialist"].includes(user?.role);
 
   const handleGSCSync = async () => {
-    const selectedClient = clients.find(c => c.id === selectedClientId);
     if (!selectedClient?.google_search_console_url) {
-      setSyncError("This client has no Google Search Console URL set. Please add it in the client profile.");
+      setSyncError("No GSC URL set for this client. Add it in the client profile.");
       return;
     }
-    setSyncing(true);
+    setSyncingGSC(true);
     setSyncError("");
     try {
       await base44.functions.invoke('syncGSC', {
@@ -66,9 +91,29 @@ export default function SEO() {
       });
       base44.entities.SEOData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setSeoData);
     } catch (err) {
-      setSyncError(err?.response?.data?.error || "Sync failed. Check that the service account has access to this GSC property.");
+      setSyncError(err?.response?.data?.error || "GSC sync failed.");
     }
-    setSyncing(false);
+    setSyncingGSC(false);
+  };
+
+  const handleGASync = async () => {
+    if (!selectedClient?.ga_property_id) {
+      setSyncError("No GA4 Property ID set for this client. Add it in the client profile.");
+      return;
+    }
+    setSyncingGA(true);
+    setSyncError("");
+    try {
+      await base44.functions.invoke('syncGA', {
+        client_id: selectedClientId,
+        property_id: selectedClient.ga_property_id,
+        sync_months: syncMonths,
+      });
+      base44.entities.GAData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setGaData);
+    } catch (err) {
+      setSyncError(err?.response?.data?.error || "GA4 sync failed.");
+    }
+    setSyncingGA(false);
   };
 
   const handleSave = async () => {
@@ -78,207 +123,268 @@ export default function SEO() {
     base44.entities.SEOData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setSeoData);
   };
 
-  const chartData = [...seoData].reverse().map(d => ({
-    date: new Date(d.report_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+  // Combined chart data — merge by date
+  const gscChartData = [...seoData].reverse().map(d => ({
+    date: new Date(d.report_date).toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
     clicks: d.organic_clicks,
     impressions: d.organic_impressions,
     position: d.avg_position,
   }));
 
-  const selectedClient = clients.find(c => c.id === selectedClientId);
+  const gaChartData = [...gaData].reverse().map(d => ({
+    date: new Date(d.report_date).toLocaleDateString("en-US", { month: "short", year: "2-digit" }),
+    sessions: d.sessions,
+    users: d.users,
+  }));
+
+  let topKeywords = [];
+  let gscTopPages = [];
+  let gaTopPages = [];
+  let trafficSources = [];
+  try { topKeywords = latestSEO?.top_keywords ? JSON.parse(latestSEO.top_keywords) : []; } catch {}
+  try { gscTopPages = latestSEO?.top_pages ? JSON.parse(latestSEO.top_pages) : []; } catch {}
+  try { gaTopPages = latestGA?.top_pages ? JSON.parse(latestGA.top_pages) : []; } catch {}
+  try { trafficSources = latestGA?.traffic_sources ? JSON.parse(latestGA.traffic_sources) : []; } catch {}
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
+    <div className="p-6 max-w-7xl mx-auto space-y-8">
+
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800">SEO Dashboard</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Monitor organic performance & GBP metrics</p>
+          <h1 className="text-2xl font-bold text-slate-800">SEO & Analytics Dashboard</h1>
+          <p className="text-slate-500 text-sm mt-0.5">Unified view of organic search & website performance</p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)}
             className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20">
             {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
-          {canEdit && activeTab === "seo" && (
+          <select value={syncMonths} onChange={e => setSyncMonths(Number(e.target.value))}
+            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20">
+            <option value={1}>Last 1 Month</option>
+            <option value={3}>Last 3 Months</option>
+            <option value={6}>Last 6 Months</option>
+            <option value={12}>Last 12 Months</option>
+          </select>
+          {canEdit && (
             <>
-              <select
-                value={syncMonths}
-                onChange={e => setSyncMonths(Number(e.target.value))}
-                className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-              >
-                <option value={1}>Last 1 Month</option>
-                <option value={3}>Last 3 Months</option>
-                <option value={6}>Last 6 Months</option>
-                <option value={12}>Last 12 Months</option>
-              </select>
-              <Button size="sm" variant="outline" onClick={handleGSCSync} disabled={syncing}>
-                <RefreshCw className={`w-4 h-4 mr-1 ${syncing ? "animate-spin" : ""}`} />
-                {syncing ? "Syncing..." : "Sync GSC"}
+              <Button size="sm" variant="outline" onClick={handleGSCSync} disabled={syncingGSC}>
+                <RefreshCw className={`w-3.5 h-3.5 mr-1 ${syncingGSC ? "animate-spin" : ""}`} />
+                {syncingGSC ? "Syncing..." : "Sync GSC"}
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleGASync} disabled={syncingGA}>
+                <RefreshCw className={`w-3.5 h-3.5 mr-1 ${syncingGA ? "animate-spin" : ""}`} />
+                {syncingGA ? "Syncing..." : "Sync GA4"}
               </Button>
               <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => setShowForm(true)}>
-                <Plus className="w-4 h-4 mr-1" /> Log Report
+                <Plus className="w-3.5 h-3.5 mr-1" /> Log SEO
               </Button>
             </>
           )}
-          {syncError && (
-            <p className="text-xs text-red-500 w-full mt-1">{syncError}</p>
-          )}
+        </div>
+        {syncError && <p className="w-full text-xs text-red-500">{syncError}</p>}
+      </div>
+
+      {/* GSC Metrics */}
+      <div className="space-y-3">
+        <SectionLabel color="bg-blue-500">Google Search Console</SectionLabel>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard label="Organic Clicks" value={latestSEO?.organic_clicks?.toLocaleString()} icon={MousePointer} color="bg-blue-500" />
+          <MetricCard label="Impressions" value={latestSEO?.organic_impressions?.toLocaleString()} icon={Eye} color="bg-violet-500" />
+          <MetricCard label="Avg. Position" value={latestSEO?.avg_position ? `#${latestSEO.avg_position}` : null} icon={TrendingUp} color="bg-emerald-500" />
+          <MetricCard label="CTR" value={latestSEO?.ctr ? `${latestSEO.ctr}%` : null} icon={BarChart2} color="bg-amber-500" />
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
-        {["seo", "analytics"].map(tab => (
-          <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2 text-sm rounded-lg font-medium capitalize transition-colors ${
-              activeTab === tab ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
-            }`}>
-            {tab === "seo" ? "GSC / SEO" : "Google Analytics"}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === "analytics" && <GADashboard client={selectedClient} />}
-
-      {activeTab === "seo" && <>
-      {/* Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <MetricCard label="Organic Clicks" value={latest?.organic_clicks?.toLocaleString()} icon={MousePointer} color="bg-blue-500" />
-        <MetricCard label="Impressions" value={latest?.organic_impressions?.toLocaleString()} icon={Eye} color="bg-violet-500" />
-        <MetricCard label="Avg. Position" value={latest?.avg_position ? `#${latest.avg_position}` : null} icon={TrendingUp} color="bg-emerald-500" />
-        <MetricCard label="CTR" value={latest?.ctr ? `${latest.ctr}%` : null} icon={BarChart2} color="bg-amber-500" />
+      {/* GA4 Metrics */}
+      <div className="space-y-3">
+        <SectionLabel color="bg-orange-500">Google Analytics 4</SectionLabel>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <MetricCard label="Sessions" value={latestGA?.sessions?.toLocaleString()} icon={Activity} color="bg-orange-500" />
+          <MetricCard label="Users" value={latestGA?.users?.toLocaleString()} icon={Users} color="bg-rose-500" />
+          <MetricCard label="Pageviews" value={latestGA?.pageviews?.toLocaleString()} icon={Eye} color="bg-cyan-500" />
+          <MetricCard label="Avg. Session" value={fmtDuration(latestGA?.avg_session_duration)} icon={Clock} color="bg-teal-500"
+            sub={latestGA?.bounce_rate != null ? `${latestGA.bounce_rate}% bounce` : null} />
+        </div>
       </div>
 
       {/* GBP Metrics */}
-      {(latest?.gbp_views || latest?.gbp_calls || latest?.gbp_direction_requests) && (
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-          <h2 className="font-semibold text-slate-800 mb-4">Google Business Profile</h2>
-          <div className="grid grid-cols-3 gap-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-slate-800">{latest?.gbp_views?.toLocaleString() || "—"}</p>
-              <p className="text-xs text-slate-500 mt-1">Views</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-slate-800">{latest?.gbp_calls?.toLocaleString() || "—"}</p>
-              <p className="text-xs text-slate-500 mt-1">Calls</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-slate-800">{latest?.gbp_direction_requests?.toLocaleString() || "—"}</p>
-              <p className="text-xs text-slate-500 mt-1">Direction Requests</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Charts */}
-      {chartData.length > 1 && (
-        <div className="grid md:grid-cols-2 gap-4">
+      {(latestSEO?.gbp_views || latestSEO?.gbp_calls || latestSEO?.gbp_direction_requests) && (
+        <div className="space-y-3">
+          <SectionLabel color="bg-green-500">Google Business Profile</SectionLabel>
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-            <p className="font-semibold text-slate-800 mb-4">Clicks Over Time</p>
-            <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={chartData}>
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="clicks" stroke="#3b82f6" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-            <p className="font-semibold text-slate-800 mb-4">Avg. Position Over Time</p>
-            <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={chartData}>
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis reversed tick={{ fontSize: 11 }} />
-                <Tooltip />
-                <Line type="monotone" dataKey="position" stroke="#10b981" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-slate-800">{latestSEO?.gbp_views?.toLocaleString() || "—"}</p>
+                <p className="text-xs text-slate-500 mt-1">Views</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-slate-800">{latestSEO?.gbp_calls?.toLocaleString() || "—"}</p>
+                <p className="text-xs text-slate-500 mt-1">Calls</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold text-slate-800">{latestSEO?.gbp_direction_requests?.toLocaleString() || "—"}</p>
+                <p className="text-xs text-slate-500 mt-1">Direction Requests</p>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* History Table */}
-      {seoData.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-100">
-            <h2 className="font-semibold text-slate-800">Report History</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-slate-50 text-xs text-slate-500 font-semibold">
-                  <th className="px-4 py-3 text-left">Date</th>
-                  <th className="px-4 py-3 text-right">Clicks</th>
-                  <th className="px-4 py-3 text-right">Impressions</th>
-                  <th className="px-4 py-3 text-right">Avg. Pos</th>
-                  <th className="px-4 py-3 text-right">CTR</th>
-                  <th className="px-4 py-3 text-right">GBP Views</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {seoData.map(d => (
-                  <tr key={d.id} className="hover:bg-slate-50">
-                    <td className="px-4 py-3 text-slate-600">{new Date(d.report_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
-                    <td className="px-4 py-3 text-right text-slate-800 font-medium">{d.organic_clicks?.toLocaleString() || "—"}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{d.organic_impressions?.toLocaleString() || "—"}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{d.avg_position ? `#${d.avg_position}` : "—"}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{d.ctr ? `${d.ctr}%` : "—"}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{d.gbp_views?.toLocaleString() || "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* Top Keywords & Pages */}
-      {latest && (latest.top_keywords || latest.top_pages) && (
+      {/* Combined Charts */}
+      {(gscChartData.length > 1 || gaChartData.length > 1) && (
         <div className="grid md:grid-cols-2 gap-4">
-          {latest.top_keywords && (() => {
-            let kws = [];
-            try { kws = JSON.parse(latest.top_keywords); } catch { kws = latest.top_keywords.split(',').map(k => ({ query: k.trim() })); }
-            return (
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100"><h2 className="font-semibold text-slate-800">Top Keywords</h2></div>
-                <table className="w-full text-sm">
-                  <thead><tr className="bg-slate-50 text-xs text-slate-500 font-semibold"><th className="px-4 py-2 text-left">Query</th><th className="px-4 py-2 text-right">Clicks</th><th className="px-4 py-2 text-right">Pos</th></tr></thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {kws.map((k, i) => <tr key={i} className="hover:bg-slate-50"><td className="px-4 py-2 text-slate-700 truncate max-w-[180px]">{k.query}</td><td className="px-4 py-2 text-right text-slate-800">{k.clicks ?? '—'}</td><td className="px-4 py-2 text-right text-slate-500">{k.position ? `#${k.position}` : '—'}</td></tr>)}
-                  </tbody>
-                </table>
-              </div>
-            );
-          })()}
-          {latest.top_pages && (() => {
-            let pages = [];
-            try { pages = JSON.parse(latest.top_pages); } catch { pages = []; }
-            return (
-              <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-                <div className="px-5 py-4 border-b border-slate-100"><h2 className="font-semibold text-slate-800">Top Pages</h2></div>
-                <table className="w-full text-sm">
-                  <thead><tr className="bg-slate-50 text-xs text-slate-500 font-semibold"><th className="px-4 py-2 text-left">Page</th><th className="px-4 py-2 text-right">Clicks</th><th className="px-4 py-2 text-right">Pos</th></tr></thead>
-                  <tbody className="divide-y divide-slate-50">
-                    {pages.map((p, i) => <tr key={i} className="hover:bg-slate-50"><td className="px-4 py-2 text-slate-700 truncate max-w-[180px]" title={p.page}>{p.page?.replace(/^https?:\/\/[^\/]+/, '') || p.page}</td><td className="px-4 py-2 text-right text-slate-800">{p.clicks ?? '—'}</td><td className="px-4 py-2 text-right text-slate-500">{p.position ? `#${p.position}` : '—'}</td></tr>)}
-                  </tbody>
-                </table>
-              </div>
-            );
-          })()}
+          {gscChartData.length > 1 && (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+              <p className="font-semibold text-slate-800 mb-1">Organic Clicks</p>
+              <p className="text-xs text-slate-400 mb-4">Google Search Console</p>
+              <ResponsiveContainer width="100%" height={160}>
+                <LineChart data={gscChartData}>
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="clicks" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          {gaChartData.length > 1 && (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+              <p className="font-semibold text-slate-800 mb-1">Sessions & Users</p>
+              <p className="text-xs text-slate-400 mb-4">Google Analytics 4</p>
+              <ResponsiveContainer width="100%" height={160}>
+                <LineChart data={gaChartData}>
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="sessions" stroke="#f97316" strokeWidth={2} dot={false} name="Sessions" />
+                  <Line type="monotone" dataKey="users" stroke="#f43f5e" strokeWidth={2} dot={false} name="Users" />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          {gscChartData.length > 1 && (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+              <p className="font-semibold text-slate-800 mb-1">Avg. Position</p>
+              <p className="text-xs text-slate-400 mb-4">Google Search Console</p>
+              <ResponsiveContainer width="100%" height={160}>
+                <LineChart data={gscChartData}>
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                  <YAxis reversed tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="position" stroke="#10b981" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+          {trafficSources.length > 0 && (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+              <p className="font-semibold text-slate-800 mb-1">Traffic Sources</p>
+              <p className="text-xs text-slate-400 mb-4">Google Analytics 4</p>
+              <ResponsiveContainer width="100%" height={160}>
+                <BarChart data={trafficSources} layout="vertical">
+                  <XAxis type="number" tick={{ fontSize: 11 }} />
+                  <YAxis dataKey="source" type="category" tick={{ fontSize: 11 }} width={90} />
+                  <Tooltip />
+                  <Bar dataKey="sessions" radius={[0, 4, 4, 0]}>
+                    {trafficSources.map((_, i) => <Cell key={i} fill={SOURCE_COLORS[i % SOURCE_COLORS.length]} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
       )}
 
-      {seoData.length === 0 && !showForm && (
+      {/* Top Keywords + Pages */}
+      {(topKeywords.length > 0 || gscTopPages.length > 0 || gaTopPages.length > 0) && (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {topKeywords.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+                <Search className="w-4 h-4 text-blue-500" />
+                <h2 className="font-semibold text-slate-800 text-sm">Top Keywords</h2>
+              </div>
+              <table className="w-full text-sm">
+                <thead><tr className="bg-slate-50 text-xs text-slate-500 font-semibold">
+                  <th className="px-4 py-2 text-left">Query</th>
+                  <th className="px-4 py-2 text-right">Clicks</th>
+                  <th className="px-4 py-2 text-right">Pos</th>
+                </tr></thead>
+                <tbody className="divide-y divide-slate-50">
+                  {topKeywords.slice(0, 8).map((k, i) => (
+                    <tr key={i} className="hover:bg-slate-50">
+                      <td className="px-4 py-2 text-slate-700 truncate max-w-[140px]">{k.query}</td>
+                      <td className="px-4 py-2 text-right text-slate-800">{k.clicks ?? "—"}</td>
+                      <td className="px-4 py-2 text-right text-slate-500">{k.position ? `#${k.position}` : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {gscTopPages.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-blue-500" />
+                <h2 className="font-semibold text-slate-800 text-sm">Top Pages (GSC)</h2>
+              </div>
+              <table className="w-full text-sm">
+                <thead><tr className="bg-slate-50 text-xs text-slate-500 font-semibold">
+                  <th className="px-4 py-2 text-left">Page</th>
+                  <th className="px-4 py-2 text-right">Clicks</th>
+                  <th className="px-4 py-2 text-right">Pos</th>
+                </tr></thead>
+                <tbody className="divide-y divide-slate-50">
+                  {gscTopPages.slice(0, 8).map((p, i) => (
+                    <tr key={i} className="hover:bg-slate-50">
+                      <td className="px-4 py-2 text-slate-700 truncate max-w-[140px]" title={p.page}>{p.page?.replace(/^https?:\/\/[^/]+/, '') || p.page}</td>
+                      <td className="px-4 py-2 text-right text-slate-800">{p.clicks ?? "—"}</td>
+                      <td className="px-4 py-2 text-right text-slate-500">{p.position ? `#${p.position}` : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          {gaTopPages.length > 0 && (
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+              <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-orange-500" />
+                <h2 className="font-semibold text-slate-800 text-sm">Top Pages (GA4)</h2>
+              </div>
+              <table className="w-full text-sm">
+                <thead><tr className="bg-slate-50 text-xs text-slate-500 font-semibold">
+                  <th className="px-4 py-2 text-left">Page</th>
+                  <th className="px-4 py-2 text-right">Sessions</th>
+                  <th className="px-4 py-2 text-right">Views</th>
+                </tr></thead>
+                <tbody className="divide-y divide-slate-50">
+                  {gaTopPages.slice(0, 8).map((p, i) => (
+                    <tr key={i} className="hover:bg-slate-50">
+                      <td className="px-4 py-2 text-slate-700 truncate max-w-[140px]" title={p.page}>{p.page}</td>
+                      <td className="px-4 py-2 text-right text-slate-800">{p.sessions?.toLocaleString() ?? "—"}</td>
+                      <td className="px-4 py-2 text-right text-slate-500">{p.pageviews?.toLocaleString() ?? "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {seoData.length === 0 && gaData.length === 0 && (
         <div className="text-center py-16 text-slate-400">
           <BarChart2 className="w-10 h-10 mx-auto mb-3 text-slate-300" />
-          <p className="text-sm">No SEO data yet. Log a report to get started.</p>
+          <p className="text-sm">No data yet. Sync GSC & GA4 to populate this dashboard.</p>
         </div>
       )}
-      </>
-      }
 
+      {/* Manual Log Form */}
       {showForm && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
