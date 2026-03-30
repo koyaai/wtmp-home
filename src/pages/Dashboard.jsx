@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Users, TrendingUp, DollarSign, AlertTriangle, CheckCircle, Clock, ArrowUpRight } from "lucide-react";
+import { Users, TrendingUp, DollarSign, AlertTriangle, CheckCircle, Clock, ArrowUpRight, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 
-function StatCard({ title, value, subtitle, icon: Icon, color }) {
+function StatCard({ title, value, subtitle, icon: Icon, color, onClick }) {
+  const Wrapper = onClick ? 'button' : 'div';
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+    <Wrapper
+      onClick={onClick}
+      className={`bg-white rounded-2xl p-5 shadow-sm border border-slate-100 w-full text-left ${onClick ? 'hover:border-blue-300 hover:shadow-md transition-all cursor-pointer' : ''}`}
+    >
       <div className="flex items-start justify-between">
         <div>
           <p className="text-sm text-slate-500 font-medium">{title}</p>
@@ -17,7 +21,7 @@ function StatCard({ title, value, subtitle, icon: Icon, color }) {
           <Icon className="w-5 h-5 text-white" />
         </div>
       </div>
-    </div>
+    </Wrapper>
   );
 }
 
@@ -34,6 +38,7 @@ export default function Dashboard() {
   const [insights, setInsights] = useState([]);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [modal, setModal] = useState(null); // { title, clients }
 
   useEffect(() => {
     Promise.all([
@@ -54,9 +59,11 @@ export default function Dashboard() {
   const onboardingClients = clients.filter(c => c.status === "onboarding");
   const totalMRR = clients.filter(c => c.status === "active").reduce((sum, c) => sum + (c.retainer_fee || 0), 0);
   const churnRisks = updates.filter(u => u.update_type === "churn_risk");
+  const churnRiskClientIds = new Set(churnRisks.map(u => u.client_id));
+  const churnRiskClientList = clients.filter(c => churnRiskClientIds.has(c.id));
 
   // Clients with at least one unresolved red flag
-  const clientsWithRedFlags = new Set(
+  const clientsWithRedFlagIds = new Set(
     insights
       .filter(ins => (ins.red_flags || []).some(f => {
         const item = typeof f === "string" ? { resolved: false } : f;
@@ -64,7 +71,8 @@ export default function Dashboard() {
       }))
       .map(ins => ins.client_id)
   );
-  const redFlagClientCount = clientsWithRedFlags.size;
+  const redFlagClientList = clients.filter(c => clientsWithRedFlagIds.has(c.id));
+  const redFlagClientCount = redFlagClientList.length;
 
   const userRole = user?.role;
   const showFinancials = ["leadership"].includes(userRole);
@@ -90,13 +98,44 @@ export default function Dashboard() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <StatCard title="Total Clients" value={clients.length} subtitle={`${activeClients.length} active`} icon={Users} color="bg-blue-500" />
-        <StatCard title="Onboarding" value={onboardingClients.length} subtitle="In progress" icon={Clock} color="bg-amber-500" />
+        <StatCard title="Onboarding" value={onboardingClients.length} subtitle="In progress" icon={Clock} color="bg-amber-500"
+          onClick={onboardingClients.length > 0 ? () => setModal({ title: 'Onboarding Clients', clients: onboardingClients }) : undefined} />
         {showFinancials && (
           <StatCard title="Monthly MRR" value={`$${totalMRR.toLocaleString()}`} subtitle="Active clients only" icon={DollarSign} color="bg-emerald-500" />
         )}
-        <StatCard title="Churn Risks" value={churnRisks.length} subtitle="Flagged by CSMs" icon={AlertTriangle} color="bg-red-500" />
-        <StatCard title="Red Flag Clients" value={redFlagClientCount} subtitle="With open red flags" icon={AlertTriangle} color="bg-orange-500" />
+        <StatCard title="Churn Risks" value={churnRisks.length} subtitle="Flagged by CSMs" icon={AlertTriangle} color="bg-red-500"
+          onClick={churnRiskClientList.length > 0 ? () => setModal({ title: 'Churn Risk Clients', clients: churnRiskClientList }) : undefined} />
+        <StatCard title="Red Flag Clients" value={redFlagClientCount} subtitle="With open red flags" icon={AlertTriangle} color="bg-orange-500"
+          onClick={redFlagClientList.length > 0 ? () => setModal({ title: 'Red Flag Clients', clients: redFlagClientList }) : undefined} />
       </div>
+
+      {/* Client Modal */}
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setModal(null)}>
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 overflow-hidden" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+              <h3 className="font-semibold text-slate-800">{modal.title}</h3>
+              <button onClick={() => setModal(null)} className="text-slate-400 hover:text-slate-600"><X className="w-4 h-4" /></button>
+            </div>
+            <div className="divide-y divide-slate-50 max-h-80 overflow-y-auto">
+              {modal.clients.map(client => (
+                <Link key={client.id} to={createPageUrl('Clients') + `?id=${client.id}`}
+                  onClick={() => setModal(null)}
+                  className="flex items-center gap-3 px-5 py-3.5 hover:bg-slate-50 transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                    <span className="text-white text-xs font-bold">{client.name?.charAt(0)}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-800">{client.name}</p>
+                    <p className="text-xs text-slate-400">{client.location || '—'}</p>
+                  </div>
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusColors[client.status]}`}>{client.status}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* Client List */}
