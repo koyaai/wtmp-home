@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Globe, ChevronLeft, Loader2, Trash2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { Plus, Globe, ChevronLeft, Loader2, Trash2, CheckCircle2, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import WebsiteQuestionnaire from "@/components/websitecontent/WebsiteQuestionnaire";
@@ -16,6 +17,7 @@ export default function WebsiteContentCreator() {
   const [view, setView] = useState('list'); // 'list' | 'new' | 'results'
   const [generating, setGenerating] = useState(false);
   const [retryingId, setRetryingId] = useState(null);
+  const [progress, setProgress] = useState({ current: 0, total: 0, currentPage: '', failed: [] });
 
   useEffect(() => {
     base44.entities.Client.list('-name', 100).then(setClients).catch(() => {});
@@ -27,51 +29,118 @@ export default function WebsiteContentCreator() {
     setProjects(p);
   };
 
+  const buildPageList = (q) => {
+    const pages = [
+      { key: 'home', name: 'Home Page' },
+      { key: 'about', name: 'About Us Page' },
+      { key: 'products', name: 'Products Overview Page' },
+      { key: 'services', name: 'Services Overview Page' },
+      { key: 'service_areas', name: 'Service Areas Page' },
+      { key: 'gallery', name: 'Gallery & Projects Page' },
+    ];
+    if (q.new_construction) pages.push({ key: 'new_construction', name: 'New Home Construction Page' });
+    if (q.motorization) pages.push({ key: 'motorization', name: 'Motorized Window Treatments Page' });
+    if (q.wood_blinds || q.faux_wood_blinds || q.vertical_blinds) {
+      pages.push({ key: 'blinds', name: 'Blinds Overview Page' });
+      if (q.wood_blinds) pages.push({ key: 'wood_blinds', name: 'Wood Blinds Page' });
+      if (q.faux_wood_blinds) pages.push({ key: 'faux_wood_blinds', name: 'Faux Wood Blinds Page' });
+      if (q.vertical_blinds) pages.push({ key: 'vertical_blinds', name: 'Vertical Blinds Page' });
+    }
+    if (q.roller_shades || q.roman_shades || q.woven_wood_shades || q.honeycomb_shades) {
+      pages.push({ key: 'shades', name: 'Shades Overview Page' });
+      if (q.roller_shades) pages.push({ key: 'roller_shades', name: 'Roller Shades Page' });
+      if (q.roman_shades) pages.push({ key: 'roman_shades', name: 'Roman Shades Page' });
+      if (q.woven_wood_shades) pages.push({ key: 'woven_wood_shades', name: 'Woven Wood Shades Page' });
+      if (q.honeycomb_shades) pages.push({ key: 'honeycomb_shades', name: 'Honeycomb/Cellular Shades Page' });
+    }
+    if (q.plantation_shutters || q.wood_shutters || q.composite_shutters || q.vinyl_shutters) {
+      pages.push({ key: 'shutters', name: 'Shutters Overview Page' });
+      if (q.plantation_shutters) pages.push({ key: 'plantation_shutters', name: 'Plantation Shutters Page' });
+      if (q.wood_shutters) pages.push({ key: 'wood_shutters', name: 'Wood Shutters Page' });
+      if (q.composite_shutters) pages.push({ key: 'composite_shutters', name: 'Composite Shutters Page' });
+      if (q.vinyl_shutters) pages.push({ key: 'vinyl_shutters', name: 'Vinyl Shutters Page' });
+    }
+    if (q.draperies) pages.push({ key: 'draperies', name: 'Custom Draperies Page' });
+    return pages;
+  };
+
   const handleGenerate = async (questionnaire, existingProjectId = null) => {
     setGenerating(true);
     if (existingProjectId) setRetryingId(existingProjectId);
-    const selectedClient = clients.find(c => c.id === selectedClientId);
 
+    const selectedClient = clients.find(c => c.id === selectedClientId);
     let project;
+    let existingPages = [];
+
     if (existingProjectId) {
-      // Retry: reset existing project
       await base44.entities.WebsiteProject.update(existingProjectId, { status: 'generating', error_message: null });
-      project = projects.find(p => p.id === existingProjectId);
+      const found = projects.find(p => p.id === existingProjectId);
+      project = found;
+      existingPages = found?.generated_pages || [];
     } else {
       project = await base44.entities.WebsiteProject.create({
         client_id: selectedClientId || null,
         client_name: selectedClient?.name || questionnaire.business_name,
         project_name: `${questionnaire.business_name} Website Copy`,
         questionnaire,
+        generated_pages: [],
+        pages_count: 0,
         status: 'generating',
       });
     }
 
-    try {
-      const response = await base44.functions.invoke('generateWebsiteContent', { questionnaire: questionnaire || project.questionnaire });
-      const pages = response.data?.pages || [];
+    const q = questionnaire || project.questionnaire;
+    const allPages = buildPageList(q);
+    // Skip pages already successfully generated
+    const existingKeys = new Set(existingPages.map(p => p.page_key));
+    const pagesToGenerate = allPages.filter(p => !existingKeys.has(p.key));
 
-      if (pages.length === 0) throw new Error('No pages were returned by the AI. Please try again.');
+    setProgress({ current: 0, total: pagesToGenerate.length, currentPage: '', failed: [] });
 
-      await base44.entities.WebsiteProject.update(project.id, {
-        generated_pages: pages,
-        pages_count: pages.length,
-        status: 'complete',
-        error_message: null,
-      });
+    const accumulated = [...existingPages];
+    const failed = [];
 
-      const fullProject = { ...project, generated_pages: pages, pages_count: pages.length, status: 'complete' };
-      setSelectedProject(fullProject);
-      setView('results');
-      toast.success(`Generated ${pages.length} pages!`);
-    } catch (err) {
-      const msg = err?.response?.data?.error || err.message || 'Generation failed';
-      await base44.entities.WebsiteProject.update(project.id, { status: 'error', error_message: msg });
-      toast.error(`Generation failed: ${msg}`);
+    for (let i = 0; i < pagesToGenerate.length; i++) {
+      const pg = pagesToGenerate[i];
+      setProgress(prev => ({ ...prev, current: i, currentPage: pg.name }));
+      try {
+        const response = await base44.functions.invoke('generateSinglePage', {
+          questionnaire: q,
+          page_key: pg.key,
+          page_name: pg.name,
+        });
+        const page = response.data?.page;
+        if (!page) throw new Error('Empty response');
+        accumulated.push(page);
+        // Save progress after each page
+        await base44.entities.WebsiteProject.update(project.id, {
+          generated_pages: accumulated,
+          pages_count: accumulated.length,
+        });
+      } catch (err) {
+        failed.push({ ...pg, error: err.message });
+      }
+      setProgress(prev => ({ ...prev, current: i + 1, failed }));
     }
+
+    const finalStatus = failed.length === pagesToGenerate.length ? 'error' : failed.length > 0 ? 'partial' : 'complete';
+    const errorMsg = failed.length > 0 ? `Failed pages: ${failed.map(f => f.name).join(', ')}` : null;
+
+    await base44.entities.WebsiteProject.update(project.id, {
+      status: finalStatus,
+      error_message: errorMsg,
+    });
+
+    const fullProject = { ...project, generated_pages: accumulated, pages_count: accumulated.length, status: finalStatus, error_message: errorMsg, questionnaire: q };
+    setSelectedProject(fullProject);
+    setView('results');
+
+    if (failed.length === 0) toast.success(`Generated all ${accumulated.length} pages!`);
+    else toast.error(`${failed.length} page(s) failed — click Retry to complete them.`);
 
     setGenerating(false);
     setRetryingId(null);
+    setProgress({ current: 0, total: 0, currentPage: '', failed: [] });
     loadProjects();
   };
 
@@ -167,6 +236,7 @@ export default function WebsiteContentCreator() {
                         <Badge className={
                           p.status === 'complete' ? 'bg-green-100 text-green-700' :
                           p.status === 'error' ? 'bg-red-100 text-red-700' :
+                          p.status === 'partial' ? 'bg-orange-100 text-orange-700' :
                           'bg-yellow-100 text-yellow-700'
                         }>
                           {p.status}
@@ -180,7 +250,7 @@ export default function WebsiteContentCreator() {
                       {p.error_message && <p className="text-xs text-red-500 mt-1">{p.error_message}</p>}
                     </div>
                     <div className="flex items-center gap-2 ml-3">
-                      {(p.status === 'error' || p.status === 'generating') && (
+                      {(p.status === 'error' || p.status === 'generating' || p.status === 'partial') && (
                         <Button size="sm" variant="outline" className="text-xs h-7"
                           disabled={retryingId === p.id}
                           onClick={e => { e.stopPropagation(); if (!p.questionnaire) { toast.error('No questionnaire data saved for this project.'); return; } handleGenerate(p.questionnaire, p.id); }}>
@@ -205,13 +275,32 @@ export default function WebsiteContentCreator() {
       {view === 'new' && (
         <div>
           {generating ? (
-            <div className="text-center py-24 bg-white border border-slate-200 rounded-xl">
-              <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-5" />
-              <h3 className="text-lg font-semibold text-slate-800">Generating your website copy...</h3>
-              <p className="text-slate-500 mt-2 text-sm max-w-sm mx-auto">
-                Using advanced AI to write all pages from your questionnaire. This takes 45–90 seconds.
-              </p>
-              <p className="text-xs text-slate-400 mt-3">Please don't close this window.</p>
+            <div className="py-16 bg-white border border-slate-200 rounded-xl px-8">
+              <div className="max-w-md mx-auto">
+                <div className="flex items-center justify-center gap-3 mb-6">
+                  <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                  <h3 className="text-lg font-semibold text-slate-800">Generating website copy...</h3>
+                </div>
+                {progress.total > 0 && (
+                  <>
+                    <div className="flex justify-between text-sm text-slate-500 mb-2">
+                      <span>{progress.currentPage}</span>
+                      <span>{progress.current} / {progress.total}</span>
+                    </div>
+                    <Progress value={(progress.current / progress.total) * 100} className="mb-4" />
+                    {progress.failed.length > 0 && (
+                      <div className="mt-3 space-y-1">
+                        {progress.failed.map(f => (
+                          <div key={f.key} className="flex items-center gap-2 text-xs text-red-500">
+                            <XCircle className="w-3 h-3" /> {f.name} failed
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+                <p className="text-xs text-slate-400 text-center mt-4">Each page is saved as it's generated. Don't close this window.</p>
+              </div>
             </div>
           ) : (
             <div className="bg-white border border-slate-200 rounded-xl p-6">
