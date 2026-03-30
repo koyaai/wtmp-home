@@ -200,12 +200,13 @@ export default function SEO() {
       {/* GA4 Metrics */}
       <div className="space-y-3">
         <SectionLabel color="bg-orange-500">Google Analytics 4</SectionLabel>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <MetricCard label="Sessions" value={latestGA?.sessions?.toLocaleString()} icon={Activity} color="bg-orange-500" />
           <MetricCard label="Users" value={latestGA?.users?.toLocaleString()} icon={Users} color="bg-rose-500" />
+          <MetricCard label="New Users" value={latestGA?.new_users?.toLocaleString()} icon={Users} color="bg-pink-500" />
           <MetricCard label="Pageviews" value={latestGA?.pageviews?.toLocaleString()} icon={Eye} color="bg-cyan-500" />
-          <MetricCard label="Avg. Session" value={fmtDuration(latestGA?.avg_session_duration)} icon={Clock} color="bg-teal-500"
-            sub={latestGA?.bounce_rate != null ? `${latestGA.bounce_rate}% bounce` : null} />
+          <MetricCard label="Bounce Rate" value={latestGA?.bounce_rate != null ? `${latestGA.bounce_rate}%` : null} icon={TrendingUp} color="bg-slate-500" />
+          <MetricCard label="Avg. Session" value={fmtDuration(latestGA?.avg_session_duration)} icon={Clock} color="bg-teal-500" />
         </div>
       </div>
 
@@ -237,14 +238,16 @@ export default function SEO() {
         <div className="grid md:grid-cols-2 gap-4">
           {gscChartData.length > 1 && (
             <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-              <p className="font-semibold text-slate-800 mb-1">Organic Clicks</p>
+              <p className="font-semibold text-slate-800 mb-1">Clicks & Impressions</p>
               <p className="text-xs text-slate-400 mb-4">Google Search Console</p>
               <ResponsiveContainer width="100%" height={160}>
                 <LineChart data={gscChartData}>
                   <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
                   <Tooltip />
-                  <Line type="monotone" dataKey="clicks" stroke="#3b82f6" strokeWidth={2} dot={false} />
+                  <Legend wrapperStyle={{ fontSize: 11 }} />
+                  <Line type="monotone" dataKey="clicks" stroke="#3b82f6" strokeWidth={2} dot={false} name="Clicks" />
+                  <Line type="monotone" dataKey="impressions" stroke="#a78bfa" strokeWidth={2} dot={false} name="Impressions" />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -375,6 +378,76 @@ export default function SEO() {
           )}
         </div>
       )}
+
+      {/* History Tables */}
+      <div className="grid md:grid-cols-2 gap-6">
+        {seoData.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              <h2 className="font-semibold text-slate-800">GSC History</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 text-xs text-slate-500 font-semibold">
+                    <th className="px-4 py-3 text-left">Date</th>
+                    <th className="px-4 py-3 text-right">Clicks</th>
+                    <th className="px-4 py-3 text-right">Impr.</th>
+                    <th className="px-4 py-3 text-right">Pos</th>
+                    <th className="px-4 py-3 text-right">CTR</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {seoData.map(d => (
+                    <tr key={d.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 text-slate-600">{new Date(d.report_date).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</td>
+                      <td className="px-4 py-3 text-right font-medium text-slate-800">{d.organic_clicks?.toLocaleString() || "—"}</td>
+                      <td className="px-4 py-3 text-right text-slate-600">{d.organic_impressions?.toLocaleString() || "—"}</td>
+                      <td className="px-4 py-3 text-right text-slate-600">{d.avg_position ? `#${d.avg_position}` : "—"}</td>
+                      <td className="px-4 py-3 text-right text-slate-600">{d.ctr ? `${d.ctr}%` : "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+        {gaData.length > 0 && (
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-orange-500" />
+              <h2 className="font-semibold text-slate-800">GA4 History</h2>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 text-xs text-slate-500 font-semibold">
+                    <th className="px-4 py-3 text-left">Period</th>
+                    <th className="px-4 py-3 text-right">Sessions</th>
+                    <th className="px-4 py-3 text-right">Users</th>
+                    <th className="px-4 py-3 text-right">New Users</th>
+                    <th className="px-4 py-3 text-right">Bounce</th>
+                    <th className="px-4 py-3 text-right">Avg. Session</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {gaData.map(d => (
+                    <tr key={d.id} className="hover:bg-slate-50">
+                      <td className="px-4 py-3 text-slate-600">{d.period_start ? new Date(d.period_start).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—"}</td>
+                      <td className="px-4 py-3 text-right font-medium text-slate-800">{d.sessions?.toLocaleString() || "—"}</td>
+                      <td className="px-4 py-3 text-right text-slate-600">{d.users?.toLocaleString() || "—"}</td>
+                      <td className="px-4 py-3 text-right text-slate-600">{d.new_users?.toLocaleString() || "—"}</td>
+                      <td className="px-4 py-3 text-right text-slate-600">{d.bounce_rate != null ? `${d.bounce_rate}%` : "—"}</td>
+                      <td className="px-4 py-3 text-right text-slate-600">{fmtDuration(d.avg_session_duration)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Empty state */}
       {seoData.length === 0 && gaData.length === 0 && (
