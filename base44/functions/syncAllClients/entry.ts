@@ -1,6 +1,8 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 import { GoogleAuth } from 'npm:google-auth-library@9.15.1';
 
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
 // Called by the daily automation. Loops through SyncSettings and syncs
 // each client that is due based on their configured frequency.
 
@@ -71,23 +73,35 @@ Deno.serve(async (req) => {
           }
 
           for (const range of monthRanges) {
-            const [overallRes, kwRes, pagesRes] = await Promise.all([
-              fetch(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ startDate: range.start, endDate: range.end, dimensions: [], rowLimit: 1 }),
-              }),
-              fetch(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ startDate: range.start, endDate: range.end, dimensions: ['query'], rowLimit: 10, orderBy: [{ fieldName: 'clicks', sortOrder: 'DESCENDING' }] }),
-              }),
-              fetch(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ startDate: range.start, endDate: range.end, dimensions: ['page'], rowLimit: 10, orderBy: [{ fieldName: 'clicks', sortOrder: 'DESCENDING' }] }),
-              }),
-            ]);
+            // Sequential calls to avoid hitting GSC rate limits (1200 QPM but burst sensitive)
+            const overallRes = await fetch(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ startDate: range.start, endDate: range.end, dimensions: [], rowLimit: 1 }),
+            });
+            await sleep(300);
+
+            const kwRes = await fetch(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ startDate: range.start, endDate: range.end, dimensions: ['query'], rowLimit: 10, orderBy: [{ fieldName: 'clicks', sortOrder: 'DESCENDING' }] }),
+            });
+            await sleep(300);
+
+            const pagesRes = await fetch(`https://searchconsole.googleapis.com/webmasters/v3/sites/${encodeURIComponent(siteUrl)}/searchAnalytics/query`, {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({ startDate: range.start, endDate: range.end, dimensions: ['page'], rowLimit: 10, orderBy: [{ fieldName: 'clicks', sortOrder: 'DESCENDING' }] }),
+            });
+            await sleep(300);
+
+            // Handle 429 rate limit responses
+            if (overallRes.status === 429 || kwRes.status === 429 || pagesRes.status === 429) {
+              console.log(`GSC rate limit hit for ${client.name}, waiting 10s...`);
+              await sleep(10000);
+              clientResult.gsc = 'rate_limited';
+              break;
+            }
 
             const gscData = await overallRes.json();
             const row = gscData.rows?.[0] || {};
@@ -106,8 +120,11 @@ Deno.serve(async (req) => {
               top_pages: topPages,
               notes: `Auto-synced. Period: ${range.start} to ${range.end}`,
             });
+
+            // Pause between month ranges to be gentle on quota
+            await sleep(500);
           }
-          clientResult.gsc = 'synced';
+          if (clientResult.gsc !== 'rate_limited') clientResult.gsc = 'synced';
         } catch (e) {
           clientResult.gsc = 'error: ' + e.message;
         }
@@ -133,11 +150,23 @@ Deno.serve(async (req) => {
             const gaHeaders = { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' };
             const gaUrl = `https://analyticsdata.googleapis.com/v1beta/properties/${propertyId}:runReport`;
 
-            const [metricsRes, pagesRes, sourcesRes] = await Promise.all([
-              fetch(gaUrl, { method: 'POST', headers: gaHeaders, body: JSON.stringify({ dateRanges: [{ startDate: range.start, endDate: range.end }], metrics: [{ name: 'sessions' }, { name: 'totalUsers' }, { name: 'newUsers' }, { name: 'screenPageViews' }, { name: 'bounceRate' }, { name: 'averageSessionDuration' }] }) }),
-              fetch(gaUrl, { method: 'POST', headers: gaHeaders, body: JSON.stringify({ dateRanges: [{ startDate: range.start, endDate: range.end }], dimensions: [{ name: 'pagePath' }], metrics: [{ name: 'sessions' }, { name: 'screenPageViews' }], orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: 10 }) }),
-              fetch(gaUrl, { method: 'POST', headers: gaHeaders, body: JSON.stringify({ dateRanges: [{ startDate: range.start, endDate: range.end }], dimensions: [{ name: 'sessionDefaultChannelGroup' }], metrics: [{ name: 'sessions' }], orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: 8 }) }),
-            ]);
+            // Sequential calls — GA4 Data API allows ~10 req/sec per property
+            const metricsRes = await fetch(gaUrl, { method: 'POST', headers: gaHeaders, body: JSON.stringify({ dateRanges: [{ startDate: range.start, endDate: range.end }], metrics: [{ name: 'sessions' }, { name: 'totalUsers' }, { name: 'newUsers' }, { name: 'screenPageViews' }, { name: 'bounceRate' }, { name: 'averageSessionDuration' }] }) });
+            await sleep(200);
+
+            const pagesRes = await fetch(gaUrl, { method: 'POST', headers: gaHeaders, body: JSON.stringify({ dateRanges: [{ startDate: range.start, endDate: range.end }], dimensions: [{ name: 'pagePath' }], metrics: [{ name: 'sessions' }, { name: 'screenPageViews' }], orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: 10 }) });
+            await sleep(200);
+
+            const sourcesRes = await fetch(gaUrl, { method: 'POST', headers: gaHeaders, body: JSON.stringify({ dateRanges: [{ startDate: range.start, endDate: range.end }], dimensions: [{ name: 'sessionDefaultChannelGroup' }], metrics: [{ name: 'sessions' }], orderBys: [{ metric: { metricName: 'sessions' }, desc: true }], limit: 8 }) });
+            await sleep(200);
+
+            // Handle 429 rate limit
+            if (metricsRes.status === 429 || pagesRes.status === 429 || sourcesRes.status === 429) {
+              console.log(`GA4 rate limit hit for ${client.name}, waiting 10s...`);
+              await sleep(10000);
+              clientResult.ga4 = 'rate_limited';
+              break;
+            }
 
             const metricsData = await metricsRes.json();
             const mRow = metricsData.rows?.[0]?.metricValues || [];
@@ -162,8 +191,11 @@ Deno.serve(async (req) => {
               traffic_sources: trafficSources,
               notes: `Auto-synced. Period: ${range.start} to ${range.end}`,
             });
+
+            // Pause between month ranges
+            await sleep(500);
           }
-          clientResult.ga4 = 'synced';
+          if (clientResult.ga4 !== 'rate_limited') clientResult.ga4 = 'synced';
         } catch (e) {
           clientResult.ga4 = 'error: ' + e.message;
         }
@@ -174,8 +206,11 @@ Deno.serve(async (req) => {
         last_synced_at: now.toISOString(),
       });
 
-      clientResult.status = 'synced';
+      clientResult.status = (clientResult.gsc === 'rate_limited' || clientResult.ga4 === 'rate_limited') ? 'rate_limited' : 'synced';
       results.push(clientResult);
+
+      // Pause between clients to avoid cross-client rate accumulation
+      await sleep(1000);
     }
 
     return Response.json({ success: true, processed: allSettings.length, results });
