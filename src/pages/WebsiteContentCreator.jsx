@@ -178,7 +178,9 @@ export default function WebsiteContentCreator() {
     const pages = selectedProject?.generated_pages || [];
     if (pages.length === 0) return;
     try {
-      await Promise.all(pages.map(page => savePageToLibrary(page)));
+      for (const page of pages) {
+        await savePageToLibrary(page);
+      }
       toast.success(`Saved all ${pages.length} pages to Content Library`);
     } catch (err) {
       toast.error(`Failed to save: ${err.message}`);
