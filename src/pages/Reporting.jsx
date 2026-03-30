@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, ArrowRight, Download, ChevronLeft, BarChart2, Plus, Link2, Star, Trash2 } from "lucide-react";
+import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, ArrowRight, Download, ChevronLeft, BarChart2, Plus, Link2, Star, Trash2, CalendarClock } from "lucide-react";
+import ScheduledReports from "@/components/reporting/ScheduledReports";
 import { toast } from "sonner";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -226,18 +227,7 @@ function ReportView({ report, clientName, dateRange, onCopy }) {
 export default function Reporting() {
   const now = new Date();
   const [clients, setClients] = useState([]);
-  const [selectedClient, setSelectedClient] = useState(null);
-  const [month, setMonth] = useState(MONTHS[now.getMonth()]);
-  const [year, setYear] = useState(now.getFullYear());
-  const [dateRange, setDateRange] = useState("");
-  const [seoFile, setSeoFile] = useState(null);
-  const [ppcFile, setPpcFile] = useState(null);
-  const [uploading, setUploading] = useState(false);
-  const [report, setReport] = useState(null);
-  const [savedReportId, setSavedReportId] = useState(null);
-  const [view, setView] = useState("list"); // "list" | "new" | "existing"
-  const [savedReports, setSavedReports] = useState([]);
-  const [loadingReports, setLoadingReports] = useState(true);
+  const [mainTab, setMainTab] = useState("reports"); // "reports" | "scheduled"
 
   useEffect(() => {
     base44.entities.Client.list().then(setClients).catch(() => {});
@@ -356,11 +346,33 @@ export default function Reporting() {
             <h1 className="text-2xl font-bold text-slate-800">Reporting</h1>
             <p className="text-slate-500 text-sm mt-1">Monthly combined reports per client.</p>
           </div>
-          <Button onClick={handleStartNew} className="bg-slate-800 hover:bg-slate-700">
-            <Plus className="w-4 h-4" /> New Report
-          </Button>
+          {mainTab === "reports" && (
+            <Button onClick={handleStartNew} className="bg-slate-800 hover:bg-slate-700">
+              <Plus className="w-4 h-4" /> New Report
+            </Button>
+          )}
         </div>
 
+        {/* Main Tabs */}
+        <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
+          <button onClick={() => setMainTab("reports")}
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+              mainTab === "reports" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            }`}>
+            <BarChart2 className="w-4 h-4" /> Reports
+          </button>
+          <button onClick={() => setMainTab("scheduled")}
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+              mainTab === "scheduled" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            }`}>
+            <CalendarClock className="w-4 h-4" /> Scheduled
+          </button>
+        </div>
+
+        {mainTab === "scheduled" && <ScheduledReports clients={clients} />}
+
+        {mainTab === "reports" && (
+        <>
         {loadingReports ? (
           <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
         ) : savedReports.length === 0 ? (
@@ -420,6 +432,8 @@ export default function Reporting() {
               </div>
             ))}
           </div>
+        )}
+        </>
         )}
       </div>
     );

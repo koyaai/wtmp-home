@@ -1,0 +1,51 @@
+{
+  "name": "ReportSchedule",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "recipient_emails": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Email addresses to send the report to"
+    },
+    "day_of_month": {
+      "type": "number",
+      "description": "Day of month to send (1\u201328)",
+      "default": 1
+    },
+    "active": {
+      "type": "boolean",
+      "default": true
+    },
+    "last_sent_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Last time this report was sent"
+    },
+    "include_seo": {
+      "type": "boolean",
+      "default": true
+    },
+    "include_ga": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string",
+      "description": "Optional custom note to include in the email"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "recipient_emails"
+  ]
+}
