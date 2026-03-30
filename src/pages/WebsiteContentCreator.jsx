@@ -152,30 +152,37 @@ export default function WebsiteContentCreator() {
     if (selectedProject?.id === id) { setSelectedProject(null); setView('list'); }
   };
 
-  const handleSavePageToLibrary = async (page) => {
+  const savePageToLibrary = async (page) => {
     const contentTypeMap = {
       home: 'Landing Page', about: 'Other', products: 'Service Page',
       services: 'Service Page', service_areas: 'Service Page', gallery: 'Other',
     };
     await base44.entities.ContentItem.create({
-      client_id: selectedProject?.client_id || '',
+      client_id: selectedProject?.client_id || null,
       client_name: selectedProject?.client_name || '',
-      title: page.h1,
+      title: page.h1 || page.page_name,
       final_content: `Meta Description: ${page.meta_description}\n\n${page.content}`,
       content_type: contentTypeMap[page.page_key] || 'Service Page',
       mode: 'generated',
       status: 'draft',
       context_notes: `Website page: ${page.page_name}`,
     });
+  };
+
+  const handleSavePageToLibrary = async (page) => {
+    await savePageToLibrary(page);
     toast.success('Saved to Content Library');
   };
 
   const handleSaveAllToLibrary = async () => {
     const pages = selectedProject?.generated_pages || [];
-    for (const page of pages) {
-      await handleSavePageToLibrary(page);
+    if (pages.length === 0) return;
+    try {
+      await Promise.all(pages.map(page => savePageToLibrary(page)));
+      toast.success(`Saved all ${pages.length} pages to Content Library`);
+    } catch (err) {
+      toast.error(`Failed to save: ${err.message}`);
     }
-    toast.success(`Saved all ${pages.length} pages to Content Library`);
   };
 
   return (
