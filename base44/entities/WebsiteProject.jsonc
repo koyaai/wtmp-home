@@ -1,0 +1,64 @@
+{
+  "name": "WebsiteProject",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "project_name": {
+      "type": "string",
+      "description": "e.g., Naka's Drapery Website Copy"
+    },
+    "questionnaire": {
+      "type": "object",
+      "description": "All questionnaire answers"
+    },
+    "generated_pages": {
+      "type": "array",
+      "description": "Array of generated page objects",
+      "items": {
+        "type": "object",
+        "properties": {
+          "page_key": {
+            "type": "string"
+          },
+          "page_name": {
+            "type": "string"
+          },
+          "h1": {
+            "type": "string"
+          },
+          "meta_description": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "pages_count": {
+      "type": "number"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "generating",
+        "partial",
+        "complete",
+        "error"
+      ],
+      "default": "draft"
+    },
+    "error_message": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_name"
+  ]
+}
