@@ -18,6 +18,7 @@ export default function WebsiteContentCreator() {
   const [generating, setGenerating] = useState(false);
   const [retryingId, setRetryingId] = useState(null);
   const [progress, setProgress] = useState({ current: 0, total: 0, currentPage: '', failed: [] });
+  const [saving, setSaving] = useState({ active: false, current: 0, total: 0 });
 
   useEffect(() => {
     base44.entities.Client.list('-name', 100).then(setClients).catch(() => {});
@@ -177,13 +178,17 @@ export default function WebsiteContentCreator() {
   const handleSaveAllToLibrary = async () => {
     const pages = selectedProject?.generated_pages || [];
     if (pages.length === 0) return;
+    setSaving({ active: true, current: 0, total: pages.length });
     try {
-      for (const page of pages) {
-        await savePageToLibrary(page);
+      for (let i = 0; i < pages.length; i++) {
+        await savePageToLibrary(pages[i]);
+        setSaving({ active: true, current: i + 1, total: pages.length });
       }
       toast.success(`Saved all ${pages.length} pages to Content Library`);
     } catch (err) {
       toast.error(`Failed to save: ${err.message}`);
+    } finally {
+      setSaving({ active: false, current: 0, total: 0 });
     }
   };
 
@@ -210,9 +215,16 @@ export default function WebsiteContentCreator() {
           </Button>
         )}
         {view === 'results' && (
-          <Button onClick={handleSaveAllToLibrary} variant="outline" className="gap-2">
-            Save All to Library
-          </Button>
+          <div className="flex flex-col items-end gap-1">
+            <Button onClick={handleSaveAllToLibrary} variant="outline" className="gap-2" disabled={saving.active}>
+              {saving.active ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving {saving.current}/{saving.total}...</> : 'Save All to Library'}
+            </Button>
+            {saving.active && (
+              <div className="w-48">
+                <Progress value={(saving.current / saving.total) * 100} className="h-1.5" />
+              </div>
+            )}
+          </div>
         )}
       </div>
 
