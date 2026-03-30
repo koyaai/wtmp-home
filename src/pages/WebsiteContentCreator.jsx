@@ -253,7 +253,7 @@ export default function WebsiteContentCreator() {
                       {(p.status === 'error' || p.status === 'generating' || p.status === 'partial') && (
                         <Button size="sm" variant="outline" className="text-xs h-7"
                           disabled={retryingId === p.id}
-                          onClick={e => { e.stopPropagation(); if (!p.questionnaire) { toast.error('No questionnaire data saved for this project.'); return; } handleGenerate(p.questionnaire, p.id); }}>
+                          onClick={e => { e.stopPropagation(); if (!p.questionnaire) { toast.error('No questionnaire data saved for this project.'); return; } setView('new'); handleGenerate(p.questionnaire, p.id); }}>
                           {retryingId === p.id ? <><Loader2 className="w-3 h-3 animate-spin" /> Generating...</> : 'Retry'}
                         </Button>
                       )}
