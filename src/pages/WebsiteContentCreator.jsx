@@ -15,6 +15,7 @@ export default function WebsiteContentCreator() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [view, setView] = useState('list'); // 'list' | 'new' | 'results'
   const [generating, setGenerating] = useState(false);
+  const [retryingId, setRetryingId] = useState(null);
 
   useEffect(() => {
     base44.entities.Client.list('-name', 100).then(setClients).catch(() => {});
@@ -28,6 +29,7 @@ export default function WebsiteContentCreator() {
 
   const handleGenerate = async (questionnaire, existingProjectId = null) => {
     setGenerating(true);
+    if (existingProjectId) setRetryingId(existingProjectId);
     const selectedClient = clients.find(c => c.id === selectedClientId);
 
     let project;
@@ -69,6 +71,7 @@ export default function WebsiteContentCreator() {
     }
 
     setGenerating(false);
+    setRetryingId(null);
     loadProjects();
   };
 
@@ -179,8 +182,9 @@ export default function WebsiteContentCreator() {
                     <div className="flex items-center gap-2 ml-3">
                       {(p.status === 'error' || p.status === 'generating') && (
                         <Button size="sm" variant="outline" className="text-xs h-7"
-                          onClick={e => { e.stopPropagation(); handleGenerate(p.questionnaire, p.id); }}>
-                          Retry
+                          disabled={retryingId === p.id}
+                          onClick={e => { e.stopPropagation(); if (!p.questionnaire) { toast.error('No questionnaire data saved for this project.'); return; } handleGenerate(p.questionnaire, p.id); }}>
+                          {retryingId === p.id ? <><Loader2 className="w-3 h-3 animate-spin" /> Generating...</> : 'Retry'}
                         </Button>
                       )}
                       <button
