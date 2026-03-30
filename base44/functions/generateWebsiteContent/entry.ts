@@ -200,6 +200,37 @@ Pages to generate (${pages.length} total): ${pages.map(p => `"${p.key}"`).join('
 Return each page with page_key, page_name, h1, meta_description (150 chars max, includes ${q.city} and product keyword), and content (full markdown body).`;
 }
 
+const BATCH_SIZE = 4;
+
+function buildBatchPrompt(q, batchPages) {
+  const allPages = buildPageList(q);
+  const products = [
+    q.wood_blinds && 'Wood Blinds', q.faux_wood_blinds && 'Faux Wood Blinds', q.vertical_blinds && 'Vertical Blinds',
+    q.roller_shades && 'Roller Shades', q.roman_shades && 'Roman Shades', q.woven_wood_shades && 'Woven Wood Shades', q.honeycomb_shades && 'Honeycomb/Cellular Shades',
+    q.plantation_shutters && 'Plantation Shutters', q.wood_shutters && 'Wood Shutters', q.composite_shutters && 'Composite Shutters', q.vinyl_shutters && 'Vinyl Shutters',
+    q.draperies && 'Custom Draperies', q.motorization && 'Motorized Window Treatments',
+  ].filter(Boolean).join(', ');
+
+  const services = [
+    q.in_home_consultation && 'Complimentary In-Home Consultation',
+    q.measuring_installation && 'Custom Measuring & Professional Installation',
+    q.new_construction && 'New Home Construction Planning',
+    q.redesign && 'Redesign & Refresh',
+    q.motorization && 'Motorization & Smart Home Integration',
+  ].filter(Boolean).join(', ');
+
+  const usps = (q.usps || []).filter(u => u).map((u, i) => `${i + 1}. ${u}`).join('\n') || 'Professional installation, Custom solutions, Local expertise';
+  const cta = q.primary_cta || 'Schedule a complimentary in-home consultation';
+
+  // Get full instructions only for this batch's pages
+  const fullPrompt = buildPrompt(q);
+  const pageKeys = batchPages.map(p => `"${p.key}"`).join(', ');
+
+  return `${fullPrompt}
+
+IMPORTANT: For this batch, ONLY generate these ${batchPages.length} pages: ${pageKeys}. Do not generate any other pages.`;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -211,35 +242,45 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'business_name and city are required' }, { status: 400 });
     }
 
-    const pages = buildPageList(questionnaire);
-    const prompt = buildPrompt(questionnaire);
+    const allPages = buildPageList(questionnaire);
+    const allGeneratedPages = [];
 
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt,
-      model: 'claude_sonnet_4_6',
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          pages: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                page_key: { type: 'string' },
-                page_name: { type: 'string' },
-                h1: { type: 'string' },
-                meta_description: { type: 'string' },
-                content: { type: 'string' }
-              },
-              required: ['page_key', 'page_name', 'h1', 'content']
+    // Split into batches of BATCH_SIZE to avoid timeouts
+    for (let i = 0; i < allPages.length; i += BATCH_SIZE) {
+      const batch = allPages.slice(i, i + BATCH_SIZE);
+      const prompt = buildBatchPrompt(questionnaire, batch);
+
+      const result = await base44.integrations.Core.InvokeLLM({
+        prompt,
+        model: 'claude_sonnet_4_6',
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            pages: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  page_key: { type: 'string' },
+                  page_name: { type: 'string' },
+                  h1: { type: 'string' },
+                  meta_description: { type: 'string' },
+                  content: { type: 'string' }
+                },
+                required: ['page_key', 'page_name', 'h1', 'content']
+              }
             }
-          }
-        },
-        required: ['pages']
-      }
-    });
+          },
+          required: ['pages']
+        }
+      });
 
-    return Response.json({ pages: result.pages, total: result.pages?.length || 0 });
+      if (result.pages?.length) {
+        allGeneratedPages.push(...result.pages);
+      }
+    }
+
+    return Response.json({ pages: allGeneratedPages, total: allGeneratedPages.length });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
