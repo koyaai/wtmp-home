@@ -48,7 +48,7 @@ export default function Leads() {
     setGhlData(null);
     if (!selectedClient?.ghl_location_id) return;
     setGhlLoading(true);
-    base44.functions.invoke('ghlLeads', { location_id: selectedClient.ghl_location_id })
+    base44.functions.invoke('ghlLeads', { location_id: selectedClient.ghl_location_id, api_key: selectedClient.ghl_api_key })
       .then(res => setGhlData(res.data))
       .catch(() => setGhlData(null))
       .finally(() => setGhlLoading(false));
