@@ -15,88 +15,99 @@ Deno.serve(async (req) => {
       'Content-Type': 'application/json',
       'Version': '2021-07-28',
     };
-
     const baseUrl = 'https://services.leadconnectorhq.com';
 
-    // Fetch opportunities (these are the actual leads)
+    // Fetch all opportunities
     let allOpportunities = [];
-    let oppPage = 1;
-    let oppHasMore = true;
+    let page = 1;
+    let hasMore = true;
 
-    while (oppHasMore && oppPage <= 10) {
-      const oppRes = await fetch(
-        `${baseUrl}/opportunities/search?location_id=${location_id}&limit=100&page=${oppPage}`,
+    while (hasMore && page <= 10) {
+      const res = await fetch(
+        `${baseUrl}/opportunities/search?location_id=${location_id}&limit=100&page=${page}`,
         { headers }
       );
-      if (!oppRes.ok) {
-        const err = await oppRes.text();
-        return Response.json({ error: `GHL opportunities error: ${oppRes.status} - ${err}` }, { status: 200 });
+      if (!res.ok) {
+        const err = await res.text();
+        return Response.json({ error: `GHL opportunities error: ${res.status} - ${err}` }, { status: 200 });
       }
-      const oppData = await oppRes.json();
-      const opps = oppData.opportunities || [];
+      const data = await res.json();
+      const opps = data.opportunities || [];
       allOpportunities = allOpportunities.concat(opps);
-      oppHasMore = opps.length === 100;
-      oppPage++;
+      hasMore = opps.length === 100;
+      page++;
     }
 
-    // Summarize by pipeline and stage
-    const pipelineSummary = {};
-    let totalWonRevenue = 0;
-    const sourceCounts = {};
+    // Group by month (YYYY-MM)
+    const monthlyData = {};
 
     for (const opp of allOpportunities) {
+      const date = new Date(opp.createdAt || opp.dateAdded || 0);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = {
+          total: 0,
+          won: 0,
+          lost: 0,
+          open: 0,
+          revenue_won: 0,
+          sources: {},
+          pipelines: {},
+          opportunities: [],
+        };
+      }
+
+      const m = monthlyData[monthKey];
+      m.total++;
+
+      if (opp.status === 'won') {
+        m.won++;
+        m.revenue_won += opp.monetaryValue || 0;
+      } else if (opp.status === 'lost') {
+        m.lost++;
+      } else {
+        m.open++;
+      }
+
+      // Source breakdown
+      const src = opp.source || 'Direct';
+      m.sources[src] = (m.sources[src] || 0) + 1;
+
+      // Pipeline breakdown
       const pipelineName = opp.pipeline?.name || 'Default';
       const stageName = opp.stage?.name || 'Unknown';
-      const status = opp.status || 'open';
-      const value = opp.monetaryValue || 0;
-
-      if (!pipelineSummary[pipelineName]) {
-        pipelineSummary[pipelineName] = { total: 0, won: 0, lost: 0, open: 0, stages: {}, revenue_won: 0 };
+      if (!m.pipelines[pipelineName]) {
+        m.pipelines[pipelineName] = { total: 0, won: 0, lost: 0, open: 0, revenue_won: 0, stages: {} };
       }
-      pipelineSummary[pipelineName].total++;
-      pipelineSummary[pipelineName].stages[stageName] = (pipelineSummary[pipelineName].stages[stageName] || 0) + 1;
+      const p = m.pipelines[pipelineName];
+      p.total++;
+      p.stages[stageName] = (p.stages[stageName] || 0) + 1;
+      if (opp.status === 'won') { p.won++; p.revenue_won += opp.monetaryValue || 0; }
+      else if (opp.status === 'lost') p.lost++;
+      else p.open++;
 
-      if (status === 'won') {
-        pipelineSummary[pipelineName].won++;
-        pipelineSummary[pipelineName].revenue_won += value;
-        totalWonRevenue += value;
-      } else if (status === 'lost') {
-        pipelineSummary[pipelineName].lost++;
-      } else {
-        pipelineSummary[pipelineName].open++;
-      }
-
-      // Track lead sources
-      if (opp.source) {
-        sourceCounts[opp.source] = (sourceCounts[opp.source] || 0) + 1;
-      }
+      // Store lightweight opp for the list
+      m.opportunities.push({
+        id: opp.id,
+        name: opp.name || 'Unnamed',
+        contactName: `${opp.contact?.firstName || ''} ${opp.contact?.lastName || ''}`.trim() || opp.contact?.name || 'Unknown',
+        stage: stageName,
+        pipeline: pipelineName,
+        status: opp.status || 'open',
+        value: opp.monetaryValue || 0,
+        source: opp.source || null,
+        createdAt: opp.createdAt,
+      });
     }
 
-    // Recent 10 opportunities
-    const recentOpportunities = allOpportunities
-      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-      .slice(0, 10)
-      .map(o => ({
-        id: o.id,
-        name: o.name || 'Unnamed',
-        contactName: o.contact?.name || `${o.contact?.firstName || ''} ${o.contact?.lastName || ''}`.trim() || 'Unknown',
-        stage: o.stage?.name || 'Unknown',
-        pipeline: o.pipeline?.name || 'Default',
-        status: o.status || 'open',
-        value: o.monetaryValue || 0,
-        source: o.source || null,
-        createdAt: o.createdAt,
-      }));
+    // Sort months descending
+    const sortedMonths = Object.keys(monthlyData).sort((a, b) => b.localeCompare(a));
 
     return Response.json({
-      total_opportunities: allOpportunities.length,
-      total_won: allOpportunities.filter(o => o.status === 'won').length,
-      total_lost: allOpportunities.filter(o => o.status === 'lost').length,
-      total_open: allOpportunities.filter(o => o.status !== 'won' && o.status !== 'lost').length,
-      total_won_revenue: totalWonRevenue,
-      pipeline_summary: pipelineSummary,
-      source_counts: sourceCounts,
-      recent_opportunities: recentOpportunities,
+      total_all_time: allOpportunities.length,
+      months: sortedMonths,
+      monthly_data: monthlyData,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 200 });

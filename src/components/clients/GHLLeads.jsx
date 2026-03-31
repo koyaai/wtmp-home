@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Loader2, TrendingUp, Trophy, XCircle, RefreshCw, ChevronDown, ChevronUp, DollarSign, Circle, DatabaseZap } from "lucide-react";
+import { Loader2, TrendingUp, Trophy, XCircle, RefreshCw, ChevronDown, ChevronUp, DollarSign, Circle, DatabaseZap, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function StatCard({ label, value, icon: Icon, color }) {
@@ -23,22 +23,19 @@ const statusStyles = {
   open: "bg-blue-100 text-blue-700",
 };
 
+function formatMonth(key) {
+  const [year, month] = key.split('-');
+  return new Date(year, month - 1).toLocaleString('default', { month: 'long', year: 'numeric' });
+}
+
 export default function GHLLeads({ client }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(null);
   const [expandedPipeline, setExpandedPipeline] = useState(null);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState(null);
-
-  const handleSync = async () => {
-    setSyncing(true);
-    setSyncResult(null);
-    const res = await base44.functions.invoke('syncGHLLeads', {});
-    setSyncResult(res.data?.results?.find(r => r.client === client.name) || { action: 'done' });
-    setSyncing(false);
-    fetchData(); // refresh display
-  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -51,15 +48,34 @@ export default function GHLLeads({ client }) {
       setError(res.data.error);
     } else {
       setData(res.data);
-      const firstPipeline = Object.keys(res.data.pipeline_summary || {})[0];
-      if (firstPipeline) setExpandedPipeline(firstPipeline);
+      // Default to most recent month
+      if (res.data.months?.length > 0) {
+        setSelectedMonth(res.data.months[0]);
+      }
     }
     setLoading(false);
+  };
+
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    const res = await base44.functions.invoke('syncGHLLeads', {});
+    setSyncResult(res.data?.results?.find(r => r.client === client.name) || { action: 'done' });
+    setSyncing(false);
+    fetchData();
   };
 
   useEffect(() => {
     if (client.ghl_location_id && client.ghl_api_key) fetchData();
   }, [client.ghl_location_id, client.ghl_api_key]);
+
+  // Reset expanded pipeline when month changes
+  useEffect(() => {
+    if (selectedMonth && data) {
+      const firstPipeline = Object.keys(data.monthly_data?.[selectedMonth]?.pipelines || {})[0];
+      setExpandedPipeline(firstPipeline || null);
+    }
+  }, [selectedMonth]);
 
   if (!client.ghl_location_id || !client.ghl_api_key) {
     return (
@@ -89,19 +105,25 @@ export default function GHLLeads({ client }) {
     );
   }
 
-  if (!data) return null;
+  if (!data || !selectedMonth) return null;
 
-  const pipelines = Object.entries(data.pipeline_summary || {});
-  const sources = Object.entries(data.source_counts || {}).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const months = data.months || [];
+  const monthIndex = months.indexOf(selectedMonth);
+  const monthData = data.monthly_data?.[selectedMonth] || {};
+  const pipelines = Object.entries(monthData.pipelines || {});
+  const sources = Object.entries(monthData.sources || {}).sort((a, b) => b[1] - a[1]);
+
+  const prevMonth = months[monthIndex + 1] || null;
+  const nextMonth = months[monthIndex - 1] || null;
 
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-700">GHL Pipeline Data</h3>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           {syncResult && (
-            <span className="text-xs text-emerald-600 font-medium self-center">
+            <span className="text-xs text-emerald-600 font-medium">
               {syncResult.action === 'error' ? '⚠ Sync failed' : syncResult.action === 'created' ? '✓ Lead record created' : '✓ Lead record updated'}
             </span>
           )}
@@ -115,23 +137,68 @@ export default function GHLLeads({ client }) {
         </div>
       </div>
 
+      {/* Month Selector */}
+      <div className="bg-white rounded-xl border border-slate-100 px-4 py-3 flex items-center justify-between">
+        <button
+          onClick={() => prevMonth && setSelectedMonth(prevMonth)}
+          disabled={!prevMonth}
+          className="p-1 rounded-lg hover:bg-slate-100 disabled:opacity-30 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4 text-slate-500" />
+        </button>
+        <div className="text-center">
+          <p className="text-sm font-bold text-slate-800">{formatMonth(selectedMonth)}</p>
+          <p className="text-xs text-slate-400">{monthData.total || 0} opportunities</p>
+        </div>
+        <button
+          onClick={() => nextMonth && setSelectedMonth(nextMonth)}
+          disabled={!nextMonth}
+          className="p-1 rounded-lg hover:bg-slate-100 disabled:opacity-30 transition-colors"
+        >
+          <ChevronRight className="w-4 h-4 text-slate-500" />
+        </button>
+      </div>
+
       {/* Summary Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label="Total Opps" value={data.total_opportunities} icon={TrendingUp} color="bg-blue-500" />
-        <StatCard label="Open" value={data.total_open} icon={Circle} color="bg-violet-500" />
-        <StatCard label="Won" value={data.total_won} icon={Trophy} color="bg-emerald-500" />
-        <StatCard label="Lost" value={data.total_lost} icon={XCircle} color="bg-red-400" />
+        <StatCard label="New Opps" value={monthData.total} icon={TrendingUp} color="bg-blue-500" />
+        <StatCard label="Open" value={monthData.open} icon={Circle} color="bg-violet-500" />
+        <StatCard label="Won" value={monthData.won} icon={Trophy} color="bg-emerald-500" />
+        <StatCard label="Lost" value={monthData.lost} icon={XCircle} color="bg-red-400" />
       </div>
 
       {/* Won Revenue */}
-      {data.total_won_revenue > 0 && (
+      {monthData.revenue_won > 0 && (
         <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4 flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-emerald-500 flex items-center justify-center">
             <DollarSign className="w-4 h-4 text-white" />
           </div>
           <div>
-            <p className="text-xs text-emerald-700 font-medium">Total Won Revenue</p>
-            <p className="text-xl font-bold text-emerald-800">${data.total_won_revenue.toLocaleString()}</p>
+            <p className="text-xs text-emerald-700 font-medium">Won Revenue This Month</p>
+            <p className="text-xl font-bold text-emerald-800">${monthData.revenue_won.toLocaleString()}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Lead Sources */}
+      {sources.length > 0 && (
+        <div className="bg-white rounded-xl border border-slate-100 p-4">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Where Leads Came From</p>
+          <div className="space-y-2">
+            {sources.map(([source, count]) => (
+              <div key={source} className="flex items-center gap-3">
+                <p className="text-sm text-slate-700 flex-1 capitalize">{source}</p>
+                <div className="flex items-center gap-2">
+                  <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-violet-400 rounded-full"
+                      style={{ width: `${Math.min(100, (count / monthData.total) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="text-xs text-slate-500 w-12 text-right">{count} ({Math.round((count / monthData.total) * 100)}%)</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -139,7 +206,7 @@ export default function GHLLeads({ client }) {
       {/* Pipeline Breakdown */}
       {pipelines.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Pipelines</p>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Pipeline Breakdown</p>
           {pipelines.map(([pipelineName, summary]) => (
             <div key={pipelineName} className="bg-white rounded-xl border border-slate-100 overflow-hidden">
               <button
@@ -191,41 +258,20 @@ export default function GHLLeads({ client }) {
         </div>
       )}
 
-      {/* Lead Sources */}
-      {sources.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-100 p-4">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Top Lead Sources</p>
-          <div className="space-y-2">
-            {sources.map(([source, count]) => (
-              <div key={source} className="flex items-center gap-3">
-                <p className="text-sm text-slate-700 flex-1 capitalize">{source}</p>
-                <div className="flex items-center gap-2">
-                  <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-violet-400 rounded-full"
-                      style={{ width: `${Math.min(100, (count / data.total_opportunities) * 100)}%` }}
-                    />
-                  </div>
-                  <span className="text-xs text-slate-500 w-6 text-right">{count}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Recent Opportunities */}
-      {data.recent_opportunities?.length > 0 && (
+      {/* Opportunities List */}
+      {monthData.opportunities?.length > 0 && (
         <div className="bg-white rounded-xl border border-slate-100 overflow-hidden">
           <div className="px-4 py-3 border-b border-slate-50">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Recent Opportunities</p>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Opportunities — {formatMonth(selectedMonth)}
+            </p>
           </div>
           <div className="divide-y divide-slate-50">
-            {data.recent_opportunities.map(opp => (
+            {monthData.opportunities.map(opp => (
               <div key={opp.id} className="flex items-center justify-between px-4 py-2.5">
                 <div>
                   <p className="text-sm font-medium text-slate-700">{opp.name}</p>
-                  <p className="text-xs text-slate-400">{opp.contactName} · {opp.pipeline}</p>
+                  <p className="text-xs text-slate-400">{opp.contactName} · {opp.source || 'No source'}</p>
                 </div>
                 <div className="text-right flex flex-col items-end gap-1">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${statusStyles[opp.status] || statusStyles.open}`}>
