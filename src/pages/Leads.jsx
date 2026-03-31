@@ -29,6 +29,7 @@ export default function Leads() {
   const [form, setForm] = useState({});
   const [user, setUser] = useState(null);
   const [ghlData, setGhlData] = useState(null);
+  const [ghlError, setGhlError] = useState(null);
   const [ghlLoading, setGhlLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
@@ -46,11 +47,16 @@ export default function Leads() {
 
   useEffect(() => {
     setGhlData(null);
+    setGhlError(null);
     if (!selectedClient?.ghl_location_id) return;
+    if (!selectedClient?.ghl_api_key) { setGhlError('No GHL API Key set for this client. Edit the client and add the GHL API Key.'); return; }
     setGhlLoading(true);
     base44.functions.invoke('ghlLeads', { location_id: selectedClient.ghl_location_id, api_key: selectedClient.ghl_api_key })
-      .then(res => setGhlData(res.data))
-      .catch(() => setGhlData(null))
+      .then(res => {
+        if (res.data?.error) { setGhlError(res.data.error); setGhlData(null); }
+        else setGhlData(res.data);
+      })
+      .catch(e => setGhlError(e?.message || 'Unknown error'))
       .finally(() => setGhlLoading(false));
   }, [selectedClientId]);
 
@@ -181,7 +187,7 @@ export default function Leads() {
             </>
           )}
           {!ghlLoading && !ghlData && (
-            <p className="text-slate-400 text-sm">Could not load GHL data. Check the location ID or API key.</p>
+            <p className="text-red-400 text-sm">{ghlError || 'Could not load GHL data.'}</p>
           )}
         </div>
       )}
