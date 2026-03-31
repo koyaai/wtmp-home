@@ -19,25 +19,26 @@ Deno.serve(async (req) => {
 
     const baseUrl = 'https://services.leadconnectorhq.com';
 
-    // Fetch contacts with pagination
+    // Fetch contacts using POST search
     let allContacts = [];
-    let skip = 0;
-    let hasMore = true;
+    let contactsPage = 1;
+    let contactsHasMore = true;
 
-    while (hasMore && skip < 500) {
-      const res = await fetch(
-        `${baseUrl}/contacts/?locationId=${location_id}&limit=100&skip=${skip}`,
-        { headers }
-      );
+    while (contactsHasMore && contactsPage <= 5) {
+      const res = await fetch(`${baseUrl}/contacts/search`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ locationId: location_id, page: contactsPage, pageLimit: 100 })
+      });
       if (!res.ok) {
         const err = await res.text();
-        return Response.json({ error: `GHL API error: ${res.status} - ${err}` }, { status: res.status });
+        return Response.json({ error: `GHL contacts error: ${res.status} - ${err}` }, { status: 200 });
       }
       const data = await res.json();
       const contacts = data.contacts || [];
       allContacts = allContacts.concat(contacts);
-      hasMore = contacts.length === 100;
-      skip += 100;
+      contactsHasMore = contacts.length === 100;
+      contactsPage++;
     }
 
     // Fetch pipelines
@@ -61,6 +62,8 @@ Deno.serve(async (req) => {
         allOpportunities = allOpportunities.concat(opps);
         oppHasMore = opps.length === 100;
       } else {
+        const oppErr = await oppRes.text();
+        console.log(`Opportunities error ${oppRes.status}: ${oppErr}`);
         oppHasMore = false;
       }
       oppPage++;
@@ -109,6 +112,6 @@ Deno.serve(async (req) => {
       pipelines: pipelines.map(p => ({ id: p.id, name: p.name, stages: p.stages?.map(s => s.name) || [] })),
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    return Response.json({ error: error.message }, { status: 200 });
   }
 });
