@@ -16,14 +16,16 @@ Deno.serve(async (req) => {
       'Version': '2021-07-28',
     };
 
-    // Fetch contacts with pagination (up to 100 per page, get first few pages)
+    const baseUrl = 'https://services.leadconnectorhq.com';
+
+    // Fetch contacts with pagination
     let allContacts = [];
-    let page = 1;
+    let skip = 0;
     let hasMore = true;
 
-    while (hasMore && page <= 5) {
+    while (hasMore && skip < 500) {
       const res = await fetch(
-        `https://services.leadconnectorhq.com/contacts/?locationId=${location_id}&limit=100&startAfter=${(page - 1) * 100}`,
+        `${baseUrl}/contacts/?locationId=${location_id}&limit=100&skip=${skip}`,
         { headers }
       );
       if (!res.ok) {
@@ -34,25 +36,22 @@ Deno.serve(async (req) => {
       const contacts = data.contacts || [];
       allContacts = allContacts.concat(contacts);
       hasMore = contacts.length === 100;
-      page++;
+      skip += 100;
     }
 
-    // Fetch pipelines to get stages
-    const pipelineRes = await fetch(
-      `https://services.leadconnectorhq.com/opportunities/pipelines?locationId=${location_id}`,
-      { headers }
-    );
+    // Fetch pipelines
+    const pipelineRes = await fetch(`${baseUrl}/opportunities/pipelines?locationId=${location_id}`, { headers });
     const pipelineData = pipelineRes.ok ? await pipelineRes.json() : { pipelines: [] };
     const pipelines = pipelineData.pipelines || [];
 
-    // Fetch opportunities (leads in pipeline)
+    // Fetch opportunities
     let allOpportunities = [];
     let oppPage = 1;
     let oppHasMore = true;
 
     while (oppHasMore && oppPage <= 5) {
       const oppRes = await fetch(
-        `https://services.leadconnectorhq.com/opportunities/search?location_id=${location_id}&limit=100&page=${oppPage}`,
+        `${baseUrl}/opportunities/search?location_id=${location_id}&limit=100&page=${oppPage}`,
         { headers }
       );
       if (oppRes.ok) {
