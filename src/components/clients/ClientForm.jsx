@@ -19,7 +19,7 @@ export default function ClientForm({ initial, onSave, onCancel }) {
     name: "", contact_name: "", contact_email: "", contact_phone: "",
     website: "", location: "", status: "active", services: [],
     retainer_fee: "", start_date: "", csm_assigned: "",
-    google_search_console_url: "", gbp_url: "", ghl_location_id: "",
+    google_search_console_url: "", gbp_url: "", ghl_location_id: "", ghl_api_key: "",
     google_ads_account_id: "", ga_property_id: "", wordpress_url: "", wordpress_username: "",
     wordpress_app_password: "", notes: "",
     ...initial,
@@ -103,6 +103,7 @@ export default function ClientForm({ initial, onSave, onCancel }) {
         <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">Integration IDs</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="GHL Location ID" name="ghl_location_id" placeholder="abc123..." value={form.ghl_location_id} onChange={set} />
+          <Field label="GHL API Key" name="ghl_api_key" placeholder="eyJ..." value={form.ghl_api_key} onChange={set} />
           <Field label="Google Ads Account ID" name="google_ads_account_id" placeholder="123-456-7890" value={form.google_ads_account_id} onChange={set} />
           <Field label="Google Search Console URL" name="google_search_console_url" placeholder="https://..." value={form.google_search_console_url} onChange={set} />
           <Field label="Google Business Profile URL" name="gbp_url" placeholder="https://..." value={form.gbp_url} onChange={set} />

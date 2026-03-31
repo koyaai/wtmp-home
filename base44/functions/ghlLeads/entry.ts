@@ -6,10 +6,11 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { location_id } = await req.json();
+    const { location_id, api_key } = await req.json();
     if (!location_id) return Response.json({ error: 'location_id is required' }, { status: 400 });
+    if (!api_key) return Response.json({ error: 'api_key is required' }, { status: 400 });
 
-    const apiKey = Deno.env.get('GHL_API_KEY');
+    const apiKey = api_key;
     const headers = {
       'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',

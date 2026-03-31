@@ -1,0 +1,117 @@
+{
+  "name": "Client",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Client/business name"
+    },
+    "contact_name": {
+      "type": "string",
+      "description": "Primary contact person"
+    },
+    "contact_email": {
+      "type": "string",
+      "description": "Primary contact email"
+    },
+    "contact_phone": {
+      "type": "string",
+      "description": "Primary contact phone"
+    },
+    "website": {
+      "type": "string",
+      "description": "Client website URL"
+    },
+    "location": {
+      "type": "string",
+      "description": "City, State"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "onboarding",
+        "paused",
+        "churned"
+      ],
+      "default": "active"
+    },
+    "program": {
+      "type": "string",
+      "enum": [
+        "Growth",
+        "Outshine",
+        "Rocketfuel"
+      ],
+      "description": "Client program tier"
+    },
+    "services": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "SEO",
+          "PPC",
+          "Social Media",
+          "Web Design",
+          "GHL Automations",
+          "Customer Success"
+        ]
+      },
+      "description": "Active services"
+    },
+    "retainer_fee": {
+      "type": "number",
+      "description": "Monthly retainer in USD"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "csm_assigned": {
+      "type": "string",
+      "description": "Assigned CSM email"
+    },
+    "google_search_console_url": {
+      "type": "string"
+    },
+    "gbp_url": {
+      "type": "string",
+      "description": "Google Business Profile URL"
+    },
+    "ghl_location_id": {
+      "type": "string",
+      "description": "Go High Level location ID"
+    },
+    "ghl_api_key": {
+      "type": "string",
+      "description": "Go High Level API key for this location"
+    },
+    "google_ads_account_id": {
+      "type": "string"
+    },
+    "ga_property_id": {
+      "type": "string",
+      "description": "Google Analytics 4 Property ID (e.g. 123456789)"
+    },
+    "wordpress_url": {
+      "type": "string",
+      "description": "WordPress site URL (e.g. https://clientsite.com)"
+    },
+    "wordpress_username": {
+      "type": "string",
+      "description": "WordPress username for REST API auth"
+    },
+    "wordpress_app_password": {
+      "type": "string",
+      "description": "WordPress Application Password for REST API (not the login password)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "General notes"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

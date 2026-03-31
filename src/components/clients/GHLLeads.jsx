@@ -26,7 +26,7 @@ export default function GHLLeads({ client }) {
   const fetchData = async () => {
     setLoading(true);
     setError(null);
-    const res = await base44.functions.invoke("ghlLeads", { location_id: client.ghl_location_id });
+    const res = await base44.functions.invoke("ghlLeads", { location_id: client.ghl_location_id, api_key: client.ghl_api_key });
     if (res.data?.error) {
       setError(res.data.error);
     } else {
@@ -40,13 +40,13 @@ export default function GHLLeads({ client }) {
 
   useEffect(() => {
     if (client.ghl_location_id) fetchData();
-  }, [client.ghl_location_id]);
+  }, [client.ghl_location_id, client.ghl_api_key]);
 
-  if (!client.ghl_location_id) {
+  if (!client.ghl_location_id || !client.ghl_api_key) {
     return (
       <div className="bg-white rounded-2xl border border-slate-100 p-8 text-center">
-        <p className="text-slate-400 text-sm">No GHL Location ID set for this client.</p>
-        <p className="text-slate-400 text-xs mt-1">Add it in the client edit form to enable GHL sync.</p>
+        <p className="text-slate-400 text-sm">No GHL Location ID or API Key set for this client.</p>
+        <p className="text-slate-400 text-xs mt-1">Add both in the client edit form to enable GHL sync.</p>
       </div>
     );
   }
