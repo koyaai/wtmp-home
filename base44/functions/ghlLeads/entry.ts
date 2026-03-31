@@ -10,106 +10,93 @@ Deno.serve(async (req) => {
     if (!location_id) return Response.json({ error: 'location_id is required' }, { status: 400 });
     if (!api_key) return Response.json({ error: 'api_key is required' }, { status: 400 });
 
-    const apiKey = api_key;
     const headers = {
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${api_key}`,
       'Content-Type': 'application/json',
       'Version': '2021-07-28',
     };
 
     const baseUrl = 'https://services.leadconnectorhq.com';
 
-    // Fetch contacts using POST search
-    let allContacts = [];
-    let contactsPage = 1;
-    let contactsHasMore = true;
-
-    while (contactsHasMore && contactsPage <= 5) {
-      const res = await fetch(`${baseUrl}/contacts/search`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ locationId: location_id, page: contactsPage, pageLimit: 100 })
-      });
-      if (!res.ok) {
-        const err = await res.text();
-        return Response.json({ error: `GHL contacts error: ${res.status} - ${err}` }, { status: 200 });
-      }
-      const data = await res.json();
-      const contacts = data.contacts || [];
-      allContacts = allContacts.concat(contacts);
-      contactsHasMore = contacts.length === 100;
-      contactsPage++;
-    }
-
-    // Fetch pipelines
-    const pipelineRes = await fetch(`${baseUrl}/opportunities/pipelines?locationId=${location_id}`, { headers });
-    const pipelineData = pipelineRes.ok ? await pipelineRes.json() : { pipelines: [] };
-    const pipelines = pipelineData.pipelines || [];
-
-    // Fetch opportunities
+    // Fetch opportunities (these are the actual leads)
     let allOpportunities = [];
     let oppPage = 1;
     let oppHasMore = true;
 
-    while (oppHasMore && oppPage <= 5) {
+    while (oppHasMore && oppPage <= 10) {
       const oppRes = await fetch(
         `${baseUrl}/opportunities/search?location_id=${location_id}&limit=100&page=${oppPage}`,
         { headers }
       );
-      if (oppRes.ok) {
-        const oppData = await oppRes.json();
-        const opps = oppData.opportunities || [];
-        allOpportunities = allOpportunities.concat(opps);
-        oppHasMore = opps.length === 100;
-      } else {
-        const oppErr = await oppRes.text();
-        console.log(`Opportunities error ${oppRes.status}: ${oppErr}`);
-        oppHasMore = false;
+      if (!oppRes.ok) {
+        const err = await oppRes.text();
+        return Response.json({ error: `GHL opportunities error: ${oppRes.status} - ${err}` }, { status: 200 });
       }
+      const oppData = await oppRes.json();
+      const opps = oppData.opportunities || [];
+      allOpportunities = allOpportunities.concat(opps);
+      oppHasMore = opps.length === 100;
       oppPage++;
     }
 
-    // Summarize opportunities by stage
-    const stageCounts = {};
+    // Summarize by pipeline and stage
     const pipelineSummary = {};
+    let totalWonRevenue = 0;
+    const sourceCounts = {};
 
     for (const opp of allOpportunities) {
-      const stageName = opp.stage?.name || 'Unknown';
-      stageCounts[stageName] = (stageCounts[stageName] || 0) + 1;
-
       const pipelineName = opp.pipeline?.name || 'Default';
+      const stageName = opp.stage?.name || 'Unknown';
+      const status = opp.status || 'open';
+      const value = opp.monetaryValue || 0;
+
       if (!pipelineSummary[pipelineName]) {
-        pipelineSummary[pipelineName] = { total: 0, won: 0, lost: 0, open: 0, stages: {} };
+        pipelineSummary[pipelineName] = { total: 0, won: 0, lost: 0, open: 0, stages: {}, revenue_won: 0 };
       }
       pipelineSummary[pipelineName].total++;
-      if (opp.status === 'won') pipelineSummary[pipelineName].won++;
-      else if (opp.status === 'lost') pipelineSummary[pipelineName].lost++;
-      else pipelineSummary[pipelineName].open++;
-
       pipelineSummary[pipelineName].stages[stageName] = (pipelineSummary[pipelineName].stages[stageName] || 0) + 1;
+
+      if (status === 'won') {
+        pipelineSummary[pipelineName].won++;
+        pipelineSummary[pipelineName].revenue_won += value;
+        totalWonRevenue += value;
+      } else if (status === 'lost') {
+        pipelineSummary[pipelineName].lost++;
+      } else {
+        pipelineSummary[pipelineName].open++;
+      }
+
+      // Track lead sources
+      if (opp.source) {
+        sourceCounts[opp.source] = (sourceCounts[opp.source] || 0) + 1;
+      }
     }
 
-    // Recent contacts (last 10)
-    const recentContacts = allContacts
-      .sort((a, b) => new Date(b.dateAdded || 0) - new Date(a.dateAdded || 0))
+    // Recent 10 opportunities
+    const recentOpportunities = allOpportunities
+      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
       .slice(0, 10)
-      .map(c => ({
-        id: c.id,
-        name: `${c.firstName || ''} ${c.lastName || ''}`.trim() || c.email || 'Unknown',
-        email: c.email,
-        phone: c.phone,
-        source: c.source,
-        dateAdded: c.dateAdded,
-        tags: c.tags || [],
+      .map(o => ({
+        id: o.id,
+        name: o.name || 'Unnamed',
+        contactName: o.contact?.name || `${o.contact?.firstName || ''} ${o.contact?.lastName || ''}`.trim() || 'Unknown',
+        stage: o.stage?.name || 'Unknown',
+        pipeline: o.pipeline?.name || 'Default',
+        status: o.status || 'open',
+        value: o.monetaryValue || 0,
+        source: o.source || null,
+        createdAt: o.createdAt,
       }));
 
     return Response.json({
-      total_contacts: allContacts.length,
       total_opportunities: allOpportunities.length,
+      total_won: allOpportunities.filter(o => o.status === 'won').length,
+      total_lost: allOpportunities.filter(o => o.status === 'lost').length,
+      total_open: allOpportunities.filter(o => o.status !== 'won' && o.status !== 'lost').length,
+      total_won_revenue: totalWonRevenue,
       pipeline_summary: pipelineSummary,
-      stage_counts: stageCounts,
-      recent_contacts: recentContacts,
-      pipelines: pipelines.map(p => ({ id: p.id, name: p.name, stages: p.stages?.map(s => s.name) || [] })),
+      source_counts: sourceCounts,
+      recent_opportunities: recentOpportunities,
     });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 200 });
