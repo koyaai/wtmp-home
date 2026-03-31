@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { ArrowLeft, Edit, Trash2, Globe, Phone, Mail, MapPin, DollarSign, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Globe, Phone, Mail, MapPin, DollarSign, Plus, ChevronDown, ChevronUp, Info } from "lucide-react";
+import HealthBadge from "@/components/clients/HealthBadge";
 import { Button } from "@/components/ui/button";
 import MeetingNotes from "@/components/clients/MeetingNotes";
 import CSMUpdates from "@/components/clients/CSMUpdates";
@@ -31,7 +32,7 @@ const serviceColors = {
   "Customer Success": "bg-emerald-100 text-emerald-700",
 };
 
-export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit, userRole }) {
+export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit, userRole, health }) {
   const [activeTab, setActiveTab] = useState("snapshot");
 
   const showFinancials = ["leadership"].includes(userRole);
@@ -54,11 +55,21 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
             </div>
             <div>
               <h1 className="text-xl font-bold text-slate-800">{client.name}</h1>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex items-center flex-wrap gap-2 mt-1">
                 <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium capitalize ${statusColors[client.status]}`}>{client.status}</span>
-                  {client.program && <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${programColors[client.program]}`}>{client.program}</span>}
-                  {client.location && <span className="text-xs text-slate-500 flex items-center gap-1"><MapPin className="w-3 h-3" />{client.location}</span>}
+                {client.program && <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${programColors[client.program]}`}>{client.program}</span>}
+                {client.location && <span className="text-xs text-slate-500 flex items-center gap-1"><MapPin className="w-3 h-3" />{client.location}</span>}
+                {health && <HealthBadge score={health.score} showDot />}
               </div>
+              {health && health.reasons?.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {health.reasons.map((r, i) => (
+                    <span key={i} className="text-xs text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                      <Info className="w-3 h-3 text-slate-400" /> {r}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           {canEdit && (

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
+import HealthBadge from "@/components/clients/HealthBadge";
 
 const statusColors = {
   active: "bg-emerald-400",
@@ -14,7 +15,7 @@ const programColors = {
   Rocketfuel: "bg-orange-100 text-orange-700",
 };
 
-export default function ClientList({ clients, selectedId, onSelect }) {
+export default function ClientList({ clients, selectedId, onSelect, healthMap = {} }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [programFilter, setProgramFilter] = useState("all");
@@ -69,7 +70,10 @@ export default function ClientList({ clients, selectedId, onSelect }) {
                 <div className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white ${statusColors[client.status] || "bg-slate-400"}`} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-slate-800 truncate">{client.name}</p>
+                <div className="flex items-center justify-between gap-1">
+                  <p className="text-sm font-medium text-slate-800 truncate">{client.name}</p>
+                  {healthMap[client.id] && <HealthBadge score={healthMap[client.id].score} showDot />}
+                </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <p className="text-xs text-slate-400 truncate">{client.location || "No location"}</p>
                   {client.program && (
