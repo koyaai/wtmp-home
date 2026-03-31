@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Loader2, TrendingUp, Trophy, XCircle, RefreshCw, ChevronDown, ChevronUp, DollarSign, Circle } from "lucide-react";
+import { Loader2, TrendingUp, Trophy, XCircle, RefreshCw, ChevronDown, ChevronUp, DollarSign, Circle, DatabaseZap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 function StatCard({ label, value, icon: Icon, color }) {
@@ -28,6 +28,17 @@ export default function GHLLeads({ client }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [expandedPipeline, setExpandedPipeline] = useState(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState(null);
+
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncResult(null);
+    const res = await base44.functions.invoke('syncGHLLeads', {});
+    setSyncResult(res.data?.results?.find(r => r.client === client.name) || { action: 'done' });
+    setSyncing(false);
+    fetchData(); // refresh display
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -88,9 +99,20 @@ export default function GHLLeads({ client }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-semibold text-slate-700">GHL Pipeline Data</h3>
-        <Button size="sm" variant="outline" onClick={fetchData} className="h-7 text-xs gap-1">
-          <RefreshCw className="w-3 h-3" /> Refresh
-        </Button>
+        <div className="flex gap-2">
+          {syncResult && (
+            <span className="text-xs text-emerald-600 font-medium self-center">
+              {syncResult.action === 'error' ? '⚠ Sync failed' : syncResult.action === 'created' ? '✓ Lead record created' : '✓ Lead record updated'}
+            </span>
+          )}
+          <Button size="sm" variant="outline" onClick={handleSync} disabled={syncing} className="h-7 text-xs gap-1">
+            {syncing ? <Loader2 className="w-3 h-3 animate-spin" /> : <DatabaseZap className="w-3 h-3" />}
+            {syncing ? 'Syncing…' : 'Sync to Leads'}
+          </Button>
+          <Button size="sm" variant="outline" onClick={fetchData} className="h-7 text-xs gap-1">
+            <RefreshCw className="w-3 h-3" /> Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Summary Stats */}
