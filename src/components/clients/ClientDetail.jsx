@@ -8,7 +8,7 @@ import CSMUpdates from "@/components/clients/CSMUpdates";
 import ClientTracker from "@/components/clients/ClientTracker";
 import ClientSnapshot from "@/components/clients/ClientSnapshot";
 import ClientScore from "@/components/clients/ClientScore";
-import GHLLeads from "@/components/clients/GHLLeads";
+
 
 const programColors = {
   Growth: "bg-emerald-100 text-emerald-700",
@@ -37,7 +37,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
 
   const showFinancials = ["leadership"].includes(userRole);
 
-  const tabs = ["snapshot", "overview", "tracker", "meetings", "updates", "score", ...(client.ghl_location_id ? ["leads"] : [])];
+  const tabs = ["snapshot", "overview", "tracker", "meetings", "updates", "score"];
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-5">
@@ -165,7 +165,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
       {activeTab === "meetings" && <MeetingNotes clientId={client.id} canEdit={canEdit} />}
       {activeTab === "updates" && <CSMUpdates clientId={client.id} canEdit={canEdit} />}
       {activeTab === "score" && <ClientScore clientId={client.id} clientName={client.name} />}
-      {activeTab === "leads" && <GHLLeads client={client} />}
+
     </div>
   );
 }

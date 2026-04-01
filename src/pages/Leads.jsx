@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, TrendingUp, Users, Calendar, DollarSign, X, RefreshCw, Zap, CheckCircle, XCircle } from "lucide-react";
+import { Plus, TrendingUp, Users, Calendar, DollarSign, X } from "lucide-react";
+import GHLLeads from "@/components/clients/GHLLeads";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
@@ -28,9 +29,6 @@ export default function Leads() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({});
   const [user, setUser] = useState(null);
-  const [ghlData, setGhlData] = useState(null);
-  const [ghlError, setGhlError] = useState(null);
-  const [ghlLoading, setGhlLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
@@ -45,37 +43,9 @@ export default function Leads() {
 
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
-  useEffect(() => {
-    setGhlData(null);
-    setGhlError(null);
-    if (!selectedClient?.ghl_location_id) return;
-    if (!selectedClient?.ghl_api_key) { setGhlError('No GHL API Key set for this client. Edit the client and add the GHL API Key.'); return; }
-    setGhlLoading(true);
-    base44.functions.invoke('ghlLeads', { location_id: selectedClient.ghl_location_id, api_key: selectedClient.ghl_api_key })
-      .then(res => {
-        if (res.data?.error) { setGhlError(res.data.error); setGhlData(null); }
-        else setGhlData(res.data);
-      })
-      .catch(e => setGhlError(e?.message || 'Unknown error'))
-      .finally(() => setGhlLoading(false));
-  }, [selectedClientId]);
 
-  const handleSyncFromGHL = async () => {
-    if (!ghlData || !selectedClientId) return;
-    setSyncing(true);
-    const totalWon = Object.values(ghlData.pipeline_summary || {}).reduce((sum, p) => sum + (p.won || 0), 0);
-    const today = new Date().toISOString().split('T')[0];
-    await base44.entities.LeadData.create({
-      client_id: selectedClientId,
-      report_date: today,
-      total_leads: ghlData.total_contacts || 0,
-      qualified_leads: ghlData.total_opportunities || 0,
-      closed_deals: totalWon,
-      notes: 'Synced from GHL',
-    });
-    base44.entities.LeadData.filter({ client_id: selectedClientId }, '-report_date', 12).then(setLeadData);
-    setSyncing(false);
-  };
+
+
 
   useEffect(() => {
     if (!selectedClientId) return;
@@ -127,69 +97,9 @@ export default function Leads() {
         </div>
       </div>
 
-      {/* Live GHL Panel */}
+      {/* GHL Monthly Data */}
       {selectedClient?.ghl_location_id && (
-        <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-yellow-400" />
-              <span className="font-semibold text-sm">Live GHL Data</span>
-              {ghlLoading && <RefreshCw className="w-3.5 h-3.5 text-slate-400 animate-spin" />}
-            </div>
-            {canEdit && ghlData && (
-              <Button size="sm" className="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-semibold h-7 text-xs"
-                onClick={handleSyncFromGHL} disabled={syncing}>
-                {syncing ? <><RefreshCw className="w-3 h-3 mr-1 animate-spin" />Saving...</> : <><RefreshCw className="w-3 h-3 mr-1" />Sync Snapshot</>}
-              </Button>
-            )}
-          </div>
-          {ghlLoading && <p className="text-slate-400 text-sm">Fetching from GHL...</p>}
-          {!ghlLoading && ghlData && (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-                {[
-                  { label: "Total Contacts", value: ghlData.total_contacts },
-                  { label: "Opportunities", value: ghlData.total_opportunities },
-                  { label: "Won", value: Object.values(ghlData.pipeline_summary || {}).reduce((s, p) => s + (p.won || 0), 0) },
-                  { label: "Open", value: Object.values(ghlData.pipeline_summary || {}).reduce((s, p) => s + (p.open || 0), 0) },
-                ].map(m => (
-                  <div key={m.label} className="bg-white/10 rounded-xl p-3">
-                    <p className="text-xs text-slate-400">{m.label}</p>
-                    <p className="text-2xl font-bold mt-0.5">{m.value ?? '—'}</p>
-                  </div>
-                ))}
-              </div>
-              {/* Pipeline breakdown */}
-              {Object.entries(ghlData.pipeline_summary || {}).map(([name, p]) => (
-                <div key={name} className="mb-3">
-                  <p className="text-xs text-slate-400 mb-1.5 font-medium">{name}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {Object.entries(p.stages || {}).map(([stage, count]) => (
-                      <span key={stage} className="text-xs bg-white/10 px-2 py-1 rounded-lg">{stage}: <b>{count}</b></span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-              {/* Recent contacts */}
-              {ghlData.recent_contacts?.length > 0 && (
-                <div className="mt-3 border-t border-white/10 pt-3">
-                  <p className="text-xs text-slate-400 mb-2">Recent Contacts</p>
-                  <div className="space-y-1.5">
-                    {ghlData.recent_contacts.slice(0, 5).map(c => (
-                      <div key={c.id} className="flex items-center justify-between text-xs">
-                        <span className="text-white font-medium">{c.name}</span>
-                        <span className="text-slate-400">{c.source || 'Unknown source'} · {c.dateAdded ? new Date(c.dateAdded).toLocaleDateString() : ''}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-          {!ghlLoading && !ghlData && (
-            <p className="text-red-400 text-sm">{ghlError || 'Could not load GHL data.'}</p>
-          )}
-        </div>
+        <GHLLeads client={selectedClient} />
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
