@@ -7,6 +7,8 @@ import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import WebsiteContentCreator from '@/pages/WebsiteContentCreator';
+import TermsOfService from '@/pages/TermsOfService';
+import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import ClientInsights from '@/pages/ClientInsights';
 import Reporting from '@/pages/Reporting';
 import ClientReportPublic from '@/pages/ClientReportPublic';
@@ -65,6 +67,8 @@ const AuthenticatedApp = () => {
       <Route path="/ClientInsights" element={<LayoutWrapper currentPageName="ClientInsights"><ClientInsights /></LayoutWrapper>} />
       <Route path="/Reporting" element={<LayoutWrapper currentPageName="Reporting"><Reporting /></LayoutWrapper>} />
       <Route path="/report/:clientId" element={<ClientReportPublic />} />
+      <Route path="/terms-of-service" element={<TermsOfService />} />
+      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
