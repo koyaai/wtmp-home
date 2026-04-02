@@ -2,11 +2,10 @@ export default function TermsOfService() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-3xl mx-auto px-6 py-16">
-        {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
+              <span className="text-white font-bold text-sm">W</span>
             </div>
             <span className="font-bold text-slate-800 text-lg">WTMP Home</span>
           </div>
@@ -14,62 +13,62 @@ export default function TermsOfService() {
           <p className="text-slate-500 text-sm">Last updated: April 2, 2026</p>
         </div>
 
-        <div className="prose prose-slate max-w-none space-y-8 text-slate-700 text-sm leading-relaxed">
+        <div className="space-y-8 text-slate-700 text-sm leading-relaxed">
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">1. Acceptance of Terms</h2>
-            <p>By accessing or using WTMP Home ("the Platform"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Platform. These terms apply to all users, including agency staff and administrators.</p> ("the Platform"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Platform. These terms apply to all users, including agency staff and administrators.</p>
+            <p>By accessing or using WTMP Home ("the Platform"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Platform. These terms apply to all users, including agency staff and administrators.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">2. Description of Service</h2>
-            <p>WTMP Home is an internal agency management platform designed for use by authorized agency personnel. It provides tools for client management, SEO reporting, PPC tracking, lead tracking, content creation, and integration with third-party platforms including Google and GoHighLevel (GHL).</p> designed for use by authorized agency personnel. It provides tools for client management, SEO reporting, PPC tracking, lead tracking, content creation, and integration with third-party platforms including Google and GoHighLevel (GHL).</p>
+            <p>WTMP Home is an internal agency management platform designed for use by authorized agency personnel. It provides tools for client management, SEO reporting, PPC tracking, lead tracking, content creation, and integration with third-party platforms including Google and GoHighLevel (GHL).</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">3. Authorized Use</h2>
-            <p>Access to the Platform is restricted to authorized agency employees and contractors who have been granted access by an administrator. You agree to:</p>
+            <p>Access to the Platform is restricted to authorized agency staff only. Users must:</p>
             <ul className="list-disc pl-5 space-y-1 mt-2">
-              <li>Keep your login credentials confidential</li>
-              <li>Not share access with unauthorized individuals</li>
+              <li>Keep login credentials confidential and not share access with unauthorized individuals</li>
               <li>Use the Platform solely for legitimate agency business purposes</li>
-              <li>Not attempt to reverse engineer, copy, or redistribute the Platform</li>
+              <li>Comply with all applicable laws and regulations when using the Platform</li>
+              <li>Report any unauthorized access or security vulnerabilities to an administrator immediately</li>
             </ul>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">4. Client Data</h2>
-            <p>The Platform stores and processes data belonging to the agency's clients. All users are responsible for handling client data in accordance with applicable privacy laws and the agency's internal data handling policies. Client data must not be shared outside the Platform without proper authorization.</p>
+            <p>Users are responsible for the accuracy and legality of all client data entered into the Platform. The Platform stores sensitive client information including contact details, API credentials, and performance metrics. Users must handle this data with care and in compliance with applicable privacy laws.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">5. Third-Party Integrations</h2>
-            <p>The Platform integrates with third-party services including Google Search Console, Google Analytics, Google Ads, and GoHighLevel. Your use of these integrations is also subject to the respective third-party terms of service. We are not responsible for changes, outages, or limitations imposed by these third-party platforms.</p>
+            <p>The Platform integrates with third-party services including Google Search Console, Google Analytics, Google Ads, and GoHighLevel. Use of these integrations is subject to each provider's own terms of service. The agency is not responsible for disruptions or changes made by third-party providers.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">6. Intellectual Property</h2>
-            <p>All content, features, and functionality of the Platform are the exclusive property of the agency. Unauthorized reproduction, distribution, or modification of any part of the Platform is strictly prohibited.</p>. Unauthorized reproduction, distribution, or modification of any part of the Platform is strictly prohibited.</p>
+            <p>All content, features, and functionality of the Platform are the exclusive property of the agency. Unauthorized reproduction, distribution, or modification of any part of the Platform is strictly prohibited.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">7. Limitation of Liability</h2>
-            <p>The Platform is provided "as is." We make no warranties, expressed or implied, regarding accuracy, reliability, or fitness for a particular purpose. We shall not be liable for any indirect, incidental, or consequential damages arising from your use of the Platform.</p>
+            <p>The Platform is provided "as is" without warranties of any kind. The agency is not liable for any indirect, incidental, or consequential damages arising from the use or inability to use the Platform, including data loss or service interruptions.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">8. Termination</h2>
-            <p>Access to the Platform may be revoked at any time by an administrator without notice if a user is found to be in violation of these terms or for any other business reason.</p>
+            <p>Access to the Platform may be revoked at any time for violations of these terms or at the discretion of agency administration. Upon termination, users must cease all use of the Platform immediately.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">9. Changes to Terms</h2>
-            <p>We reserve the right to update these Terms of Service at any time. Continued use of the Platform after changes are posted constitutes acceptance of the revised terms.</p>
+            <p>These Terms of Service may be updated from time to time. Continued use of the Platform after changes are posted constitutes acceptance of the revised terms. Users are encouraged to review this page periodically.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">10. Contact</h2>
-            <p>If you have questions about these Terms of Service, please contact your agency administrator.</p>
+            <p>If you have any questions about these Terms of Service, please contact your agency administrator.</p>
           </section>
 
         </div>
