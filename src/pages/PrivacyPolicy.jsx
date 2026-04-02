@@ -2,23 +2,22 @@ export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="max-w-3xl mx-auto px-6 py-16">
-        {/* Header */}
         <div className="mb-10">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center">
-              <span className="text-white font-bold text-sm">A</span>
+              <span className="text-white font-bold text-sm">W</span>
             </div>
-            <span className="font-bold text-slate-800 text-lg">AgencyOS</span>
+            <span className="font-bold text-slate-800 text-lg">WTMP Home</span>
           </div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Privacy Policy</h1>
           <p className="text-slate-500 text-sm">Last updated: April 2, 2026</p>
         </div>
 
-        <div className="prose prose-slate max-w-none space-y-8 text-slate-700 text-sm leading-relaxed">
+        <div className="space-y-8 text-slate-700 text-sm leading-relaxed">
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">1. Overview</h2>
-            <p>This Privacy Policy describes how AgencyOS ("the Platform") collects, uses, and protects information in connection with its use by authorized agency personnel. We are committed to maintaining the privacy and security of all data processed through the Platform.</p>
+            <p>This Privacy Policy describes how WTMP Home ("the Platform") collects, uses, and protects information in connection with its use by authorized agency personnel. We are committed to maintaining the privacy and security of all data processed through the Platform.</p>
           </section>
 
           <section>
@@ -98,7 +97,7 @@ export default function PrivacyPolicy() {
         <div className="mt-12 pt-8 border-t border-slate-200 flex gap-4 text-xs text-slate-400">
           <a href="/terms-of-service" className="hover:text-slate-600 transition-colors">Terms of Service</a>
           <span>·</span>
-          <span>© 2026 AgencyOS. All rights reserved.</span>
+          <span>© 2026 WTMP Home. All rights reserved.</span>
         </div>
       </div>
     </div>

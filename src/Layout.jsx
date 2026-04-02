@@ -83,7 +83,7 @@ export default function Layout({ children, currentPageName }) {
         </div>
         {!collapsed && (
           <div>
-            <p className="text-white font-bold text-sm leading-tight">AgencyOS</p>
+            <p className="text-white font-bold text-sm leading-tight">WTMP Home</p>
             <p className="text-blue-300 text-xs">Window Treatment Hub</p>
           </div>
         )}
@@ -209,7 +209,7 @@ export default function Layout({ children, currentPageName }) {
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center">
               <Blinds className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-slate-800 text-sm">AgencyOS</span>
+            <span className="font-bold text-slate-800 text-sm">WTMP Home</span>
           </div>
         </header>
 

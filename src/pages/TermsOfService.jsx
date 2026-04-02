@@ -8,7 +8,7 @@ export default function TermsOfService() {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center">
               <span className="text-white font-bold text-sm">A</span>
             </div>
-            <span className="font-bold text-slate-800 text-lg">AgencyOS</span>
+            <span className="font-bold text-slate-800 text-lg">WTMP Home</span>
           </div>
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Terms of Service</h1>
           <p className="text-slate-500 text-sm">Last updated: April 2, 2026</p>
@@ -18,12 +18,12 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">1. Acceptance of Terms</h2>
-            <p>By accessing or using AgencyOS ("the Platform"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Platform. These terms apply to all users, including agency staff and administrators.</p>
+            <p>By accessing or using WTMP Home ("the Platform"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Platform. These terms apply to all users, including agency staff and administrators.</p> ("the Platform"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use the Platform. These terms apply to all users, including agency staff and administrators.</p>
           </section>
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">2. Description of Service</h2>
-            <p>AgencyOS is an internal agency management platform designed for use by authorized agency personnel. It provides tools for client management, SEO reporting, PPC tracking, lead tracking, content creation, and integration with third-party platforms including Google and GoHighLevel (GHL).</p>
+            <p>WTMP Home is an internal agency management platform designed for use by authorized agency personnel. It provides tools for client management, SEO reporting, PPC tracking, lead tracking, content creation, and integration with third-party platforms including Google and GoHighLevel (GHL).</p> designed for use by authorized agency personnel. It provides tools for client management, SEO reporting, PPC tracking, lead tracking, content creation, and integration with third-party platforms including Google and GoHighLevel (GHL).</p>
           </section>
 
           <section>
@@ -49,7 +49,7 @@ export default function TermsOfService() {
 
           <section>
             <h2 className="text-lg font-semibold text-slate-800 mb-2">6. Intellectual Property</h2>
-            <p>All content, features, and functionality of the Platform are the exclusive property of the agency. Unauthorized reproduction, distribution, or modification of any part of the Platform is strictly prohibited.</p>
+            <p>All content, features, and functionality of the Platform are the exclusive property of the agency. Unauthorized reproduction, distribution, or modification of any part of the Platform is strictly prohibited.</p>. Unauthorized reproduction, distribution, or modification of any part of the Platform is strictly prohibited.</p>
           </section>
 
           <section>
@@ -77,7 +77,7 @@ export default function TermsOfService() {
         <div className="mt-12 pt-8 border-t border-slate-200 flex gap-4 text-xs text-slate-400">
           <a href="/privacy-policy" className="hover:text-slate-600 transition-colors">Privacy Policy</a>
           <span>·</span>
-          <span>© 2026 AgencyOS. All rights reserved.</span>
+          <span>© 2026 WTMP Home. All rights reserved.</span>
         </div>
       </div>
     </div>
