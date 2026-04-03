@@ -228,6 +228,18 @@ export default function Reporting() {
   const now = new Date();
   const [clients, setClients] = useState([]);
   const [mainTab, setMainTab] = useState("reports"); // "reports" | "scheduled"
+  const [view, setView] = useState("list"); // "list" | "new" | "existing"
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [report, setReport] = useState(null);
+  const [savedReports, setSavedReports] = useState([]);
+  const [loadingReports, setLoadingReports] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [seoFile, setSeoFile] = useState(null);
+  const [ppcFile, setPpcFile] = useState(null);
+  const [dateRange, setDateRange] = useState("");
+  const [savedReportId, setSavedReportId] = useState(null);
+  const [month, setMonth] = useState(MONTHS[now.getMonth()]);
+  const [year, setYear] = useState(now.getFullYear());
 
   useEffect(() => {
     base44.entities.Client.list().then(setClients).catch(() => {});
