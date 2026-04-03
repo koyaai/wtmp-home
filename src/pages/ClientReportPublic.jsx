@@ -93,7 +93,58 @@ function BulletList({ items, color }) {
   );
 }
 
-function ReportBody({ report, clientName, dateRange }) {
+function ROISummary({ report, client }) {
+  const retainer = client?.retainer_fee || 0;
+  const adSpend = parseFloat(String(report?.ppc?.total_spend || '').replace(/[^0-9.]/g, '')) || 0;
+  const totalInvestment = retainer + adSpend;
+  const leads = report?.ppc?.total_leads || report?.leads_total || null;
+  const costPerLead = leads && totalInvestment ? (totalInvestment / leads).toFixed(2) : null;
+
+  if (!retainer && !adSpend) return null;
+
+  return (
+    <div className="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl p-6 text-white">
+      <p className="text-emerald-200 text-xs uppercase tracking-widest mb-3 font-semibold">Your Monthly Marketing Investment</p>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        {retainer > 0 && (
+          <div className="bg-white/10 rounded-xl p-3 text-center">
+            <p className="text-lg font-bold">${retainer.toLocaleString()}</p>
+            <p className="text-emerald-200 text-xs mt-0.5">Monthly Retainer</p>
+          </div>
+        )}
+        {adSpend > 0 && (
+          <div className="bg-white/10 rounded-xl p-3 text-center">
+            <p className="text-lg font-bold">${adSpend.toLocaleString()}</p>
+            <p className="text-emerald-200 text-xs mt-0.5">Ad Spend</p>
+          </div>
+        )}
+        {totalInvestment > 0 && (
+          <div className="bg-white/15 rounded-xl p-3 text-center border border-white/20">
+            <p className="text-lg font-bold">${totalInvestment.toLocaleString()}</p>
+            <p className="text-emerald-200 text-xs mt-0.5">Total Investment</p>
+          </div>
+        )}
+        {leads && (
+          <div className="bg-white/10 rounded-xl p-3 text-center">
+            <p className="text-lg font-bold">{leads}</p>
+            <p className="text-emerald-200 text-xs mt-0.5">Leads Generated</p>
+          </div>
+        )}
+      </div>
+      {costPerLead && (
+        <div className="bg-white/10 rounded-xl p-3 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-semibold">Cost Per Lead</p>
+            <p className="text-emerald-200 text-xs mt-0.5">Total investment ÷ leads generated this period</p>
+          </div>
+          <p className="text-2xl font-black">${costPerLead}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReportBody({ report, clientName, dateRange, client }) {
   return (
     <div className="space-y-5">
       {/* Hero */}
@@ -105,6 +156,8 @@ function ReportBody({ report, clientName, dateRange }) {
           <p className="text-slate-200 text-sm mt-4 leading-relaxed border-t border-white/10 pt-4">{report.executive_summary}</p>
         )}
       </div>
+
+      <ROISummary report={report} client={client} />
 
       <ScorecardBanner scorecard={report.client_scorecard} />
 
@@ -271,6 +324,7 @@ export default function ClientReportPublic() {
             report={selectedReport.report_data}
             clientName={client?.name}
             dateRange={selectedReport.date_range || `${selectedReport.month} ${selectedReport.year}`}
+            client={client}
           />
         ) : (
           <div className="text-center py-12 text-slate-400 text-sm">Report data not available.</div>
