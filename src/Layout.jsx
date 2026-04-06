@@ -58,7 +58,7 @@ const navItems = [
   { label: "Client Insights", icon: Brain, page: "ClientInsights", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist"] },
   { label: "Reporting", icon: BarChart2, page: "Reporting", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist", "lead_boomerang"] },
   { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: [...CSM_ROLES, "lead_boomerang"] },
-  { label: "Will's Corner", icon: Crown, page: "WillsCorner", roles: ADMIN_LIKE },
+  { label: "Will's Corner", icon: Crown, page: "WillsCorner", roles: ["admin", "leadership"] },
 ];
 
 export default function Layout({ children, currentPageName }) {

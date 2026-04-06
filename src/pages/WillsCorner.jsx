@@ -116,6 +116,7 @@ function MeetingCard({ meeting, onDelete }) {
 
 export default function WillsCorner() {
   const now = new Date();
+  const [mainTab, setMainTab] = useState("meetings");  // "meetings" | "parser"
   const [clients, setClients] = useState([]);
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -197,7 +198,7 @@ Parse and extract:
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-8">
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 shadow">
@@ -205,11 +206,28 @@ Parse and extract:
         </div>
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Will's Corner</h1>
-          <p className="text-slate-500 text-sm">Paste call transcripts from Will's client meetings — AI will extract the key highlights.</p>
+          <p className="text-slate-500 text-sm">CEO meeting logs and transcript intelligence.</p>
         </div>
       </div>
 
-      {/* Parser Form */}
+      {/* Tabs */}
+      <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
+        <button onClick={() => setMainTab("meetings")}
+          className={`px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+            mainTab === "meetings" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+          }`}>
+          All Meetings
+        </button>
+        <button onClick={() => setMainTab("parser")}
+          className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
+            mainTab === "parser" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
+          }`}>
+          <Sparkles className="w-3.5 h-3.5" /> Client Meeting Parser
+        </button>
+      </div>
+
+      {/* Parser Tab */}
+      {mainTab === "parser" && (
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-4">
         <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">New Meeting</p>
 
@@ -256,8 +274,10 @@ Parse and extract:
             : <><Sparkles className="w-4 h-4" /> Parse & Save Meeting</>}
         </Button>
       </div>
+      )}
 
-      {/* Past Meetings */}
+      {/* Meetings Tab */}
+      {mainTab === "meetings" && (
       <div>
         <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">All Meetings ({meetings.length})</p>
         {loading ? (
@@ -265,7 +285,8 @@ Parse and extract:
         ) : meetings.length === 0 ? (
           <div className="text-center py-12 text-slate-400">
             <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No meetings yet. Paste a transcript above to get started.</p>
+            <p className="text-sm">No meetings yet.</p>
+            <p className="text-xs mt-1">Use the <button onClick={() => setMainTab("parser")} className="font-semibold underline">Client Meeting Parser</button> to log one.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -273,6 +294,7 @@ Parse and extract:
           </div>
         )}
       </div>
+      )}
     </div>
   );
 }
