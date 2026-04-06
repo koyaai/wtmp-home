@@ -1,0 +1,21 @@
+{
+  "name": "User",
+  "type": "object",
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": [
+        "admin",
+        "leadership",
+        "team_lead",
+        "csm",
+        "seo_specialist",
+        "ppc_specialist",
+        "social_media",
+        "web_designer",
+        "lead_boomerang"
+      ],
+      "default": "csm"
+    }
+  }
+}

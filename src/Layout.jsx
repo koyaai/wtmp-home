@@ -26,9 +26,10 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const ALL_ROLES = ["admin", "leadership", "team_lead", "csm", "seo_specialist", "ppc_specialist", "social_media", "web_designer"];
+const ALL_ROLES = ["admin", "leadership", "team_lead", "csm", "seo_specialist", "ppc_specialist", "social_media", "web_designer", "lead_boomerang"];
 const ADMIN_LIKE = ["admin", "leadership", "team_lead"];
 const CSM_ROLES = ["admin", "leadership", "team_lead", "csm"];
+const LEAD_BOOMERANG = ["lead_boomerang"];
 
 const navItems = [
   { label: "Command Center", icon: LayoutDashboard, page: "Dashboard", roles: ALL_ROLES },
@@ -54,8 +55,8 @@ const navItems = [
     ]
   },
   { label: "Client Insights", icon: Brain, page: "ClientInsights", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist"] },
-  { label: "Reporting", icon: BarChart2, page: "Reporting", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist"] },
-  { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: CSM_ROLES },
+  { label: "Reporting", icon: BarChart2, page: "Reporting", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist", "lead_boomerang"] },
+  { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: [...CSM_ROLES, "lead_boomerang"] },
 ];
 
 export default function Layout({ children, currentPageName }) {
