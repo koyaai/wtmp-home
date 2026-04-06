@@ -12,6 +12,7 @@ import PrivacyPolicy from '@/pages/PrivacyPolicy';
 import ClientInsights from '@/pages/ClientInsights';
 import Reporting from '@/pages/Reporting';
 import ClientReportPublic from '@/pages/ClientReportPublic';
+import WillsCorner from '@/pages/WillsCorner';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -67,6 +68,7 @@ const AuthenticatedApp = () => {
       <Route path="/ClientInsights" element={<LayoutWrapper currentPageName="ClientInsights"><ClientInsights /></LayoutWrapper>} />
       <Route path="/Reporting" element={<LayoutWrapper currentPageName="Reporting"><Reporting /></LayoutWrapper>} />
       <Route path="/report/:clientId" element={<ClientReportPublic />} />
+      <Route path="/WillsCorner" element={<LayoutWrapper currentPageName="WillsCorner"><WillsCorner /></LayoutWrapper>} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="*" element={<PageNotFound />} />

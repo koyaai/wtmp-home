@@ -1,0 +1,66 @@
+{
+  "name": "WillMeeting",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "meeting_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "attendees": {
+      "type": "string",
+      "description": "Who was on the call (besides Will)"
+    },
+    "raw_transcript": {
+      "type": "string",
+      "description": "Pasted call transcript"
+    },
+    "parsed": {
+      "type": "object",
+      "description": "AI-parsed output",
+      "properties": {
+        "summary": {
+          "type": "string"
+        },
+        "highlights": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "action_items": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "client_sentiment": {
+          "type": "string"
+        },
+        "key_topics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "follow_ups": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "meeting_date"
+  ]
+}
