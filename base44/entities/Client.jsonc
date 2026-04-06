@@ -51,6 +51,7 @@
         "type": "string",
         "enum": [
           "SEO",
+          "Local SEO",
           "PPC",
           "Social Media",
           "Web Design",

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-const SERVICES = ["SEO", "PPC", "Social Media", "Web Design", "GHL Automations", "Customer Success"];
+const SERVICES = ["SEO", "Local SEO", "PPC", "Social Media", "Web Design", "GHL Automations", "Customer Success"];
 
 function Field({ label, name, type = "text", placeholder, value, onChange }) {
   return (
