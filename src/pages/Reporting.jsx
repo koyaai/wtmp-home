@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, ArrowRight, Download, ChevronLeft, BarChart2, Plus, Link2, Star, Trash2, CalendarClock } from "lucide-react";
+import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, ArrowRight, Download, ChevronLeft, BarChart2, Plus, Link2, Star, Trash2, CalendarClock, MapPin } from "lucide-react";
 import ScheduledReports from "@/components/reporting/ScheduledReports";
 import { toast } from "sonner";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
-// ── Shared tiny components ────────────────────────────────────────
 function MetricCard({ label, value }) {
   return (
     <div className="bg-white rounded-xl border border-slate-100 p-4 text-center">
@@ -48,7 +47,7 @@ function BulletList({ items, color }) {
   );
 }
 
-function UploadBox({ label, icon: Icon, color, file, onFile, loading }) {
+function UploadBox({ label, icon: Icon, color, file, onFile, loading, optional }) {
   return (
     <label
       onDragOver={e => e.preventDefault()}
@@ -71,7 +70,7 @@ function UploadBox({ label, icon: Icon, color, file, onFile, loading }) {
           </div>
           <div className="text-center">
             <p className="text-sm font-semibold text-slate-700">{label}</p>
-            <p className="text-xs text-slate-400">Drop PDF or click to upload</p>
+            <p className="text-xs text-slate-400">{optional ? "Optional — drop PDF or click" : "Drop PDF or click to upload"}</p>
           </div>
         </>
       )}
@@ -126,8 +125,7 @@ function ScorecardBanner({ scorecard }) {
   );
 }
 
-// ── Report View ───────────────────────────────────────────────────
-function ReportView({ report, clientName, dateRange, onCopy }) {
+function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl }) {
   if (!report) return null;
   return (
     <div className="space-y-6">
@@ -138,9 +136,17 @@ function ReportView({ report, clientName, dateRange, onCopy }) {
             <h2 className="text-2xl font-bold">{clientName}</h2>
             <p className="text-slate-300 text-sm mt-1">{dateRange}</p>
           </div>
-          <Button size="sm" variant="outline" onClick={onCopy} className="border-white/20 text-white hover:bg-white/10 bg-transparent">
-            <Download className="w-3.5 h-3.5 mr-1" /> Copy JSON
-          </Button>
+          <div className="flex gap-2">
+            {brightlocalUrl && (
+              <a href={brightlocalUrl} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs border border-white/20 text-white hover:bg-white/10 rounded-lg px-3 py-2 transition-colors">
+                <MapPin className="w-3.5 h-3.5" /> BrightLocal Report
+              </a>
+            )}
+            <Button size="sm" variant="outline" onClick={onCopy} className="border-white/20 text-white hover:bg-white/10 bg-transparent">
+              <Download className="w-3.5 h-3.5 mr-1" /> Copy JSON
+            </Button>
+          </div>
         </div>
         {report.executive_summary && (
           <p className="text-slate-200 text-sm mt-4 leading-relaxed border-t border-white/10 pt-4">{report.executive_summary}</p>
@@ -156,18 +162,19 @@ function ReportView({ report, clientName, dateRange, onCopy }) {
       )}
 
       {report.seo && (
-        <Section title="SEO Performance" icon={TrendingUp} color={{ border: "border-violet-100", bg: "bg-violet-50", icon: "text-violet-600", text: "text-violet-700" }}>
+        <Section title="Local SEO / GBP Performance" icon={MapPin} color={{ border: "border-violet-100", bg: "bg-violet-50", icon: "text-violet-600", text: "text-violet-700" }}>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-            <MetricCard label="Organic Sessions" value={report.seo.organic_sessions} />
-            <MetricCard label="Organic Clicks" value={report.seo.organic_clicks} />
-            <MetricCard label="Avg. Position" value={report.seo.avg_position} />
             {report.seo.gbp_metrics?.impressions && <MetricCard label="GBP Impressions" value={report.seo.gbp_metrics.impressions} />}
+            {report.seo.gbp_metrics?.website_clicks && <MetricCard label="Website Clicks" value={report.seo.gbp_metrics.website_clicks} />}
+            {report.seo.gbp_metrics?.call_clicks && <MetricCard label="Calls" value={report.seo.gbp_metrics.call_clicks} />}
+            {report.seo.gbp_metrics?.direction_requests && <MetricCard label="Directions" value={report.seo.gbp_metrics.direction_requests} />}
           </div>
-          {report.seo.gbp_metrics && (
-            <div className="grid grid-cols-3 gap-3 mb-5">
-              {report.seo.gbp_metrics.website_clicks && <MetricCard label="GBP Website Clicks" value={report.seo.gbp_metrics.website_clicks} />}
-              {report.seo.gbp_metrics.call_clicks && <MetricCard label="GBP Call Clicks" value={report.seo.gbp_metrics.call_clicks} />}
-              {report.seo.gbp_metrics.direction_requests && <MetricCard label="GBP Directions" value={report.seo.gbp_metrics.direction_requests} />}
+          {(report.seo.gbp_metrics?.avg_map_rank || report.seo.organic_clicks) && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+              {report.seo.gbp_metrics?.avg_map_rank && <MetricCard label="Avg Map Rank" value={report.seo.gbp_metrics.avg_map_rank} />}
+              {report.seo.gbp_metrics?.rank_change && <MetricCard label="Rank Change" value={report.seo.gbp_metrics.rank_change} />}
+              {report.seo.organic_clicks && <MetricCard label="Organic Clicks" value={report.seo.organic_clicks} />}
+              {report.seo.avg_position && <MetricCard label="Avg. Position" value={report.seo.avg_position} />}
             </div>
           )}
           {report.seo.highlights?.length > 0 && <div className="mb-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Highlights</p><BulletList items={report.seo.highlights} color="bg-violet-500" /></div>}
@@ -223,12 +230,11 @@ function ReportView({ report, clientName, dateRange, onCopy }) {
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────
 export default function Reporting() {
   const now = new Date();
   const [clients, setClients] = useState([]);
-  const [mainTab, setMainTab] = useState("reports"); // "reports" | "scheduled"
-  const [view, setView] = useState("list"); // "list" | "new" | "existing"
+  const [mainTab, setMainTab] = useState("reports");
+  const [view, setView] = useState("list");
   const [selectedClient, setSelectedClient] = useState(null);
   const [report, setReport] = useState(null);
   const [savedReports, setSavedReports] = useState([]);
@@ -240,11 +246,36 @@ export default function Reporting() {
   const [savedReportId, setSavedReportId] = useState(null);
   const [month, setMonth] = useState(MONTHS[now.getMonth()]);
   const [year, setYear] = useState(now.getFullYear());
+  const [brightlocalStatus, setBrightlocalStatus] = useState(null);
+  const [brightlocalData, setBrightlocalData] = useState(null);
 
   useEffect(() => {
     base44.entities.Client.list().then(setClients).catch(() => {});
     loadSavedReports();
   }, []);
+
+  const getClientData = (id) => clients.find(c => c.id === (id || selectedClient?.id));
+
+  const isLocalSEOClient = (clientId) => {
+    const c = getClientData(clientId || selectedClient?.id);
+    return c?.services?.includes("Local SEO") && !c?.services?.includes("SEO");
+  };
+
+  const isLocalSEO = isLocalSEOClient(selectedClient?.id);
+
+  const fetchBrightlocalData = async (clientId) => {
+    const clientData = getClientData(clientId);
+    if (!clientData?.brightlocal_report_url) return;
+    setBrightlocalStatus("loading");
+    setBrightlocalData(null);
+    const res = await base44.functions.invoke("fetchBrightlocalData", { report_url: clientData.brightlocal_report_url });
+    if (res.data?.gbp_insights) {
+      setBrightlocalData(res.data);
+      setBrightlocalStatus("ok");
+    } else {
+      setBrightlocalStatus("error");
+    }
+  };
 
   const loadSavedReports = async () => {
     setLoadingReports(true);
@@ -253,7 +284,6 @@ export default function Reporting() {
     setLoadingReports(false);
   };
 
-  // Check if a report already exists for selected client+month+year
   const checkExisting = async (clientId, m, y) => {
     const results = await base44.entities.MonthlyReport.filter({ client_id: clientId, month: m, year: y });
     return results[0] || null;
@@ -265,6 +295,9 @@ export default function Reporting() {
     setSeoFile(null);
     setPpcFile(null);
     setDateRange("");
+    setSelectedClient(null);
+    setBrightlocalStatus(null);
+    setBrightlocalData(null);
     setView("new");
   };
 
@@ -278,71 +311,81 @@ export default function Reporting() {
     setView("existing");
   };
 
+  const handleClientChange = (clientId) => {
+    const c = clients.find(cl => cl.id === clientId);
+    setSelectedClient(c ? { id: c.id, name: c.name } : null);
+    setBrightlocalStatus(null);
+    setBrightlocalData(null);
+    if (c?.brightlocal_report_url) {
+      setTimeout(() => fetchBrightlocalData(c.id), 0);
+    }
+  };
+
   const handleGenerate = async () => {
-    if (!selectedClient || !seoFile || !ppcFile) return;
+    if (!selectedClient) return;
     setUploading(true);
     setReport(null);
-    try {
-      const [seoUpload, ppcUpload] = await Promise.all([
-        base44.integrations.Core.UploadFile({ file: seoFile }),
-        base44.integrations.Core.UploadFile({ file: ppcFile }),
-      ]);
+    const clientData = getClientData(selectedClient.id) || {};
+    const scoreResults = await base44.entities.ClientScore.filter({ client_id: selectedClient.id, month, year });
+    const clientScore = scoreResults[0] || null;
 
-      const clientData = clients.find(c => c.id === selectedClient.id) || {};
-
-      // Fetch the client score for this month/year if it exists
-      const scoreResults = await base44.entities.ClientScore.filter({ client_id: selectedClient.id, month, year });
-      const clientScore = scoreResults[0] || null;
-
-      const res = await base44.functions.invoke("generateCombinedReport", {
-        seo_file_url: seoUpload.file_url,
-        ppc_file_url: ppcUpload.file_url,
-        client_name: selectedClient.name,
-        date_range: dateRange || `${month} ${year}`,
-        client_context: {
-          services: clientData.services,
-          location: clientData.location,
-          website: clientData.website,
-          csm_assigned: clientData.csm_assigned,
-        },
-        client_score: clientScore,
-      });
-
-      const reportData = res.data;
-      setReport(reportData);
-
-      // Save / upsert
-      const existing = await checkExisting(selectedClient.id, month, year);
-      const payload = {
-        client_id: selectedClient.id,
-        client_name: selectedClient.name,
-        month,
-        year,
-        date_range: dateRange || `${month} ${year}`,
-        report_data: reportData,
-        seo_file_url: seoUpload.file_url,
-        ppc_file_url: ppcUpload.file_url,
-      };
-
-      if (existing) {
-        await base44.entities.MonthlyReport.update(existing.id, payload);
-        setSavedReportId(existing.id);
-      } else {
-        const created = await base44.entities.MonthlyReport.create(payload);
-        setSavedReportId(created.id);
-      }
-
-      toast.success("Report generated & saved!");
-      loadSavedReports();
-    } catch (err) {
-      toast.error("Failed: " + err.message);
+    let seoFileUrl = null;
+    let ppcFileUrl = null;
+    if (seoFile) {
+      const upload = await base44.integrations.Core.UploadFile({ file: seoFile });
+      seoFileUrl = upload.file_url;
     }
+    if (ppcFile) {
+      const upload = await base44.integrations.Core.UploadFile({ file: ppcFile });
+      ppcFileUrl = upload.file_url;
+    }
+
+    const res = await base44.functions.invoke("generateCombinedReport", {
+      is_local_seo: isLocalSEO,
+      seo_file_url: seoFileUrl,
+      ppc_file_url: ppcFileUrl,
+      brightlocal_data: brightlocalData || null,
+      client_name: selectedClient.name,
+      date_range: dateRange || `${month} ${year}`,
+      client_context: {
+        services: clientData.services,
+        location: clientData.location,
+        website: clientData.website,
+        csm_assigned: clientData.csm_assigned,
+      },
+      client_score: clientScore,
+    });
+
+    const reportData = res.data;
+    setReport(reportData);
+
+    const existing = await checkExisting(selectedClient.id, month, year);
+    const payload = {
+      client_id: selectedClient.id,
+      client_name: selectedClient.name,
+      month,
+      year,
+      date_range: dateRange || `${month} ${year}`,
+      report_data: reportData,
+      seo_file_url: seoFileUrl,
+      ppc_file_url: ppcFileUrl,
+    };
+
+    if (existing) {
+      await base44.entities.MonthlyReport.update(existing.id, payload);
+      setSavedReportId(existing.id);
+    } else {
+      const created = await base44.entities.MonthlyReport.create(payload);
+      setSavedReportId(created.id);
+    }
+
+    toast.success("Report generated & saved!");
+    loadSavedReports();
     setUploading(false);
   };
 
-  const canGenerate = selectedClient && seoFile && ppcFile;
+  const canGenerate = selectedClient && !uploading;
 
-  // Group saved reports by client
   const groupedReports = savedReports.reduce((acc, r) => {
     if (!acc[r.client_name]) acc[r.client_name] = [];
     acc[r.client_name].push(r);
@@ -365,18 +408,13 @@ export default function Reporting() {
           )}
         </div>
 
-        {/* Main Tabs */}
         <div className="flex gap-1 bg-slate-100 rounded-xl p-1 w-fit">
           <button onClick={() => setMainTab("reports")}
-            className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
-              mainTab === "reports" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
-            }`}>
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${mainTab === "reports" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
             <BarChart2 className="w-4 h-4" /> Reports
           </button>
           <button onClick={() => setMainTab("scheduled")}
-            className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${
-              mainTab === "scheduled" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"
-            }`}>
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${mainTab === "scheduled" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
             <CalendarClock className="w-4 h-4" /> Scheduled
           </button>
         </div>
@@ -384,68 +422,57 @@ export default function Reporting() {
         {mainTab === "scheduled" && <ScheduledReports clients={clients} />}
 
         {mainTab === "reports" && (
-        <>
-        {loadingReports ? (
-          <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
-        ) : savedReports.length === 0 ? (
-          <div className="text-center py-16 text-slate-400">
-            <BarChart2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
-            <p className="text-sm">No reports yet. Generate your first one.</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {Object.entries(groupedReports).map(([clientName, reports]) => (
-              <div key={clientName} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-                <div className="flex items-center gap-2 px-5 py-3.5 bg-slate-50 border-b border-slate-100">
-                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs font-bold">{clientName.charAt(0)}</span>
-                  </div>
-                  <h3 className="font-semibold text-sm text-slate-800">{clientName}</h3>
-                </div>
-                <div className="divide-y divide-slate-50">
-                  {reports.map(r => (
-                    <div key={r.id} className="flex items-center hover:bg-slate-50 transition-colors">
-                      <button
-                        onClick={() => handleOpenReport(r)}
-                        className="flex-1 flex items-center justify-between px-5 py-3.5 text-left"
-                      >
-                        <div>
-                          <p className="text-sm font-medium text-slate-700">{r.month} {r.year}</p>
-                          {r.date_range && <p className="text-xs text-slate-400">{r.date_range}</p>}
-                        </div>
-                        <span className="text-xs text-blue-600 font-medium">View →</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          const url = `${window.location.origin}/report/${r.client_id}`;
-                          navigator.clipboard.writeText(url);
-                          toast.success("Client link copied!");
-                        }}
-                        title="Copy client report link"
-                        className="px-4 py-3.5 text-slate-400 hover:text-blue-600 transition-colors"
-                      >
-                        <Link2 className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (!confirm(`Delete the ${r.month} ${r.year} report for ${r.client_name}?`)) return;
-                          await base44.entities.MonthlyReport.delete(r.id);
-                          toast.success("Report deleted.");
-                          loadSavedReports();
-                        }}
-                        title="Delete report"
-                        className="px-4 py-3.5 text-slate-400 hover:text-red-500 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
+          <>
+            {loadingReports ? (
+              <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-slate-400" /></div>
+            ) : savedReports.length === 0 ? (
+              <div className="text-center py-16 text-slate-400">
+                <BarChart2 className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p className="text-sm">No reports yet. Generate your first one.</p>
               </div>
-            ))}
-          </div>
-        )}
-        </>
+            ) : (
+              <div className="space-y-6">
+                {Object.entries(groupedReports).map(([clientName, reports]) => (
+                  <div key={clientName} className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-2 px-5 py-3.5 bg-slate-50 border-b border-slate-100">
+                      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center flex-shrink-0">
+                        <span className="text-white text-xs font-bold">{clientName.charAt(0)}</span>
+                      </div>
+                      <h3 className="font-semibold text-sm text-slate-800">{clientName}</h3>
+                    </div>
+                    <div className="divide-y divide-slate-50">
+                      {reports.map(r => (
+                        <div key={r.id} className="flex items-center hover:bg-slate-50 transition-colors">
+                          <button onClick={() => handleOpenReport(r)} className="flex-1 flex items-center justify-between px-5 py-3.5 text-left">
+                            <div>
+                              <p className="text-sm font-medium text-slate-700">{r.month} {r.year}</p>
+                              {r.date_range && <p className="text-xs text-slate-400">{r.date_range}</p>}
+                            </div>
+                            <span className="text-xs text-blue-600 font-medium">View →</span>
+                          </button>
+                          <button
+                            onClick={() => { const url = `${window.location.origin}/report/${r.client_id}`; navigator.clipboard.writeText(url); toast.success("Client link copied!"); }}
+                            title="Copy client report link" className="px-4 py-3.5 text-slate-400 hover:text-blue-600 transition-colors">
+                            <Link2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (!confirm(`Delete the ${r.month} ${r.year} report for ${r.client_name}?`)) return;
+                              await base44.entities.MonthlyReport.delete(r.id);
+                              toast.success("Report deleted.");
+                              loadSavedReports();
+                            }}
+                            title="Delete report" className="px-4 py-3.5 text-slate-400 hover:text-red-500 transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
         )}
       </div>
     );
@@ -453,6 +480,7 @@ export default function Reporting() {
 
   // ── Existing Report View ──────────────────────────────────────────
   if (view === "existing") {
+    const clientData = getClientData(selectedClient?.id);
     return (
       <div className="p-6 max-w-5xl mx-auto space-y-6">
         <button onClick={() => setView("list")} className="flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:text-blue-700">
@@ -462,6 +490,7 @@ export default function Reporting() {
           report={report}
           clientName={selectedClient?.name}
           dateRange={dateRange}
+          brightlocalUrl={clientData?.brightlocal_report_url}
           onCopy={() => { navigator.clipboard.writeText(JSON.stringify(report, null, 2)); toast.success("Copied!"); }}
         />
       </div>
@@ -476,7 +505,7 @@ export default function Reporting() {
       </button>
       <div>
         <h1 className="text-2xl font-bold text-slate-800">New Report</h1>
-        <p className="text-slate-500 text-sm mt-1">Link to a client, pick the month, upload reports.</p>
+        <p className="text-slate-500 text-sm mt-1">Select a client to see the appropriate report inputs.</p>
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 space-y-5">
@@ -485,15 +514,19 @@ export default function Reporting() {
           <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Client</label>
           <select
             value={selectedClient?.id || ""}
-            onChange={e => {
-              const c = clients.find(cl => cl.id === e.target.value);
-              setSelectedClient(c ? { id: c.id, name: c.name } : null);
-            }}
+            onChange={e => handleClientChange(e.target.value)}
             className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white"
           >
             <option value="">Select a client…</option>
-            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            {clients.map(c => (
+              <option key={c.id} value={c.id}>
+                {c.name}{isLocalSEOClient(c.id) ? " (Local SEO)" : ""}
+              </option>
+            ))}
           </select>
+          {isLocalSEO && (
+            <p className="text-xs text-violet-600 mt-1.5 font-medium">📍 Local SEO client — GBP-focused report (no SEO PDF needed)</p>
+          )}
         </div>
 
         {/* Month + Year */}
@@ -514,15 +547,51 @@ export default function Reporting() {
           </div>
         </div>
 
-        {/* Upload */}
-        <div className="grid sm:grid-cols-2 gap-4">
-          <UploadBox label="SEO Report" icon={TrendingUp} file={seoFile} onFile={setSeoFile} loading={uploading}
-            color={{ border: "border-violet-300", bg: "bg-violet-50", icon: "text-violet-600", text: "text-violet-700", iconBg: "bg-violet-500" }} />
-          <UploadBox label="PPC Report" icon={Target} file={ppcFile} onFile={setPpcFile} loading={uploading}
+        {/* BrightLocal status (shown when client has a BrightLocal URL) */}
+        {selectedClient && getClientData(selectedClient.id)?.brightlocal_report_url && (
+          <div className={`rounded-xl border p-4 flex items-center gap-3 ${
+            brightlocalStatus === "ok" ? "border-emerald-200 bg-emerald-50" :
+            brightlocalStatus === "error" ? "border-amber-200 bg-amber-50" :
+            brightlocalStatus === "loading" ? "border-blue-200 bg-blue-50" :
+            "border-slate-200 bg-slate-50"
+          }`}>
+            {brightlocalStatus === "loading" && <Loader2 className="w-4 h-4 animate-spin text-blue-500 flex-shrink-0" />}
+            {brightlocalStatus === "ok" && <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
+            {brightlocalStatus === "error" && <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />}
+            {!brightlocalStatus && <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0" />}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-slate-700">
+                {brightlocalStatus === "ok" ? "BrightLocal data fetched" :
+                 brightlocalStatus === "loading" ? "Fetching BrightLocal data..." :
+                 brightlocalStatus === "error" ? "Could not auto-fetch BrightLocal data" :
+                 "BrightLocal report linked"}
+              </p>
+              {brightlocalStatus === "ok" && brightlocalData && (
+                <p className="text-xs text-emerald-600 mt-0.5">
+                  GBP Views: {brightlocalData.gbp_insights?.total_views || "—"} · Actions: {brightlocalData.gbp_insights?.total_actions || "—"} · Avg Map Rank: {brightlocalData.local_search_grid?.avg_map_rank || "—"}
+                </p>
+              )}
+              {brightlocalStatus === "error" && (
+                <p className="text-xs text-amber-600 mt-0.5">BrightLocal data won't be included automatically.</p>
+              )}
+            </div>
+            {(brightlocalStatus === "error" || brightlocalStatus === null) && selectedClient && (
+              <button onClick={() => fetchBrightlocalData(selectedClient.id)} className="text-xs text-blue-600 font-medium hover:underline flex-shrink-0">Retry</button>
+            )}
+          </div>
+        )}
+
+        {/* File Uploads */}
+        <div className={`grid gap-4 ${isLocalSEO ? "grid-cols-1 sm:grid-cols-1 max-w-sm" : "sm:grid-cols-2"}`}>
+          {!isLocalSEO && (
+            <UploadBox label="SEO Report" icon={TrendingUp} file={seoFile} onFile={setSeoFile} loading={uploading}
+              color={{ border: "border-violet-300", bg: "bg-violet-50", icon: "text-violet-600", text: "text-violet-700", iconBg: "bg-violet-500" }} />
+          )}
+          <UploadBox label="PPC Report" icon={Target} file={ppcFile} onFile={setPpcFile} loading={uploading} optional={isLocalSEO}
             color={{ border: "border-blue-300", bg: "bg-blue-50", icon: "text-blue-600", text: "text-blue-700", iconBg: "bg-blue-500" }} />
         </div>
 
-        <Button onClick={handleGenerate} disabled={!canGenerate || uploading} className="w-full bg-slate-800 hover:bg-slate-700">
+        <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full bg-slate-800 hover:bg-slate-700">
           {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing & Generating...</> : <><Sparkles className="w-4 h-4" /> Generate & Save Report</>}
         </Button>
       </div>
@@ -532,6 +601,7 @@ export default function Reporting() {
           report={report}
           clientName={selectedClient?.name}
           dateRange={dateRange || `${month} ${year}`}
+          brightlocalUrl={getClientData(selectedClient?.id)?.brightlocal_report_url}
           onCopy={() => { navigator.clipboard.writeText(JSON.stringify(report, null, 2)); toast.success("Copied!"); }}
         />
       )}

@@ -73,6 +73,10 @@
       "type": "string",
       "description": "Assigned CSM email"
     },
+    "brightlocal_report_url": {
+      "type": "string",
+      "description": "BrightLocal location dashboard URL (for Local SEO clients)"
+    },
     "google_search_console_url": {
       "type": "string"
     },

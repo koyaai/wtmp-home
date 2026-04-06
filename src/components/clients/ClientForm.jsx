@@ -111,6 +111,13 @@ export default function ClientForm({ initial, onSave, onCancel }) {
         </div>
       </div>
 
+      {/* BrightLocal */}
+      <div>
+        <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">BrightLocal</p>
+        <Field label="BrightLocal Report URL" name="brightlocal_report_url" placeholder="https://www.local-marketing-reports.com/location-dashboard/..." value={form.brightlocal_report_url} onChange={set} />
+        <p className="text-xs text-slate-400 mt-1">Used for Local SEO clients — paste the permanent dashboard link from BrightLocal.</p>
+      </div>
+
       {/* WordPress */}
       <div>
         <p className="text-xs font-bold text-slate-400 uppercase tracking-wide mb-3">WordPress Integration</p>
