@@ -26,19 +26,20 @@ Deno.serve(async (req) => {
       if (blRes?.gbp_insights) {
         brightlocal_data = blRes;
         sections.push(`
-BRIGHTLOCAL / GBP PERFORMANCE:
-- Total Views: ${blRes.gbp_insights?.total_views || "N/A"}
+BRIGHTLOCAL / GBP PERFORMANCE (map these to seo.gbp_metrics in the output JSON):
+- GBP Impressions (total_views → impressions): ${blRes.gbp_insights?.total_views || "N/A"}
   - Search Desktop: ${blRes.gbp_insights?.search_desktop || "N/A"}
   - Search Mobile: ${blRes.gbp_insights?.search_mobile || "N/A"}
   - Maps Desktop: ${blRes.gbp_insights?.maps_desktop || "N/A"}
   - Maps Mobile: ${blRes.gbp_insights?.maps_mobile || "N/A"}
 - Total Actions: ${blRes.gbp_insights?.total_actions || "N/A"}
-  - Website Clicks: ${blRes.gbp_insights?.website_clicks || "N/A"}
-  - Direction Requests: ${blRes.gbp_insights?.direction_requests || "N/A"}
-  - Phone Calls: ${blRes.gbp_insights?.phone_calls || "N/A"}
-- Avg Map Rank: ${blRes.local_search_grid?.avg_map_rank || "N/A"}
-- Rank Change: ${blRes.local_search_grid?.rank_change || "N/A"}
-- Primary Keyword: ${blRes.local_search_grid?.keyword || "N/A"}`);
+- Website Clicks (→ website_clicks): ${blRes.gbp_insights?.website_clicks || "N/A"}
+- Direction Requests (→ direction_requests): ${blRes.gbp_insights?.direction_requests || "N/A"}
+- Phone Calls (→ call_clicks): ${blRes.gbp_insights?.phone_calls || "N/A"}
+- Avg Map Rank (→ avg_map_rank): ${blRes.local_search_grid?.avg_map_rank || "N/A"}
+- Rank Change (→ rank_change): ${blRes.local_search_grid?.rank_change || "N/A"}
+- Primary Keyword: ${blRes.local_search_grid?.keyword || "N/A"}
+IMPORTANT: Populate seo.gbp_metrics with the above values using the field mappings indicated.`);
       }
     } catch (e) {
       sections.push(`\nBRIGHTLOCAL: Could not fetch data (${e.message})`);
