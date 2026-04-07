@@ -107,13 +107,13 @@ GOOGLE ANALYTICS 4 DATA (most recent stored):
     }
   }
 
-  // ── 4. GHL Lead data from stored records ──────────────────────────
+  // ── 4. Lead Boomerang / Lead data from stored records ──────────────────────────
   if (client.ghl_location_id) {
     const leadRecords = await base44.asServiceRole.entities.LeadData.filter({ client_id });
     const lead = leadRecords.sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
     if (lead) {
       sections.push(`
-GHL / LEAD DATA (most recent stored):
+LEAD BOOMERANG / LEAD DATA (most recent stored):
 - Report Date: ${lead.report_date || "N/A"}
 - Total Leads: ${lead.total_leads ?? "N/A"}
 - New Leads: ${lead.new_leads ?? "N/A"}
@@ -165,13 +165,13 @@ Website: ${client.website || 'Not specified'}
 
 ${isLocalSEO ? 'This client is on a LOCAL SEO program. Focus on GBP/local search performance.' : 'This client is on a full SEO program. Cover both organic and local performance.'}
 
-IMPORTANT: Only populate the "ppc" block if actual PPC/Google Ads data was provided above. GHL lead data is NOT PPC data — do NOT use it to fill PPC metrics. If no PPC data is available, leave all ppc fields as "N/A" or empty arrays.
+IMPORTANT: Only populate the "ppc" block if actual PPC/Google Ads data was provided above. Lead Boomerang lead data is NOT PPC data — do NOT use it to fill PPC metrics. If no PPC data is available, leave all ppc fields as "N/A" or empty arrays.
 
-For the "leads" block: Use the GHL lead data provided above. Calculate ROI where possible:
+For the "leads" block: Use the Lead Boomerang data provided above. Calculate ROI where possible:
 - cost_per_lead = retainer_fee / total_leads (if both available)
 - roi_estimate = ((revenue_generated - retainer_fee) / retainer_fee) * 100 as a percentage string
 - Provide a 2-3 sentence roi_narrative explaining what the numbers mean for the client.
-If no GHL data is available, omit or leave leads fields as N/A. — do NOT use it to fill PPC metrics. If no PPC data is available, leave all ppc fields as "N/A" or empty arrays.
+If no Lead Boomerang data is available, omit or leave leads fields as N/A. — do NOT use it to fill PPC metrics. If no PPC data is available, leave all ppc fields as "N/A" or empty arrays.
 
 Analyze all provided data and generate a comprehensive combined marketing performance report. If some data is missing or unavailable, note it briefly but focus on what IS available.`;
 
