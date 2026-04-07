@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { base44 } from "@/api/base44Client";
-import { Loader2, TrendingUp, Target, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ChevronDown, Star } from "lucide-react";
+import { Loader2, TrendingUp, Target, Sparkles, CheckCircle2, AlertTriangle, ArrowRight, ChevronDown, Star, Users, MapPin } from "lucide-react";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
@@ -97,8 +97,10 @@ function ROISummary({ report, client }) {
   const retainer = client?.retainer_fee || 0;
   const adSpend = parseFloat(String(report?.ppc?.total_spend || '').replace(/[^0-9.]/g, '')) || 0;
   const totalInvestment = retainer + adSpend;
-  const leads = report?.ppc?.total_leads || report?.leads_total || null;
-  const costPerLead = leads && totalInvestment ? (totalInvestment / leads).toFixed(2) : null;
+  const leadsVal = report?.leads?.total_leads || report?.ppc?.total_leads || null;
+  const leads = leadsVal && leadsVal !== 'N/A' ? leadsVal : null;
+  const leadsNum = leads ? parseFloat(String(leads).replace(/[^0-9.]/g, '')) : null;
+  const costPerLead = leadsNum && totalInvestment ? (totalInvestment / leadsNum).toFixed(2) : null;
 
   if (!retainer && !adSpend) return null;
 
@@ -161,6 +163,35 @@ function ReportBody({ report, clientName, dateRange, client }) {
 
       <ScorecardBanner scorecard={report.client_scorecard} />
 
+      {/* Leads & ROI */}
+      {report.leads && report.leads.total_leads && report.leads.total_leads !== 'N/A' && (
+        <Section title="Leads & ROI (Lead Boomerang)" icon={Users} color={{ border: "border-teal-100", bg: "bg-teal-50", icon: "text-teal-600", text: "text-teal-700" }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            {report.leads.total_leads && <MetricCard label="Total Leads" value={report.leads.total_leads} />}
+            {report.leads.appointments_booked && report.leads.appointments_booked !== 'N/A' && <MetricCard label="Appts Booked" value={report.leads.appointments_booked} />}
+            {report.leads.closed_deals && report.leads.closed_deals !== 'N/A' && <MetricCard label="Closed Deals" value={report.leads.closed_deals} />}
+            {report.leads.revenue_generated && report.leads.revenue_generated !== 'N/A' && <MetricCard label="Revenue Generated" value={report.leads.revenue_generated} />}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+            {report.leads.cost_per_lead && report.leads.cost_per_lead !== 'N/A' && <MetricCard label="Cost Per Lead" value={`$${report.leads.cost_per_lead}`} />}
+            {report.leads.close_rate && report.leads.close_rate !== 'N/A' && <MetricCard label="Close Rate" value={report.leads.close_rate} />}
+            {report.leads.roi_estimate && report.leads.roi_estimate !== 'N/A' && (
+              <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 text-center">
+                <p className="text-xl font-bold text-teal-700">{report.leads.roi_estimate}</p>
+                <p className="text-xs font-medium text-teal-600 mt-1">Estimated ROI</p>
+              </div>
+            )}
+          </div>
+          {report.leads.roi_narrative && (
+            <div className="p-3 bg-teal-50 rounded-lg mb-3 border border-teal-100">
+              <p className="text-xs font-semibold text-teal-700 mb-1">ROI Summary</p>
+              <p className="text-sm text-slate-700">{report.leads.roi_narrative}</p>
+            </div>
+          )}
+          {report.leads.highlights?.length > 0 && <BulletList items={report.leads.highlights} color="bg-teal-500" />}
+        </Section>
+      )}
+
       {/* Wins */}
       {report.wins?.length > 0 && (
         <Section title="Key Wins This Period" icon={CheckCircle2} color={{ border: "border-emerald-100", bg: "bg-emerald-50", icon: "text-emerald-600", text: "text-emerald-700" }}>
@@ -170,7 +201,7 @@ function ReportBody({ report, clientName, dateRange, client }) {
 
       {/* SEO */}
       {report.seo && (
-        <Section title="SEO Performance" icon={TrendingUp} color={{ border: "border-violet-100", bg: "bg-violet-50", icon: "text-violet-600", text: "text-violet-700" }}>
+        <Section title="Local SEO / GBP Performance" icon={MapPin} color={{ border: "border-violet-100", bg: "bg-violet-50", icon: "text-violet-600", text: "text-violet-700" }}>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
             <MetricCard label="Organic Sessions" value={report.seo.organic_sessions} />
             <MetricCard label="Organic Clicks" value={report.seo.organic_clicks} />
