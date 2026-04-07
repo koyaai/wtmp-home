@@ -4,7 +4,7 @@ import { format, isPast, differenceInDays, parseISO } from "date-fns";
 
 export const TEAMS = [
   "SEO", "PPC", "Lead Boomerang", "Marketing",
-  "Project Management", "Leadership", "Content", "Web Development"
+  "Project Management", "Leadership", "Content", "Web Development", "Customer Success"
 ];
 
 export const teamColors = {
@@ -16,6 +16,7 @@ export const teamColors = {
   "Leadership": "bg-amber-100 text-amber-700",
   "Content": "bg-orange-100 text-orange-700",
   "Web Development": "bg-cyan-100 text-cyan-700",
+  "Customer Success": "bg-teal-100 text-teal-700",
 };
 
 export function DeadlineBadge({ date }) {
