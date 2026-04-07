@@ -156,34 +156,6 @@ function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl }) {
 
       <ScorecardBanner scorecard={report.client_scorecard} />
 
-      {report.wins?.length > 0 && (
-        <Section title="Key Wins This Period" icon={CheckCircle2} color={{ border: "border-emerald-100", bg: "bg-emerald-50", icon: "text-emerald-600", text: "text-emerald-700" }}>
-          <BulletList items={report.wins} color="bg-emerald-500" />
-        </Section>
-      )}
-
-      {report.seo && (
-        <Section title="Local SEO / GBP Performance" icon={MapPin} color={{ border: "border-violet-100", bg: "bg-violet-50", icon: "text-violet-600", text: "text-violet-700" }}>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-            {report.seo.gbp_metrics?.impressions && <MetricCard label="GBP Impressions" value={report.seo.gbp_metrics.impressions} />}
-            {report.seo.gbp_metrics?.website_clicks && <MetricCard label="Website Clicks" value={report.seo.gbp_metrics.website_clicks} />}
-            {report.seo.gbp_metrics?.call_clicks && <MetricCard label="Calls" value={report.seo.gbp_metrics.call_clicks} />}
-            {report.seo.gbp_metrics?.direction_requests && <MetricCard label="Directions" value={report.seo.gbp_metrics.direction_requests} />}
-          </div>
-          {(report.seo.gbp_metrics?.avg_map_rank || report.seo.organic_clicks) && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-              {report.seo.gbp_metrics?.avg_map_rank && <MetricCard label="Avg Map Rank" value={report.seo.gbp_metrics.avg_map_rank} />}
-              {report.seo.gbp_metrics?.rank_change && <MetricCard label="Rank Change" value={report.seo.gbp_metrics.rank_change} />}
-              {report.seo.organic_clicks && <MetricCard label="Organic Clicks" value={report.seo.organic_clicks} />}
-              {report.seo.avg_position && <MetricCard label="Avg. Position" value={report.seo.avg_position} />}
-            </div>
-          )}
-          {report.seo.highlights?.length > 0 && <div className="mb-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Highlights</p><BulletList items={report.seo.highlights} color="bg-violet-500" /></div>}
-          {report.seo.local_seo_notes && <div className="mt-3 p-3 bg-violet-50 rounded-lg"><p className="text-xs font-semibold text-violet-700 mb-1">Local SEO Notes</p><p className="text-sm text-slate-600">{report.seo.local_seo_notes}</p></div>}
-          {report.seo.challenges?.length > 0 && <div className="mt-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Challenges</p><BulletList items={report.seo.challenges} color="bg-amber-400" /></div>}
-        </Section>
-      )}
-
       {report.leads && report.leads.total_leads && report.leads.total_leads !== "N/A" && (
         <Section title="Leads & ROI (GHL)" icon={Users} color={{ border: "border-teal-100", bg: "bg-teal-50", icon: "text-teal-600", text: "text-teal-700" }}>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
@@ -209,6 +181,34 @@ function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl }) {
             </div>
           )}
           {report.leads.highlights?.length > 0 && <BulletList items={report.leads.highlights} color="bg-teal-500" />}
+        </Section>
+      )}
+
+      {report.wins?.length > 0 && (
+        <Section title="Key Wins This Period" icon={CheckCircle2} color={{ border: "border-emerald-100", bg: "bg-emerald-50", icon: "text-emerald-600", text: "text-emerald-700" }}>
+          <BulletList items={report.wins} color="bg-emerald-500" />
+        </Section>
+      )}
+
+      {report.seo && (
+        <Section title="Local SEO / GBP Performance" icon={MapPin} color={{ border: "border-violet-100", bg: "bg-violet-50", icon: "text-violet-600", text: "text-violet-700" }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+            {report.seo.gbp_metrics?.impressions && <MetricCard label="GBP Impressions" value={report.seo.gbp_metrics.impressions} />}
+            {report.seo.gbp_metrics?.website_clicks && <MetricCard label="Website Clicks" value={report.seo.gbp_metrics.website_clicks} />}
+            {report.seo.gbp_metrics?.call_clicks && <MetricCard label="Calls" value={report.seo.gbp_metrics.call_clicks} />}
+            {report.seo.gbp_metrics?.direction_requests && <MetricCard label="Directions" value={report.seo.gbp_metrics.direction_requests} />}
+          </div>
+          {(report.seo.gbp_metrics?.avg_map_rank || report.seo.organic_clicks) && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+              {report.seo.gbp_metrics?.avg_map_rank && <MetricCard label="Avg Map Rank" value={report.seo.gbp_metrics.avg_map_rank} />}
+              {report.seo.gbp_metrics?.rank_change && <MetricCard label="Rank Change" value={report.seo.gbp_metrics.rank_change} />}
+              {report.seo.organic_clicks && <MetricCard label="Organic Clicks" value={report.seo.organic_clicks} />}
+              {report.seo.avg_position && <MetricCard label="Avg. Position" value={report.seo.avg_position} />}
+            </div>
+          )}
+          {report.seo.highlights?.length > 0 && <div className="mb-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Highlights</p><BulletList items={report.seo.highlights} color="bg-violet-500" /></div>}
+          {report.seo.local_seo_notes && <div className="mt-3 p-3 bg-violet-50 rounded-lg"><p className="text-xs font-semibold text-violet-700 mb-1">Local SEO Notes</p><p className="text-sm text-slate-600">{report.seo.local_seo_notes}</p></div>}
+          {report.seo.challenges?.length > 0 && <div className="mt-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Challenges</p><BulletList items={report.seo.challenges} color="bg-amber-400" /></div>}
         </Section>
       )}
 
