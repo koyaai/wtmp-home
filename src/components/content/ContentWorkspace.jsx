@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles, BarChart2, RefreshCw, Save, Copy, Check, MapPin, Users, Wand2 } from "lucide-react";
+import { Loader2, Sparkles, BarChart2, RefreshCw, Save, Copy, Check, MapPin, Users, Wand2, Globe } from "lucide-react";
 import { toast } from "sonner";
 import EntropyScoreGauge from "./EntropyScoreGauge";
 import DimensionScores from "./DimensionScores";
@@ -13,6 +13,7 @@ import EntropyHeatmap from "./EntropyHeatmap";
 import CompetitorAnalysis from "./CompetitorAnalysis";
 import GenericPhraseDetection from "./GenericPhraseDetection";
 import ClaimVerifiability from "./ClaimVerifiability";
+import WordPressPublishModal from "./WordPressPublishModal";
 
 const CONTENT_TYPES = ["Blog Post", "GBP Post", "Service Page", "Landing Page", "Social Caption", "Email", "Other"];
 
@@ -29,6 +30,7 @@ export default function ContentWorkspace({ client, onSaved }) {
     const [loading, setLoading] = useState(false);
     const [applying, setApplying] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [showWpModal, setShowWpModal] = useState(false);
 
     const reset = (newMode) => {
         setMode(newMode);
@@ -348,13 +350,28 @@ export default function ContentWorkspace({ client, onSaved }) {
                                 </div>
                             )}
 
-                            {/* Save */}
-                            <Button onClick={handleSave} variant="outline" className="border-green-300 text-green-700 hover:bg-green-50">
-                                <Save className="w-4 h-4 mr-2" /> Save to {client.name}'s Library
-                            </Button>
+                            {/* Save + WP Publish */}
+                            <div className="flex gap-2">
+                                <Button onClick={handleSave} variant="outline" className="flex-1 border-green-300 text-green-700 hover:bg-green-50">
+                                    <Save className="w-4 h-4 mr-2" /> Save to {client.name}'s Library
+                                </Button>
+                                {client?.wordpress_url && (
+                                    <Button onClick={() => setShowWpModal(true)} variant="outline" className="border-blue-300 text-blue-600 hover:bg-blue-50">
+                                        <Globe className="w-4 h-4 mr-1" /> Send to WP
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>
+            )}
+
+            {showWpModal && result?.final_content && (
+                <WordPressPublishModal
+                    item={{ title, final_content: result.final_content }}
+                    client={client}
+                    onClose={() => setShowWpModal(false)}
+                />
             )}
         </div>
     );
