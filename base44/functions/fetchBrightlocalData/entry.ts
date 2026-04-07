@@ -1,14 +1,27 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
-// Extract the hash from various BrightLocal URL formats
 function extractHash(url) {
   const match = url.match(/location-dashboard\/([a-f0-9]+)/);
   return match ? match[1] : null;
 }
 
-function extractNumber(text, pattern) {
-  const m = text.match(pattern);
-  return m ? m[1].trim() : null;
+function extractNumber(text, ...patterns) {
+  for (const pattern of patterns) {
+    const m = text.match(pattern);
+    if (m) return m[1].trim().replace(/,/g, '');
+  }
+  return null;
+}
+
+async function fetchRendered(url) {
+  // Jina.ai reader renders JS pages and returns clean markdown
+  const res = await fetch(`https://r.jina.ai/${url}`, {
+    headers: {
+      'Accept': 'text/plain',
+      'X-No-Cache': 'true',
+    }
+  });
+  return res.text();
 }
 
 Deno.serve(async (req) => {
@@ -25,43 +38,41 @@ Deno.serve(async (req) => {
   const gbpAuditUrl = `https://www.local-marketing-reports.com/location-dashboard/${hash}/gbpa-reports`;
   const lsgUrl = `https://www.local-marketing-reports.com/location-dashboard/${hash}/lsg/view`;
 
-  const [gbpRes, lsgRes] = await Promise.all([
-    fetch(gbpAuditUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } }),
-    fetch(lsgUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } }),
+  const [gbpText, lsgText] = await Promise.all([
+    fetchRendered(gbpAuditUrl),
+    fetchRendered(lsgUrl),
   ]);
 
-  const [gbpHtml, lsgHtml] = await Promise.all([gbpRes.text(), lsgRes.text()]);
+  // Parse GBP Insights from markdown
+  const totalViews = extractNumber(gbpText,
+    /Total Views[:\s]*([0-9.,k]+)/i,
+    /Total Views:\s*([0-9.,k]+)/i
+  );
+  const searchDesktop = extractNumber(gbpText, /Search\s*-?\s*Desktop\s*([0-9,]+)/i);
+  const searchMobile = extractNumber(gbpText, /Search\s*-?\s*Mobile\s*([0-9,.k]+)/i);
+  const mapsDesktop = extractNumber(gbpText, /Maps\s*-?\s*Desktop\s*([0-9,]+)/i);
+  const mapsMobile = extractNumber(gbpText, /Maps\s*-?\s*Mobile\s*([0-9,]+)/i);
 
-  // Parse GBP Audit data
-  const totalViews = extractNumber(gbpHtml, /Total Views[:\s]*<\/[^>]+>[^<]*<[^>]+>([0-9,]+)/);
-  const totalActions = extractNumber(gbpHtml, /Total Actions[:\s]*<\/[^>]+>[^<]*<[^>]+>([0-9,]+)/);
+  const totalActions = extractNumber(gbpText, /Total Actions[:\s]*([0-9,]+)/i);
+  const websiteClicks = extractNumber(gbpText, /Website clicks?\s*([0-9,]+)/i);
+  const directionRequests = extractNumber(gbpText, /Request directions?\s*([0-9,]+)/i);
+  const phoneCalls = extractNumber(gbpText, /Call you\s*([0-9,]+)/i, /Total Calls?\s*([0-9,]+)/i);
+  const photoCount = extractNumber(gbpText, /Images\s*\[?([0-9,]+)/i, /Photos?\s*([0-9,]+)/i);
 
-  // Extract view breakdown
-  const searchDesktop = extractNumber(gbpHtml, /Search - Desktop\s*<\/[^>]*>\s*([0-9,]+)/);
-  const searchMobile = extractNumber(gbpHtml, /Search - Mobile\s*<\/[^>]*>\s*([0-9,]+)/);
-  const mapsDesktop = extractNumber(gbpHtml, /Maps - Desktop\s*<\/[^>]*>\s*([0-9,]+)/);
-  const mapsMobile = extractNumber(gbpHtml, /Maps - Mobile\s*<\/[^>]*>\s*([0-9,]+)/);
+  // Parse LSG data
+  const avgRank = extractNumber(lsgText,
+    /Average Map Rank[:\s]*([0-9.]+)/i,
+    /Avg\.?\s*Rank[:\s]*([0-9.]+)/i
+  );
+  const rankChange = extractNumber(lsgText,
+    /Rank Change[:\s]*([+-]?[0-9.]+)/i,
+    /([+-][0-9.]+)\s*(?:rank|position)/i
+  );
+  const keywordMatch = lsgText.match(/Results for[:\s]*["']?([^"'\n]+)["']?/i)
+    || lsgText.match(/Keyword[:\s]*([^\n]+)/i);
+  const keyword = keywordMatch ? keywordMatch[1].trim() : null;
 
-  // Extract action breakdown
-  const websiteClicks = extractNumber(gbpHtml, /Website clicks\s*<\/[^>]*>\s*([0-9,]+)/);
-  const directionRequests = extractNumber(gbpHtml, /Request directions\s*<\/[^>]*>\s*([0-9,]+)/);
-  const phoneCalls = extractNumber(gbpHtml, /Call you\s*<\/[^>]*>\s*([0-9,]+)/);
-  const totalCalls = extractNumber(gbpHtml, /Total Calls\s*([0-9,]+)/);
-
-  // Extract photo count
-  const photoCount = extractNumber(gbpHtml, /Images\s*<[^>]*>([0-9,]+)/);
-
-  // Parse LSG (Local Search Grid) data
-  const avgRank = extractNumber(lsgHtml, /Average Map Rank[\s\S]*?([0-9]+\.[0-9]+)/);
-  const rankChange = extractNumber(lsgHtml, /([0-9]+\.[0-9]+)\s*<[^>]*>\s*(?:↑|↓|Change)/);
-
-  // Extract keyword from LSG
-  const keyword = extractNumber(lsgHtml, /Results for:\s*['"](.*?)['"]/);
-
-  // Extract business name
-  const businessName = extractNumber(gbpHtml, /<h1[^>]*>(.*?)<\/h1>/);
-
-  const data = {
+  return Response.json({
     source_url: report_url,
     generated_at: new Date().toISOString(),
     gbp_insights: {
@@ -73,7 +84,7 @@ Deno.serve(async (req) => {
       total_actions: totalActions,
       website_clicks: websiteClicks,
       direction_requests: directionRequests,
-      phone_calls: phoneCalls || totalCalls,
+      phone_calls: phoneCalls,
       photo_count: photoCount,
     },
     local_search_grid: {
@@ -81,7 +92,5 @@ Deno.serve(async (req) => {
       rank_change: rankChange,
       keyword: keyword,
     },
-  };
-
-  return Response.json(data);
+  });
 });
