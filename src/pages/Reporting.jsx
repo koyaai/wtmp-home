@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
+import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, ArrowRight, Download, ChevronLeft, BarChart2, Plus, Link2, Star, Trash2, CalendarClock, MapPin } from "lucide-react";
 import ScheduledReports from "@/components/reporting/ScheduledReports";
@@ -180,6 +181,34 @@ function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl }) {
           {report.seo.highlights?.length > 0 && <div className="mb-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Highlights</p><BulletList items={report.seo.highlights} color="bg-violet-500" /></div>}
           {report.seo.local_seo_notes && <div className="mt-3 p-3 bg-violet-50 rounded-lg"><p className="text-xs font-semibold text-violet-700 mb-1">Local SEO Notes</p><p className="text-sm text-slate-600">{report.seo.local_seo_notes}</p></div>}
           {report.seo.challenges?.length > 0 && <div className="mt-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Challenges</p><BulletList items={report.seo.challenges} color="bg-amber-400" /></div>}
+        </Section>
+      )}
+
+      {report.leads && report.leads.total_leads && report.leads.total_leads !== "N/A" && (
+        <Section title="Leads & ROI (GHL)" icon={Users} color={{ border: "border-teal-100", bg: "bg-teal-50", icon: "text-teal-600", text: "text-teal-700" }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+            {report.leads.total_leads && <MetricCard label="Total Leads" value={report.leads.total_leads} />}
+            {report.leads.appointments_booked && <MetricCard label="Appts Booked" value={report.leads.appointments_booked} />}
+            {report.leads.closed_deals && <MetricCard label="Closed Deals" value={report.leads.closed_deals} />}
+            {report.leads.revenue_generated && <MetricCard label="Revenue Generated" value={report.leads.revenue_generated} />}
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-5">
+            {report.leads.cost_per_lead && <MetricCard label="Cost Per Lead" value={report.leads.cost_per_lead} />}
+            {report.leads.close_rate && <MetricCard label="Close Rate" value={report.leads.close_rate} />}
+            {report.leads.roi_estimate && (
+              <div className="bg-teal-50 border border-teal-200 rounded-xl p-4 text-center">
+                <p className="text-2xl font-bold text-teal-700">{report.leads.roi_estimate}</p>
+                <p className="text-xs font-medium text-teal-600 mt-1">Estimated ROI</p>
+              </div>
+            )}
+          </div>
+          {report.leads.roi_narrative && (
+            <div className="p-3 bg-teal-50 rounded-lg mb-4 border border-teal-100">
+              <p className="text-xs font-semibold text-teal-700 mb-1">ROI Summary</p>
+              <p className="text-sm text-slate-700">{report.leads.roi_narrative}</p>
+            </div>
+          )}
+          {report.leads.highlights?.length > 0 && <BulletList items={report.leads.highlights} color="bg-teal-500" />}
         </Section>
       )}
 

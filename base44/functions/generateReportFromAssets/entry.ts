@@ -149,6 +149,7 @@ Based on this scorecard, generate a client_scorecard block with a 2-3 sentence g
   }
 
   const isLocalSEO = client.services?.includes('Local SEO') && !client.services?.includes('SEO');
+  const retainerFee = client.retainer_fee || null;
 
   const prompt = `You are a senior digital marketing analyst for a window treatment marketing agency. 
 Generate a comprehensive marketing performance report for "${client.name}" covering "${date_range || `${month || ''} ${year || ''}`}".
@@ -158,12 +159,19 @@ ${sections.join('\n')}
 ${scoreSection}
 
 Services this client is on: ${client.services?.join(', ') || 'Not specified'}
+Monthly Retainer Fee: ${retainerFee ? `$${retainerFee}` : 'Not specified (cannot calculate ROI)'}
 Location: ${client.location || 'Not specified'}
 Website: ${client.website || 'Not specified'}
 
 ${isLocalSEO ? 'This client is on a LOCAL SEO program. Focus on GBP/local search performance.' : 'This client is on a full SEO program. Cover both organic and local performance.'}
 
 IMPORTANT: Only populate the "ppc" block if actual PPC/Google Ads data was provided above. GHL lead data is NOT PPC data — do NOT use it to fill PPC metrics. If no PPC data is available, leave all ppc fields as "N/A" or empty arrays.
+
+For the "leads" block: Use the GHL lead data provided above. Calculate ROI where possible:
+- cost_per_lead = retainer_fee / total_leads (if both available)
+- roi_estimate = ((revenue_generated - retainer_fee) / retainer_fee) * 100 as a percentage string
+- Provide a 2-3 sentence roi_narrative explaining what the numbers mean for the client.
+If no GHL data is available, omit or leave leads fields as N/A. — do NOT use it to fill PPC metrics. If no PPC data is available, leave all ppc fields as "N/A" or empty arrays.
 
 Analyze all provided data and generate a comprehensive combined marketing performance report. If some data is missing or unavailable, note it briefly but focus on what IS available.`;
 
@@ -227,6 +235,24 @@ Analyze all provided data and generate a comprehensive combined marketing perfor
           }
         },
         next_period_focus: { type: "array", items: { type: "string" } },
+        leads: {
+          type: "object",
+          properties: {
+            total_leads: { type: "string" },
+            new_leads: { type: "string" },
+            qualified_leads: { type: "string" },
+            appointments_booked: { type: "string" },
+            appointments_showed: { type: "string" },
+            closed_deals: { type: "string" },
+            revenue_generated: { type: "string" },
+            cost_per_lead: { type: "string" },
+            close_rate: { type: "string" },
+            roi_estimate: { type: "string" },
+            roi_narrative: { type: "string" },
+            lead_sources_summary: { type: "string" },
+            highlights: { type: "array", items: { type: "string" } }
+          }
+        },
         client_scorecard: {
           type: "object",
           properties: {
