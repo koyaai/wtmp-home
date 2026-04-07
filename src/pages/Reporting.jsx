@@ -386,6 +386,44 @@ export default function Reporting() {
 
   const canGenerate = selectedClient && !uploading;
 
+  const handleGenerateFromAssets = async () => {
+    if (!selectedClient) return;
+    setUploading(true);
+    setReport(null);
+    const res = await base44.functions.invoke('generateReportFromAssets', {
+      client_id: selectedClient.id,
+      month,
+      year,
+      date_range: dateRange || `${month} ${year}`,
+    });
+    if (res.data?.error) {
+      toast.error(res.data.error);
+      setUploading(false);
+      return;
+    }
+    const reportData = res.data;
+    setReport(reportData);
+    const existing = await checkExisting(selectedClient.id, month, year);
+    const payload = {
+      client_id: selectedClient.id,
+      client_name: selectedClient.name,
+      month,
+      year,
+      date_range: dateRange || `${month} ${year}`,
+      report_data: reportData,
+    };
+    if (existing) {
+      await base44.entities.MonthlyReport.update(existing.id, payload);
+      setSavedReportId(existing.id);
+    } else {
+      const created = await base44.entities.MonthlyReport.create(payload);
+      setSavedReportId(created.id);
+    }
+    toast.success('Report generated from connected assets!');
+    loadSavedReports();
+    setUploading(false);
+  };
+
   const groupedReports = savedReports.reduce((acc, r) => {
     if (!acc[r.client_name]) acc[r.client_name] = [];
     acc[r.client_name].push(r);
@@ -590,6 +628,19 @@ export default function Reporting() {
           <UploadBox label="PPC Report" icon={Target} file={ppcFile} onFile={setPpcFile} loading={uploading} optional={isLocalSEO}
             color={{ border: "border-blue-300", bg: "bg-blue-50", icon: "text-blue-600", text: "text-blue-700", iconBg: "bg-blue-500" }} />
         </div>
+
+        {selectedClient && (() => {
+          const c = clients.find(cl => cl.id === selectedClient.id);
+          const hasAssets = c && (c.brightlocal_report_url || c.ga_property_id || c.google_search_console_url || c.ghl_location_id);
+          return hasAssets ? (
+            <button
+              onClick={handleGenerateFromAssets}
+              disabled={uploading}
+              className="w-full flex items-center justify-center gap-2 text-sm font-medium text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-lg py-2.5 transition-colors disabled:opacity-50">
+              {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating...</> : <><Sparkles className="w-4 h-4" /> Generate from Connected Assets (no PDFs needed)</>}
+            </button>
+          ) : null;
+        })()}
 
         <Button onClick={handleGenerate} disabled={!canGenerate} className="w-full bg-slate-800 hover:bg-slate-700">
           {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing & Generating...</> : <><Sparkles className="w-4 h-4" /> Generate & Save Report</>}
