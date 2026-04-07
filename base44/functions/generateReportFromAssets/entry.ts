@@ -5,7 +5,7 @@ Deno.serve(async (req) => {
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { client_id, month, year, date_range } = await req.json();
+  const { client_id, month, year, date_range, brightlocal_data: passedBrightlocalData } = await req.json();
 
   if (!client_id) return Response.json({ error: 'client_id is required' }, { status: 400 });
 
@@ -18,7 +18,26 @@ Deno.serve(async (req) => {
   let brightlocal_data = null;
 
   // ── 1. BrightLocal ────────────────────────────────────────────────
-  if (client.brightlocal_report_url) {
+  // If brightlocal_data was pre-fetched by the frontend, use it directly to avoid timeout
+  if (passedBrightlocalData?.gbp_insights) {
+    const blRes = passedBrightlocalData;
+    brightlocal_data = blRes;
+    sections.push(`
+BRIGHTLOCAL / GBP PERFORMANCE (map these to seo.gbp_metrics in the output JSON):
+- GBP Impressions (total_views → impressions): ${blRes.gbp_insights?.total_views || "N/A"}
+  - Search Desktop: ${blRes.gbp_insights?.search_desktop || "N/A"}
+  - Search Mobile: ${blRes.gbp_insights?.search_mobile || "N/A"}
+  - Maps Desktop: ${blRes.gbp_insights?.maps_desktop || "N/A"}
+  - Maps Mobile: ${blRes.gbp_insights?.maps_mobile || "N/A"}
+- Total Actions: ${blRes.gbp_insights?.total_actions || "N/A"}
+- Website Clicks (→ website_clicks): ${blRes.gbp_insights?.website_clicks || "N/A"}
+- Direction Requests (→ direction_requests): ${blRes.gbp_insights?.direction_requests || "N/A"}
+- Phone Calls (→ call_clicks): ${blRes.gbp_insights?.phone_calls || "N/A"}
+- Avg Map Rank (→ avg_map_rank): ${blRes.local_search_grid?.avg_map_rank || "N/A"}
+- Rank Change (→ rank_change): ${blRes.local_search_grid?.rank_change || "N/A"}
+- Primary Keyword: ${blRes.local_search_grid?.keyword || "N/A"}
+IMPORTANT: Populate seo.gbp_metrics with the above values using the field mappings indicated.`);
+  } else if (client.brightlocal_report_url) {
     try {
       const blRes = await base44.asServiceRole.functions.invoke('fetchBrightlocalData', {
         report_url: client.brightlocal_report_url,

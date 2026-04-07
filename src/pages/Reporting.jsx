@@ -395,6 +395,7 @@ export default function Reporting() {
       month,
       year,
       date_range: dateRange || `${month} ${year}`,
+      brightlocal_data: brightlocalData || null,
     });
     if (res.data?.error) {
       toast.error(res.data.error);
