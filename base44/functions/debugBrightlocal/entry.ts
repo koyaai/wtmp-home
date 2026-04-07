@@ -8,48 +8,56 @@ Deno.serve(async (req) => {
   const { report_url } = await req.json();
   if (!report_url) return Response.json({ error: 'report_url is required' }, { status: 400 });
 
-  // Try multiple hash patterns
-  const patterns = [
-    /location-dashboard\/([a-f0-9]+)/,
-    /location-dashboard\/([^\/\?]+)/,
-    /\/([a-f0-9]{8,})/,
-    /dashboard\/([^\/\?#]+)/,
-  ];
+  const match = report_url.match(/location-dashboard\/([^\/\?#]+)/);
+  const hash = match ? match[1] : null;
+  if (!hash) return Response.json({ error: 'Could not extract hash' }, { status: 400 });
 
-  let hash = null;
-  for (const p of patterns) {
-    const m = report_url.match(p);
-    if (m) { hash = m[1]; break; }
-  }
+  const gbpaUrl = `https://www.local-marketing-reports.com/location-dashboard/${hash}/gbpa-reports`;
+  const lsgUrl = `https://www.local-marketing-reports.com/location-dashboard/${hash}/lsg/view`;
 
-  const urls_to_try = hash ? [
-    `https://www.local-marketing-reports.com/location-dashboard/${hash}/gbpa-reports`,
-    `https://www.local-marketing-reports.com/location-dashboard/${hash}`,
-  ] : [];
+  // Use LLM with internet context to read the JS-rendered pages
+  const result = await base44.integrations.Core.InvokeLLM({
+    prompt: `Please visit these two BrightLocal dashboard pages and extract all the data you can find:
 
-  const results = {};
+1. GBP Audit page: ${gbpaUrl}
+2. Local Search Grid page: ${lsgUrl}
 
-  for (const url of urls_to_try) {
-    try {
-      const res = await fetch(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120',
-          'Accept': 'text/html,application/xhtml+xml',
-        }
-      });
-      const html = await res.text();
-      results[url] = {
-        status: res.status,
-        html_sample: html.slice(0, 3000),
-        // Find anything that looks like numbers near keywords
-        views_snippet: (html.match(/.{0,100}[Vv]iew.{0,100}/g) || []).slice(0, 5),
-        actions_snippet: (html.match(/.{0,100}[Aa]ction.{0,100}/g) || []).slice(0, 5),
-        rank_snippet: (html.match(/.{0,100}[Rr]ank.{0,100}/g) || []).slice(0, 5),
-      };
-    } catch (e) {
-      results[url] = { error: e.message };
+From the GBP Audit page, extract: Total Views, Search Desktop, Search Mobile, Maps Desktop, Maps Mobile, Total Actions, Website Clicks, Direction Requests, Phone Calls, photo count, and any other metrics shown.
+
+From the Local Search Grid page, extract: Average Map Rank, Rank Change, keyword being tracked, and any ranking data.
+
+Return all extracted data as structured JSON.`,
+    add_context_from_internet: true,
+    response_json_schema: {
+      type: "object",
+      properties: {
+        gbp_insights: {
+          type: "object",
+          properties: {
+            total_views: { type: "string" },
+            search_desktop: { type: "string" },
+            search_mobile: { type: "string" },
+            maps_desktop: { type: "string" },
+            maps_mobile: { type: "string" },
+            total_actions: { type: "string" },
+            website_clicks: { type: "string" },
+            direction_requests: { type: "string" },
+            phone_calls: { type: "string" },
+            photo_count: { type: "string" }
+          }
+        },
+        local_search_grid: {
+          type: "object",
+          properties: {
+            avg_map_rank: { type: "string" },
+            rank_change: { type: "string" },
+            keyword: { type: "string" }
+          }
+        },
+        raw_notes: { type: "string", description: "Any additional notes about what was found on the pages" }
+      }
     }
-  }
+  });
 
-  return Response.json({ hash, report_url, results });
+  return Response.json(result);
 });
