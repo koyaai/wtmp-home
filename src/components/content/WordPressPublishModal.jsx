@@ -11,7 +11,8 @@ const STATUS_OPTIONS = [
     { value: "schedule", label: "Schedule", icon: Calendar, description: "Set a future date and time to publish" },
 ];
 
-export default function WordPressPublishModal({ item, client, onClose }) {
+export default function WordPressPublishModal({ item, client, onClose, defaultPostType = "post" }) {
+    const [postType, setPostType] = useState(defaultPostType);
     const [publishStatus, setPublishStatus] = useState("draft");
     const [scheduledDate, setScheduledDate] = useState("");
     const [scheduledTime, setScheduledTime] = useState("09:00");
@@ -41,6 +42,7 @@ export default function WordPressPublishModal({ item, client, onClose }) {
                 content: item.final_content,
                 status: publishStatus,
                 scheduled_date,
+                post_type: postType,
             });
 
             if (res.data?.error) {
@@ -112,10 +114,25 @@ export default function WordPressPublishModal({ item, client, onClose }) {
                         </div>
                     ) : (
                         <>
+                            {/* Post Type toggle */}
+                            <div>
+                                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Content Type</label>
+                                <div className="flex gap-2">
+                                    {[{value: "post", label: "Blog Post / Article"}, {value: "page", label: "Page"}].map(opt => (
+                                        <button key={opt.value} onClick={() => setPostType(opt.value)}
+                                            className={`flex-1 py-2 px-3 text-sm rounded-lg border-2 font-medium transition-all ${
+                                                postType === opt.value ? "border-blue-500 bg-blue-50 text-blue-700" : "border-slate-200 text-slate-600 hover:border-slate-300"
+                                            }`}>
+                                            {opt.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* Title override */}
                             <div>
-                                <label className="text-xs font-semibold text-slate-600 mb-1 block">Post Title</label>
-                                <Input value={titleOverride} onChange={e => setTitleOverride(e.target.value)} placeholder="Post title..." />
+                                <label className="text-xs font-semibold text-slate-600 mb-1 block">{postType === "page" ? "Page" : "Post"} Title</label>
+                                <Input value={titleOverride} onChange={e => setTitleOverride(e.target.value)} placeholder="Title..." />
                             </div>
 
                             {/* Publish status selection */}

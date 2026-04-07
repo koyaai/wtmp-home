@@ -8,7 +8,7 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { client_id, title, content, status, scheduled_date, excerpt } = await req.json();
+        const { client_id, title, content, status, scheduled_date, excerpt, post_type } = await req.json();
 
         if (!client_id || !title || !content) {
             return Response.json({ error: 'client_id, title, and content are required' }, { status: 400 });
@@ -32,7 +32,8 @@ Deno.serve(async (req) => {
 
         // Normalize the WP URL
         const baseUrl = wordpress_url.replace(/\/$/, '');
-        const apiUrl = `${baseUrl}/wp-json/wp/v2/posts`;
+        const endpoint = post_type === 'page' ? 'pages' : 'posts';
+        const apiUrl = `${baseUrl}/wp-json/wp/v2/${endpoint}`;
 
         // Build the Basic Auth header using WP Application Passwords
         const credentials = btoa(`${wordpress_username}:${wordpress_app_password}`);
@@ -65,11 +66,13 @@ Deno.serve(async (req) => {
             }, { status: wpResponse.status });
         }
 
+        const editPath = post_type === 'page' ? 'post.php?post=' : 'post.php?post=';
         return Response.json({
             success: true,
             post_id: wpData.id,
             post_url: wpData.link,
             post_status: wpData.status,
+            post_type: post_type || 'post',
             edit_url: `${baseUrl}/wp-admin/post.php?post=${wpData.id}&action=edit`,
         });
 
