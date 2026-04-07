@@ -314,7 +314,7 @@ export default function Reporting() {
   };
 
   const checkExisting = async (clientId, m, y) => {
-    const results = await base44.entities.MonthlyReport.filter({ client_id: clientId, month: m, year: y });
+    const results = await base44.entities.MonthlyReport.filter({ client_id: clientId, month: m, year: Number(y) });
     return results[0] || null;
   };
 

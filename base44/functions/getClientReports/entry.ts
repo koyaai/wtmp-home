@@ -15,7 +15,7 @@ Deno.serve(async (req) => {
   // Sort reports by year desc, then month desc
   const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
   reports.sort((a, b) => {
-    if (b.year !== a.year) return b.year - a.year;
+    if (Number(b.year) !== Number(a.year)) return Number(b.year) - Number(a.year);
     return MONTHS.indexOf(b.month) - MONTHS.indexOf(a.month);
   });
 
