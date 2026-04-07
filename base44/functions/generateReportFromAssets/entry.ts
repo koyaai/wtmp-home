@@ -163,6 +163,8 @@ Website: ${client.website || 'Not specified'}
 
 ${isLocalSEO ? 'This client is on a LOCAL SEO program. Focus on GBP/local search performance.' : 'This client is on a full SEO program. Cover both organic and local performance.'}
 
+IMPORTANT: Only populate the "ppc" block if actual PPC/Google Ads data was provided above. GHL lead data is NOT PPC data — do NOT use it to fill PPC metrics. If no PPC data is available, leave all ppc fields as "N/A" or empty arrays.
+
 Analyze all provided data and generate a comprehensive combined marketing performance report. If some data is missing or unavailable, note it briefly but focus on what IS available.`;
 
   const result = await base44.integrations.Core.InvokeLLM({
