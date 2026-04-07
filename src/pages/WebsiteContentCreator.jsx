@@ -19,6 +19,7 @@ export default function WebsiteContentCreator() {
   const [retryingId, setRetryingId] = useState(null);
   const [progress, setProgress] = useState({ current: 0, total: 0, currentPage: '', failed: [] });
   const [saving, setSaving] = useState({ active: false, current: 0, total: 0 });
+  const [wpPublishing, setWpPublishing] = useState({ active: false, current: 0, total: 0 });
 
   useEffect(() => {
     base44.entities.Client.list('-name', 100).then(setClients).catch(() => {});
@@ -192,6 +193,32 @@ export default function WebsiteContentCreator() {
     }
   };
 
+  const handlePublishAllToWP = async () => {
+    const pages = selectedProject?.generated_pages || [];
+    const client = clients.find(c => c.id === selectedProject?.client_id);
+    if (!client?.wordpress_url) { toast.error('This client has no WordPress configured'); return; }
+    if (!confirm(`Publish all ${pages.length} pages to WordPress as Pages on ${client.wordpress_url}?`)) return;
+    setWpPublishing({ active: true, current: 0, total: pages.length });
+    let failed = 0;
+    for (let i = 0; i < pages.length; i++) {
+      const page = pages[i];
+      try {
+        const res = await base44.functions.invoke('wpPublish', {
+          client_id: client.id,
+          title: page.h1 || page.page_name,
+          content: page.content,
+          status: 'draft',
+          post_type: 'page',
+        });
+        if (res.data?.error) failed++;
+      } catch { failed++; }
+      setWpPublishing({ active: true, current: i + 1, total: pages.length });
+    }
+    setWpPublishing({ active: false, current: 0, total: 0 });
+    if (failed === 0) toast.success(`All ${pages.length} pages sent to WordPress as drafts!`);
+    else toast.error(`${failed} page(s) failed to publish.`);
+  };
+
   return (
     <div className="p-6 max-w-5xl mx-auto">
       {/* Header */}
@@ -215,13 +242,20 @@ export default function WebsiteContentCreator() {
           </Button>
         )}
         {view === 'results' && (
-          <div className="flex flex-col items-end gap-1">
-            <Button onClick={handleSaveAllToLibrary} variant="outline" className="gap-2" disabled={saving.active}>
-              {saving.active ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving {saving.current}/{saving.total}...</> : 'Save All to Library'}
-            </Button>
-            {saving.active && (
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex gap-2">
+              {clients.find(c => c.id === selectedProject?.client_id)?.wordpress_url && (
+                <Button onClick={handlePublishAllToWP} variant="outline" className="gap-2 border-blue-300 text-blue-600 hover:bg-blue-50" disabled={wpPublishing.active}>
+                  {wpPublishing.active ? <><Loader2 className="w-4 h-4 animate-spin" /> Publishing {wpPublishing.current}/{wpPublishing.total}...</> : <><Globe className="w-4 h-4" /> Publish All to WP</>}
+                </Button>
+              )}
+              <Button onClick={handleSaveAllToLibrary} variant="outline" className="gap-2" disabled={saving.active}>
+                {saving.active ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving {saving.current}/{saving.total}...</> : 'Save All to Library'}
+              </Button>
+            </div>
+            {(saving.active || wpPublishing.active) && (
               <div className="w-48">
-                <Progress value={(saving.current / saving.total) * 100} className="h-1.5" />
+                <Progress value={saving.active ? (saving.current / saving.total) * 100 : (wpPublishing.current / wpPublishing.total) * 100} className="h-1.5" />
               </div>
             )}
           </div>
@@ -356,6 +390,7 @@ export default function WebsiteContentCreator() {
                   key={i}
                   page={page}
                   onSaveToLibrary={() => handleSavePageToLibrary(page)}
+                  client={clients.find(c => c.id === selectedProject?.client_id)}
                 />
               ))}
             </div>

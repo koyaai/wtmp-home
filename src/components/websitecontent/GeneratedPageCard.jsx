@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronUp, Copy, Check, Bookmark } from "lucide-react";
+import { ChevronDown, ChevronUp, Copy, Check, Bookmark, Globe } from "lucide-react";
+import WordPressPublishModal from "@/components/content/WordPressPublishModal";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 
@@ -25,10 +26,11 @@ const BADGE_COLORS = {
   shutters: 'bg-rose-100 text-rose-700', draperies: 'bg-fuchsia-100 text-fuchsia-700',
 };
 
-export default function GeneratedPageCard({ page, onSaveToLibrary }) {
+export default function GeneratedPageCard({ page, onSaveToLibrary, client }) {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showWpModal, setShowWpModal] = useState(false);
 
   const handleCopy = () => {
     const text = `H1: ${page.h1}\nMeta: ${page.meta_description}\n\n${page.content}`;
@@ -62,16 +64,27 @@ export default function GeneratedPageCard({ page, onSaveToLibrary }) {
             className={`p-1.5 rounded-lg transition-colors ${saved ? 'text-green-500' : 'text-slate-300 hover:text-blue-500'}`}>
             <Bookmark className="w-4 h-4" />
           </button>
-          <button onClick={handleCopy} title="Copy full content"
-            className={`p-1.5 rounded-lg transition-colors ${copied ? 'text-green-500' : 'text-slate-300 hover:text-slate-600'}`}>
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          </button>
+          {client?.wordpress_url && (
+            <button onClick={() => setShowWpModal(true)} title="Publish to WordPress as Page"
+              className="p-1.5 text-slate-300 hover:text-blue-500 rounded-lg transition-colors">
+              <Globe className="w-4 h-4" />
+            </button>
+          )}
           <button onClick={() => setExpanded(!expanded)}
             className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg">
             {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
         </div>
       </div>
+
+      {showWpModal && (
+        <WordPressPublishModal
+          item={{ title: page.h1 || page.page_name, final_content: `${page.content}` }}
+          client={client}
+          defaultPostType="page"
+          onClose={() => setShowWpModal(false)}
+        />
+      )}
 
       {expanded && (
         <div className="px-4 pb-5 border-t border-slate-100 pt-4">
