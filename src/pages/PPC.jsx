@@ -50,6 +50,16 @@ export default function PPC() {
   const canEdit = ["admin", "leadership", "team_lead", "ppc_specialist"].includes(user?.role);
   const selectedClient = clients.find(c => c.id === selectedClientId);
 
+  const handleSave = async () => {
+    const data = { ...form, client_id: selectedClientId };
+    const numericFields = ['budget','spend','impressions','clicks','ctr','cpc','conversions','cost_per_conversion','roas'];
+    numericFields.forEach(f => { if (data[f]) data[f] = parseFloat(data[f]); });
+    await base44.entities.PPCData.create(data);
+    setShowForm(false);
+    setForm({ platform: 'Google Ads' });
+    base44.entities.PPCData.filter({ client_id: selectedClientId }, '-report_date', 12).then(setPpcData);
+  };
+
   const handleGoogleAdsSync = async () => {
     if (!selectedClient?.google_ads_account_id) {
       setSyncError("No Google Ads Account ID set for this client. Add it in the client profile.");
