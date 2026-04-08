@@ -23,7 +23,8 @@ import {
   Globe,
   Brain,
   BarChart2,
-  Crown
+  Crown,
+  BookOpen
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -59,6 +60,7 @@ const navItems = [
   { label: "Reporting", icon: BarChart2, page: "Reporting", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist", "lead_boomerang"] },
   { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: [...CSM_ROLES, "lead_boomerang"] },
   { label: "Will's Corner", icon: Crown, page: "WillsCorner", roles: ["admin", "leadership"] },
+  { label: "Client Memory", icon: BookOpen, page: "ClientMemory", roles: CSM_ROLES },
 ];
 
 export default function Layout({ children, currentPageName }) {
