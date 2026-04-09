@@ -44,7 +44,14 @@ Deno.serve(async (req) => {
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { source_text } = await req.json();
+  const body = await req.json();
+  let source_text = body.source_text || '';
+
+  // If a file URL was provided, fetch the file content directly
+  if (body.file_url) {
+    const fileRes = await fetch(body.file_url);
+    source_text = await fileRes.text();
+  }
 
   const chunks = chunkText(source_text.trim(), CHUNK_SIZE);
 
