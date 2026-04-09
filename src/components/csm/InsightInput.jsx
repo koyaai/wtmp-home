@@ -70,6 +70,14 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
         onChange={e => setSourceText(e.target.value)}
         className="min-h-[180px] text-sm"
       />
+      <div className="flex items-center justify-between text-xs text-slate-400">
+        <span>{sourceText.length.toLocaleString()} characters</span>
+        {sourceText.length > 8000 && (
+          <span className="text-amber-600 font-medium">
+            Long transcript — will be auto-split into {Math.ceil(sourceText.length / 8000)} parts and merged automatically ✓
+          </span>
+        )}
+      </div>
       {error && (
         <div className="flex items-center gap-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           <AlertCircle className="w-4 h-4 flex-shrink-0" /> {error}
