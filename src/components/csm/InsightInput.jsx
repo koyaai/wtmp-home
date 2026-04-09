@@ -20,10 +20,16 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
       const res = await base44.functions.invoke("extractClientInsight", { source_text: sourceText });
       const { summary, todos, requests, red_flags } = res.data;
 
+      // Truncate stored source_text to avoid entity size limits (~30KB max)
+      // The full text was already sent to the backend for processing
+      const storedText = sourceText.length > 20000
+        ? sourceText.slice(0, 20000) + `\n\n[Truncated — original was ${sourceText.length.toLocaleString()} characters]`
+        : sourceText;
+
       await base44.entities.ClientInsight.create({
         client_id: clientId,
         client_name: clientName,
-        source_text: sourceText,
+        source_text: storedText,
         source_type: sourceType,
         meeting_date: meetingDate || undefined,
         summary,
