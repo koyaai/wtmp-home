@@ -110,6 +110,15 @@ export default function WillsMeetings({ clientId }) {
   const [queryResult, setQueryResult] = useState(null);
   const [querying, setQuerying] = useState(false);
 
+  useEffect(() => {
+    if (!clientId) { setLoading(false); return; }
+    setLoading(true);
+    base44.entities.WillMeeting.filter({ client_id: clientId }, "-meeting_date")
+      .then(data => setMeetings(data || []))
+      .catch(() => setMeetings([]))
+      .finally(() => setLoading(false));
+  }, [clientId]);
+
   const handleQuery = async () => {
     if (!query.trim() || meetings.length === 0) return;
     setQuerying(true);
