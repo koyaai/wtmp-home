@@ -174,12 +174,16 @@ Parse and extract:
       }
     });
 
+    const storedTranscript = transcript.length > 20000
+      ? transcript.slice(0, 20000) + `\n\n[Truncated — original was ${transcript.length.toLocaleString()} characters]`
+      : transcript;
+
     await base44.entities.WillMeeting.create({
       client_id: clientId,
       client_name: client?.name,
       meeting_date: meetingDate,
       attendees,
-      raw_transcript: transcript,
+      raw_transcript: storedTranscript,
       parsed: result,
     });
 
