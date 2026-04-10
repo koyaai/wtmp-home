@@ -174,8 +174,8 @@ Parse and extract:
       }
     });
 
-    const storedTranscript = transcript.length > 20000
-      ? transcript.slice(0, 20000) + `\n\n[Truncated — original was ${transcript.length.toLocaleString()} characters]`
+    const storedTranscript = transcript.length > 5000
+      ? transcript.slice(0, 5000) + `\n\n[Truncated — original was ${transcript.length.toLocaleString()} characters]`
       : transcript;
 
     await base44.entities.WillMeeting.create({
