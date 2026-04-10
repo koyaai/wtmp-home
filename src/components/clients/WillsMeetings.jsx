@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Loader2, MessageSquare, Calendar, User, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, MessageSquare, Calendar, User, ChevronDown, ChevronUp, Search, Sparkles, X } from "lucide-react";
 
 const SENTIMENT_COLORS = {
   Positive: "bg-emerald-100 text-emerald-700",
@@ -106,12 +106,30 @@ function MeetingCard({ meeting }) {
 export default function WillsMeetings({ clientId }) {
   const [meetings, setMeetings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState("");
+  const [queryResult, setQueryResult] = useState(null);
+  const [querying, setQuerying] = useState(false);
 
-  useEffect(() => {
-    base44.entities.WillMeeting.filter({ client_id: clientId }, "-meeting_date")
-      .then(setMeetings)
-      .finally(() => setLoading(false));
-  }, [clientId]);
+  const handleQuery = async () => {
+    if (!query.trim() || meetings.length === 0) return;
+    setQuerying(true);
+    setQueryResult(null);
+    const context = meetings.map((m, i) => {
+      const p = m.parsed || {};
+      return `Meeting ${i + 1} (${new Date(m.meeting_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}):
+Summary: ${p.summary || "N/A"}
+Key Topics: ${(p.key_topics || []).join(", ") || "N/A"}
+Highlights: ${(p.highlights || []).join(" | ") || "N/A"}
+Action Items: ${(p.action_items || []).join(" | ") || "N/A"}
+Follow-ups: ${(p.follow_ups || []).join(" | ") || "N/A"}`;
+    }).join("\n\n");
+
+    const result = await base44.integrations.Core.InvokeLLM({
+      prompt: `You are reviewing historical Will Hanke CEO meeting notes for a specific client. Answer the following question based only on the meeting data provided. Be specific — cite meeting dates when relevant. If nothing relevant was found, say so clearly.\n\nQuestion: ${query}\n\nMeeting Data:\n${context}`
+    });
+    setQueryResult(result);
+    setQuerying(false);
+  };
 
   if (loading) return <div className="flex justify-center py-10"><Loader2 className="w-5 h-5 animate-spin text-slate-400" /></div>;
 
@@ -124,7 +142,38 @@ export default function WillsMeetings({ clientId }) {
   );
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* AI Query Box */}
+      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-3">
+        <p className="text-xs font-semibold text-amber-700 uppercase tracking-wide flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5" /> Ask About These Meetings
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleQuery()}
+            placeholder="e.g. Did we discuss pricing? What did Will promise them?"
+            className="flex-1 border border-amber-200 bg-white rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300"
+          />
+          <button
+            onClick={handleQuery}
+            disabled={querying || !query.trim()}
+            className="px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg transition-colors disabled:opacity-50"
+          >
+            {querying ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+          </button>
+        </div>
+        {queryResult && (
+          <div className="bg-white border border-amber-200 rounded-lg p-3 text-sm text-slate-700 leading-relaxed relative">
+            <button onClick={() => setQueryResult(null)} className="absolute top-2 right-2 text-slate-300 hover:text-slate-500"><X className="w-3.5 h-3.5" /></button>
+            {queryResult}
+          </div>
+        )}
+      </div>
+
+      {/* Meeting Cards */}
       {meetings.map(m => <MeetingCard key={m.id} meeting={m} />)}
     </div>
   );
