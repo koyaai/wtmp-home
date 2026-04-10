@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, Trash2, ChevronDown, ChevronUp, User, Calendar, MessageSquare } from "lucide-react";
+import { Loader2, Sparkles, Trash2, ChevronDown, ChevronUp, User, Calendar, MessageSquare, Upload, FileText, X } from "lucide-react";
 import { toast } from "sonner";
 
 const SENTIMENT_COLORS = {
@@ -122,10 +122,27 @@ export default function WillsCorner() {
   const [loading, setLoading] = useState(false);
   const [parsing, setParsing] = useState(false);
 
+  const [inputMode, setInputMode] = useState("paste"); // "paste" | "file"
   const [clientId, setClientId] = useState("");
   const [meetingDate, setMeetingDate] = useState(now.toISOString().split("T")[0]);
   const [attendees, setAttendees] = useState("");
   const [transcript, setTranscript] = useState("");
+  const [uploadedFile, setUploadedFile] = useState(null); // { name, url }
+  const [uploading, setUploading] = useState(false);
+
+  const handleFileSelect = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      setUploadedFile({ name: file.name, url: file_url });
+    } catch (err) {
+      toast.error("Failed to upload file. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   useEffect(() => {
     base44.entities.Client.list().then(setClients);
@@ -140,9 +157,19 @@ export default function WillsCorner() {
   };
 
   const handleParse = async () => {
-    if (!clientId || !transcript.trim()) return;
+    const isFile = inputMode === "file";
+    if (!clientId) return;
+    if (isFile && !uploadedFile) return;
+    if (!isFile && !transcript.trim()) return;
     setParsing(true);
     const client = clients.find(c => c.id === clientId);
+
+    // If file mode, fetch the text content from the uploaded URL
+    let transcriptText = transcript;
+    if (isFile) {
+      const fileRes = await fetch(uploadedFile.url);
+      transcriptText = await fileRes.text();
+    }
 
     const result = await base44.integrations.Core.InvokeLLM({
       prompt: `You are analyzing a call transcript between Will Hanke (CEO of a digital marketing agency) and a client.
@@ -152,7 +179,7 @@ Meeting Date: ${meetingDate}
 Attendees: ${attendees || "Not specified"}
 
 Transcript:
-${transcript}
+${transcriptText}
 
 Parse and extract:
 - summary: 2-3 sentence executive summary of the call
@@ -174,9 +201,11 @@ Parse and extract:
       }
     });
 
-    const storedTranscript = transcript.length > 5000
-      ? transcript.slice(0, 5000) + `\n\n[Truncated — original was ${transcript.length.toLocaleString()} characters]`
-      : transcript;
+    const storedTranscript = isFile
+      ? `[Transcript uploaded from file: ${uploadedFile.name}]`
+      : transcriptText.length > 5000
+        ? transcriptText.slice(0, 5000) + `\n\n[Truncated — original was ${transcriptText.length.toLocaleString()} characters]`
+        : transcriptText;
 
     await base44.entities.WillMeeting.create({
       client_id: clientId,
@@ -189,8 +218,10 @@ Parse and extract:
 
     toast.success("Meeting parsed and saved!");
     setTranscript("");
+    setUploadedFile(null);
     setAttendees("");
     setClientId("");
+    setInputMode("paste");
     await loadMeetings();
     setParsing(false);
   };
@@ -258,19 +289,60 @@ Parse and extract:
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Transcript *</label>
-          <textarea
-            value={transcript}
-            onChange={e => setTranscript(e.target.value)}
-            rows={10}
-            placeholder="Paste the full call transcript here…"
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 resize-y font-mono"
-          />
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-semibold text-slate-600">Transcript *</label>
+            <div className="flex gap-1 bg-slate-100 rounded-lg p-0.5">
+              <button onClick={() => setInputMode("paste")}
+                className={`px-2.5 py-1 text-xs rounded-md font-medium transition-colors ${inputMode === "paste" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+                Paste Text
+              </button>
+              <button onClick={() => setInputMode("file")}
+                className={`px-2.5 py-1 text-xs rounded-md font-medium transition-colors ${inputMode === "file" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+                Upload .txt
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-start gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-2 mb-2">
+            <FileText className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
+            <p className="text-xs text-blue-700"><span className="font-semibold">For transcripts 10 pages or longer,</span> use the <span className="font-semibold">Upload .txt</span> tab to avoid errors.</p>
+          </div>
+
+          {inputMode === "paste" ? (
+            <textarea
+              value={transcript}
+              onChange={e => setTranscript(e.target.value)}
+              rows={10}
+              placeholder="Paste the full call transcript here…"
+              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 resize-y font-mono"
+            />
+          ) : (
+            uploadedFile ? (
+              <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-emerald-600" />
+                  <span className="text-sm font-medium text-emerald-700">{uploadedFile.name}</span>
+                </div>
+                <button onClick={() => setUploadedFile(null)} className="text-slate-400 hover:text-red-400">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center gap-3 border-2 border-dashed border-slate-200 rounded-xl p-8 cursor-pointer hover:border-amber-300 hover:bg-amber-50 transition-colors">
+                <input type="file" accept=".txt" className="hidden" onChange={handleFileSelect} disabled={uploading} />
+                {uploading ? <Loader2 className="w-7 h-7 text-amber-400 animate-spin" /> : <Upload className="w-7 h-7 text-slate-400" />}
+                <div className="text-center">
+                  <p className="text-sm font-medium text-slate-700">{uploading ? "Uploading..." : "Click to upload .txt file"}</p>
+                  <p className="text-xs text-slate-400 mt-0.5">Plain text files only (.txt)</p>
+                </div>
+              </label>
+            )
+          )}
         </div>
 
         <Button
           onClick={handleParse}
-          disabled={parsing || !clientId || !transcript.trim()}
+          disabled={parsing || !clientId || (inputMode === "paste" ? !transcript.trim() : !uploadedFile)}
           className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0"
         >
           {parsing
