@@ -184,6 +184,7 @@ export default function Dashboard() {
           </div>
           <div className="divide-y divide-slate-50">
             {updates.slice(0, 6).map(update => {
+              const client = clients.find(c => c.id === update.client_id);
               const typeColors = {
                 win: "text-emerald-600 bg-emerald-50",
                 churn_risk: "text-red-600 bg-red-50",
@@ -192,9 +193,9 @@ export default function Dashboard() {
                 status_update: "text-slate-600 bg-slate-50",
                 general: "text-slate-600 bg-slate-50",
               };
-              return (
+              const inner = (
                 <div key={update.id} className="px-5 py-3.5">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${typeColors[update.update_type] || typeColors.general}`}>
                       {update.update_type?.replace("_", " ")}
                     </span>
@@ -202,8 +203,18 @@ export default function Dashboard() {
                       {new Date(update.created_date).toLocaleDateString()}
                     </span>
                   </div>
+                  {client && (
+                    <p className="text-xs font-semibold text-blue-600 mb-0.5">{client.name}</p>
+                  )}
                   <p className="text-xs text-slate-600 line-clamp-2">{update.content}</p>
                 </div>
+              );
+              return client ? (
+                <Link key={update.id} to={createPageUrl('Clients') + `?id=${client.id}`} className="block hover:bg-slate-50 transition-colors">
+                  {inner}
+                </Link>
+              ) : (
+                <div key={update.id}>{inner}</div>
               );
             })}
             {updates.length === 0 && (
