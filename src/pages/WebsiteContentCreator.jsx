@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Plus, Globe, ChevronLeft, Loader2, Trash2, CheckCircle2, XCircle } from "lucide-react";
+import { Plus, Globe, ChevronLeft, Loader2, Trash2, CheckCircle2, XCircle, Download } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import WebsiteQuestionnaire from "@/components/websitecontent/WebsiteQuestionnaire";
@@ -193,6 +193,30 @@ export default function WebsiteContentCreator() {
     }
   };
 
+  const handleDownloadAll = () => {
+    const pages = selectedProject?.generated_pages || [];
+    if (pages.length === 0) return;
+    const text = pages.map(page => [
+      `${'='.repeat(60)}`,
+      `PAGE: ${page.page_name}`,
+      `${'='.repeat(60)}`,
+      `H1: ${page.h1 || ''}`,
+      `META DESCRIPTION: ${page.meta_description || ''}`,
+      ``,
+      `CONTENT:`,
+      page.content || '',
+      ``,
+    ].join('\n')).join('\n\n');
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${selectedProject.project_name.replace(/[^a-z0-9]/gi, '_')}_pages.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Downloaded ${pages.length} pages`);
+  };
+
   const handlePublishAllToWP = async () => {
     const pages = selectedProject?.generated_pages || [];
     const client = clients.find(c => c.id === selectedProject?.client_id);
@@ -249,6 +273,9 @@ export default function WebsiteContentCreator() {
                   {wpPublishing.active ? <><Loader2 className="w-4 h-4 animate-spin" /> Publishing {wpPublishing.current}/{wpPublishing.total}...</> : <><Globe className="w-4 h-4" /> Publish All to WP</>}
                 </Button>
               )}
+              <Button onClick={handleDownloadAll} variant="outline" className="gap-2">
+                <Download className="w-4 h-4" /> Download All
+              </Button>
               <Button onClick={handleSaveAllToLibrary} variant="outline" className="gap-2" disabled={saving.active}>
                 {saving.active ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving {saving.current}/{saving.total}...</> : 'Save All to Library'}
               </Button>
