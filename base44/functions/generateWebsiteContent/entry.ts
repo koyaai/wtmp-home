@@ -7,7 +7,10 @@ function buildPageList(q) {
     { key: 'products', name: 'Products Overview Page' },
     { key: 'services', name: 'Services Overview Page' },
     { key: 'service_areas', name: 'Service Areas Page' },
-    { key: 'gallery', name: 'Gallery & Projects Page' },
+    { key: 'gallery', name: 'Gallery Page' },
+    { key: 'projects', name: 'Our Projects Page' },
+    { key: 'testimonials', name: 'What Our Clients Say Page' },
+    { key: 'faq', name: 'FAQ Page' },
   ];
   if (q.new_construction) pages.push({ key: 'new_construction', name: 'New Home Construction Page' });
   if (q.motorization) pages.push({ key: 'motorization', name: 'Motorized Window Treatments Page' });
@@ -150,10 +153,18 @@ H1: "Our Service Areas"
 
 GALLERY (key: gallery) — SHORT BLURBS ONLY, no [GLOBAL TRUST SECTION]:
 Four labeled short pieces:
-- ### Gallery Intro (3-4 sentences about what the gallery shows, types of projects, local homes)
-- ### Gallery CTA (2-3 sentences to inspire action after seeing photos)  
-- ### Projects Intro (3-4 sentences about craftsmanship, each installation)
-- ### Projects CTA (2-3 sentences encouraging consultation)
+- ### Gallery Intro (3-4 sentences about what the gallery shows, the variety of window treatment styles, and local home aesthetics in ${q.city})
+- ### Gallery CTA (2-3 sentences inviting homeowners to imagine their own spaces and book a consultation)
+- ### By Room Intro (2-3 sentences about how window treatments transform different rooms: living rooms, bedrooms, kitchens, home offices)
+- ### Style Guide Intro (2-3 sentences about how the gallery showcases different styles from light-filtering to blackout, casual to elegant)
+
+PROJECTS (key: projects) — SHORT BLURBS ONLY, no [GLOBAL TRUST SECTION]:
+Five labeled short pieces:
+- ### Projects Intro (3-4 sentences about the craftsmanship and care that goes into each ${q.business_name} installation, real homes in ${q.city} and surrounding areas)
+- ### Projects Featured (3-4 sentences describing a sample featured project: the client's challenge, the solution chosen, and the outcome — make it vivid and specific to ${q.city} homes)
+- ### Projects Process (2-3 sentences about the journey from consultation to final install, every detail handled by the team)
+- ### Projects Materials (2-3 sentences about the quality of materials sourced from ${q.brands_carried || 'leading manufacturers'})
+- ### Projects CTA (2-3 sentences encouraging visitors to start their own project with a free consultation)
 
 NEW CONSTRUCTION (key: new_construction, if selected):
 H1: "New Home Construction Window Treatments in ${q.city}"
@@ -177,22 +188,56 @@ H1: "Motorized Window Treatments in ${q.city}"
 
 PRODUCT CATEGORY PAGES (blinds, shades, shutters, draperies):
 H1: "Custom [Category] in ${q.city}, ${q.state}"
-1. Compelling hook specific to this category + local relevance
+PURPOSE: This is a CATEGORY OVERVIEW page. It introduces the category as a whole. Do NOT repeat the deep product-level detail covered on individual product pages. Think of it as a curated menu that helps homeowners understand which specific product within this category is right for them.
+1. Compelling hook about this category's general strengths + local climate relevance
 2. [GLOBAL TRUST SECTION]
-3. ## Why [Category] Work So Well in ${q.city} Homes — specific climate reasons for this category
-4. ## Our [Category] Collection — ### sub-section per product type offered within this category, mention brands
-5. ## What to Expect — process specific to this category
-6. CTA
+3. ## Why [Category] Work So Well in ${q.city} Homes — category-level climate/lifestyle reasons (UV exposure, humidity, light management, privacy needs, architectural style)
+4. ## Our [Category] Collection — ### sub-section per specific product type within this category offered by this client. Each sub-section: 2-3 sentences giving a high-level description of that specific product and who it's best for. Use the product's proper name (e.g. "Roller Shades", "Roman Shades"). Mention ${q.brands_carried || 'leading manufacturers'}. Do NOT repeat the full features list — save that for the individual product page.
+5. ## How to Choose the Right [Category] — 3-4 practical tips to help a homeowner narrow down which specific option suits their room, lifestyle, and budget
+6. ## What to Expect — process specific to this category
+7. CTA
 
 INDIVIDUAL PRODUCT PAGES (wood_blinds, faux_wood_blinds, vertical_blinds, roller_shades, roman_shades, woven_wood_shades, honeycomb_shades, plantation_shutters, wood_shutters, composite_shutters, vinyl_shutters):
 H1 pattern: "[Descriptor] [Specific Product] in ${q.city}[, ${q.state}]"
 Examples: "Timeless Wood Blinds in [City]", "Custom Roller Shades in [City]", "Durable Vinyl Shutters in [City], [State]"
-1. Compelling hook unique to this product type + local angle
+1. Compelling hook unique to THIS specific product + local angle (e.g. reference the exact climate, architecture, or lifestyle reason this product suits ${q.city} homeowners)
 2. [GLOBAL TRUST SECTION]
-3. ## [Product] for [City] Homes — specific reasons THIS product works for local climate
-4. ## Features & Options — specific materials/styles/sizes: wood blinds→hardwood slats/stains/slat widths; faux wood→PVC/moisture resistance; vinyl shutters→PVC/coast resistance; wood shutters→hardwood/louver options; composite→moisture-resist materials; roller shades→fabric opacity options; roman shades→fold styles/fabrics; woven wood→bamboo/reeds/grasses; honeycomb→cell structure/single-double-triple; vertical blinds→vane materials/track systems
-5. ## What to Expect — process for this specific product
+3. ## [Specific Product] for ${q.city} Homes — go deep on WHY this exact product (not the category) suits the local climate, light conditions, and lifestyle
+4. ## Features & Options — be very specific to this product only:
+   - Wood Blinds → hardwood species options, stain/paint colors, slat widths (1", 2", 2.5"), tilt mechanisms, lift options
+   - Faux Wood Blinds → PVC/composite composition, moisture & warp resistance, paintable/woodgrain options, slat widths
+   - Vertical Blinds → vane materials (fabric, vinyl, PVC), vane widths, track systems, sliding door applications
+   - Roller Shades → fabric types (sheer/light-filtering/room-darkening/blackout), opacity percentages, hem bar styles, fascia options
+   - Roman Shades → fold styles (flat, hobbled, relaxed, waterfall), fabric options, lining choices (unlined/privacy/blackout)
+   - Woven Wood Shades → natural materials (bamboo, jute, reeds, grasses, rattan), weave densities, privacy liner options
+   - Honeycomb/Cellular Shades → single/double/triple cell options, cell size (3/8", 1/2", 3/4"), opacity, top-down/bottom-up
+   - Plantation Shutters → louver sizes (2.5", 3.5", 4.5"), frame styles (L-frame, Z-frame, café style), tilt bar options
+   - Wood Shutters → hardwood species, stain/paint finishes, louver and frame options, custom sizing
+   - Composite Shutters → moisture-resistant materials, interior painting/staining, coastal humidity performance
+   - Vinyl Shutters → full PVC construction, moisture/fade/salt-air resistance, louver sizes, ideal for high-humidity rooms
+5. ## What to Expect — the installation process specific to this product type (how it's measured, fitted, installed)
 6. CTA
+
+TESTIMONIALS (key: testimonials) — SHORT BLURBS ONLY, no [GLOBAL TRUST SECTION]:
+Write 6 realistic, specific, varied client testimonials for ${q.business_name} in ${q.city}. Each must:
+- Sound like a real homeowner (use first names only, different each time)
+- Reference a specific product from: ${products}
+- Mention a specific benefit experienced (light control, privacy, durability, easy cleaning, design match, etc.)
+- Be 2-4 sentences long
+- Feel authentic and conversational, NOT generic or salesy
+
+Also write:
+- ### Testimonials Intro (2-3 sentences inviting visitors to hear from real ${q.city} homeowners)
+- ### Testimonials CTA (2-3 sentences encouraging the next step — schedule a consultation)
+
+FAQ (key: faq) — SHORT BLURBS ONLY, no [GLOBAL TRUST SECTION]:
+Write 10 realistic FAQ entries for a window treatment business in ${q.city}. Each entry:
+- ### [Question] as the heading
+- 2-4 sentence answer that is specific, helpful, and references local context or their specific products where relevant
+Cover a mix of: product selection, measuring & installation process, care & cleaning, pricing expectations, lead times, motorization, child safety, warranty, what to expect at an in-home consultation, and custom vs. ready-made.
+Also write:
+- ### FAQ Intro (2-3 sentences welcoming visitors to the FAQ section)
+- ### FAQ CTA (2-3 sentences at the end pointing to the free consultation for anything not answered)
 </page_instructions>
 
 Pages to generate (${pages.length} total): ${pages.map(p => `"${p.key}"`).join(', ')}
