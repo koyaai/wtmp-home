@@ -24,7 +24,8 @@ import {
   Brain,
   BarChart2,
   Crown,
-  BookOpen
+  BookOpen,
+  FileText
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -53,7 +54,8 @@ const navItems = [
   },
   { label: "Content Studio", icon: PenTool, page: "Content", roles: [...ADMIN_LIKE, "seo_specialist", "social_media", "web_designer"],
     children: [
-      { label: "Web Copy Builder", icon: Globe, page: "WebsiteContentCreator", roles: [...ADMIN_LIKE, "seo_specialist", "social_media", "web_designer"] }
+      { label: "Web Copy Builder", icon: Globe, page: "WebsiteContentCreator", roles: [...ADMIN_LIKE, "seo_specialist", "social_media", "web_designer"] },
+      { label: "Project Page Creator", icon: FileText, page: "ProjectPageCreator", roles: [...ADMIN_LIKE, "seo_specialist", "social_media", "web_designer"] }
     ]
   },
   { label: "Client Insights", icon: Brain, page: "ClientInsights", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist"] },
