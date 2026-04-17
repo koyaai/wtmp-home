@@ -189,6 +189,7 @@ Generate high-quality content applying all four advanced capabilities:
 - Apply local authority enhancements if location is provided (climate, regional challenges, geography)
 - Use competitor information gain opportunities if competitor data is provided
 - Avoid generic marketing copy. Score 7+ on every dimension and 70+ entropy.
+- TARGET LENGTH: 600–700 words for the generated content body. Do not go shorter.
 ${content_type === 'Blog Post' ? `
 BLOG POST REQUIREMENTS:
 - Open with a 2–3 sentence summary paragraph (labeled "Overview" or as a natural intro paragraph) that tells the reader exactly what the blog covers and why it matters. This goes BEFORE the main body.

@@ -8,7 +8,24 @@ Deno.serve(async (req) => {
             return Response.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { client_id, title, content, status, scheduled_date, excerpt, post_type } = await req.json();
+        const { client_id, title, content: rawContent, status, scheduled_date, excerpt, post_type } = await req.json();
+
+        // Convert basic markdown to HTML for WordPress
+        const content = rawContent
+            .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+            .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+            .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>')
+            .replace(/^\| .+ \|$/gm, (tableBlock) => tableBlock) // preserve tables as-is for now
+            .replace(/^- (.+)$/gm, '<li>$1</li>')
+            .replace(/^(\d+)\. (.+)$/gm, '<li>$2</li>')
+            .replace(/(<li>.*<\/li>\n?)+/g, (match) => `<ul>${match}</ul>`)
+            .replace(/\n\n/g, '</p><p>')
+            .replace(/^(?!<[a-z])/gm, '')
+            .trim();
+
+        const wrappedContent = content.startsWith('<') ? content : `<p>${content}</p>`;
 
         if (!client_id || !title || !content) {
             return Response.json({ error: 'client_id, title, and content are required' }, { status: 400 });
@@ -42,7 +59,7 @@ Deno.serve(async (req) => {
         const postStatus = status === 'schedule' ? 'future' : (status || 'draft');
         const postPayload = {
             title,
-            content,
+            content: wrappedContent,
             status: postStatus,
             ...(excerpt ? { excerpt } : {}),
             ...(postStatus === 'future' && scheduled_date ? { date: scheduled_date } : {}),
