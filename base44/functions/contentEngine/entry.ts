@@ -236,10 +236,20 @@ Steps:
 1. Evaluate the original content
 2. Identify weaknesses using all 12 dimensions + entropy heatmap
 3. Rewrite applying all four advanced capabilities:
-   - Inject experience signals (real scenarios, named tools, measurable outcomes)
+   - Inject experience signals (real scenarios, named tools, measurable outcomes) — but LIMIT to a MAXIMUM of 1–2 experience signal references per page. Do NOT cite the business name or a real-life example in every paragraph. Spread them sparingly and only where they add the most value.
    - Add local authority context if location is provided
    - Use information gain opportunities identified from competitors or gaps
    - Eliminate clichés, add technical precision, improve sentence variation, strengthen entity signals
+
+CRITICAL REWRITE RULES:
+A. TEMPLATE PRESERVATION — The original content has a defined page structure (sections, headings, and order). You MUST preserve ALL existing sections and their order. Do NOT skip, merge, or reorder sections. If the original has 6 sections, the rewrite must have 6 sections with the same headings. Only improve the copy within each section.
+B. FORMATTING — Actively use structured formatting where it genuinely improves readability:
+   - Bullet point lists (- item) for: features, benefits, options, process steps (3+ items)
+   - Numbered lists for: sequential processes, ranked tips
+   - Markdown tables (| Col | Col |) for: product comparisons, option comparisons, pros/cons — only when a table genuinely adds value
+   - Mix short punchy paragraphs with more detailed explanatory ones
+   - Do NOT force formatting into every section — use judgment
+C. EXPERIENCE SIGNALS — Maximum 1–2 real-life examples in the entire rewritten page. Do NOT insert a business name citation or example every 1–2 paragraphs.
 
 Return JSON:
 {
@@ -291,9 +301,11 @@ ${FRAMEWORK_INSTRUCTIONS}
 Instructions:
 - Apply every fix listed above. Replace every generic phrase with specific, technical, measurable alternatives.
 - Fix every unverifiable claim using the suggested improvements.
-- Preserve the original content structure, length, and intent — only improve the problematic parts.
+- TEMPLATE PRESERVATION: Preserve the EXACT original content structure — all sections, headings, and their order must remain intact. Only improve the copy within each section. Do NOT skip, merge, or reorder any sections.
 - Do NOT add new sections or drastically expand the content unless the rewrite strategy requires it.
 ${content_type === 'Blog Post' ? `- Ensure the blog has: (1) an Overview/intro summary at the start, (2) max 5 FAQs, (3) a CTA paragraph at the end referencing the client/business.` : ''}
+- FORMATTING: Use bullet points, numbered lists, or markdown tables where they genuinely improve readability (features, steps, comparisons). Do not leave everything as plain paragraphs if lists would serve the reader better.
+- EXPERIENCE SIGNALS: Limit real-life business examples to a maximum of 1–2 per page. Do NOT reference the business name or a specific example in every paragraph.
 - Score 7+ on all dimensions and 70+ entropy.
 
 Return JSON:
