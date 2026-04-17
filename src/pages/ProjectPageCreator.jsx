@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles, Copy, Check, ChevronDown, ChevronUp, FileText } from "lucide-react";
+import { Loader2, Sparkles, Copy, Check, ChevronDown, ChevronUp, FileText, Building2, X } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 
@@ -86,9 +86,38 @@ function GeneratedSection({ title, content, className = "" }) {
 }
 
 export default function ProjectPageCreator() {
+  const [clients, setClients] = useState([]);
+  const [selectedClient, setSelectedClient] = useState(null);
   const [q, setQ] = useState(INITIAL_Q);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    base44.entities.Client.list().then(setClients).catch(() => {});
+  }, []);
+
+  const handleClientSelect = (clientId) => {
+    const client = clients.find(c => c.id === clientId);
+    if (!client) return;
+    setSelectedClient(client);
+
+    // Pre-fill company info from client record
+    const locationParts = (client.location || "").split(",").map(s => s.trim());
+    setQ(prev => ({
+      ...prev,
+      company_name: client.name || prev.company_name,
+      service_areas: client.location || prev.service_areas,
+      contact_url: client.website || prev.contact_url,
+      city: locationParts[0] || prev.city,
+      state: locationParts[1] || prev.state,
+    }));
+  };
+
+  const handleClearClient = () => {
+    setSelectedClient(null);
+    setQ(INITIAL_Q);
+    setResult(null);
+  };
 
   const handleChange = (name, value) => setQ(prev => ({ ...prev, [name]: value }));
 
@@ -100,7 +129,17 @@ export default function ProjectPageCreator() {
     setLoading(true);
     setResult(null);
     try {
-      const res = await base44.functions.invoke("generateProjectPage", { questionnaire: q });
+      const res = await base44.functions.invoke("generateProjectPage", {
+        questionnaire: q,
+        client_context: selectedClient ? {
+          name: selectedClient.name,
+          location: selectedClient.location,
+          website: selectedClient.website,
+          services: selectedClient.services,
+          program: selectedClient.program,
+          notes: selectedClient.notes,
+        } : null,
+      });
       setResult(res.data.page);
       toast.success("Project page generated!");
     } catch (err) {
@@ -136,8 +175,43 @@ export default function ProjectPageCreator() {
           </div>
         </div>
 
-        {!result ? (
-          /* Questionnaire */
+        {/* Client Picker */}
+        <div className="bg-white border border-slate-200 rounded-xl p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Building2 className="w-4 h-4 text-indigo-500" />
+            <span className="text-sm font-semibold text-slate-700">Select Client</span>
+            <span className="text-xs text-slate-400">(required)</span>
+          </div>
+          {!selectedClient ? (
+            <select
+              value=""
+              onChange={e => handleClientSelect(e.target.value)}
+              className="w-full border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white text-slate-500"
+            >
+              <option value="" disabled>Choose a client…</option>
+              {clients.sort((a,b) => a.name.localeCompare(b.name)).map(c => (
+                <option key={c.id} value={c.id}>{c.name}{c.location ? ` — ${c.location}` : ""}</option>
+              ))}
+            </select>
+          ) : (
+            <div className="flex items-center justify-between bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-3">
+              <div>
+                <p className="text-sm font-semibold text-indigo-800">{selectedClient.name}</p>
+                <p className="text-xs text-indigo-500">
+                  {[selectedClient.location, selectedClient.website].filter(Boolean).join(" · ")}
+                </p>
+                {selectedClient.services?.length > 0 && (
+                  <p className="text-xs text-indigo-400 mt-0.5">Services: {selectedClient.services.join(", ")}</p>
+                )}
+              </div>
+              <button onClick={handleClearClient} className="text-indigo-400 hover:text-indigo-600 ml-4">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+
+        {selectedClient && !result && (
           <div className="space-y-4">
             <Section title="About the Project">
               <div className="grid sm:grid-cols-2 gap-4">
@@ -186,7 +260,8 @@ export default function ProjectPageCreator() {
               <Field label="Total Project Cost" name="project_cost" value={q.project_cost} onChange={handleChange} placeholder="e.g. 7,450" hint="Optional — include if client approves sharing" />
             </Section>
 
-            <Section title="Company Info (for CTA)">
+            <Section title="Company Info (for CTA)" defaultOpen={false}>
+              <p className="text-xs text-slate-400 -mt-1">Pre-filled from client record — edit if needed.</p>
               <div className="grid sm:grid-cols-2 gap-4">
                 <Field label="Company Name" name="company_name" value={q.company_name} onChange={handleChange} placeholder="e.g. AAA Awnings Inc." />
                 <Field label="Contact / Scheduling URL" name="contact_url" value={q.contact_url} onChange={handleChange} placeholder="e.g. https://example.com/contact" />
@@ -201,17 +276,18 @@ export default function ProjectPageCreator() {
               className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white border-0 h-11 text-sm font-semibold"
             >
               {loading
-                ? <><Loader2 className="w-4 h-4 animate-spin" /> Generating Project Page…</>
-                : <><Sparkles className="w-4 h-4" /> Generate Project Page</>}
+                ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Generating Project Page…</>
+                : <><Sparkles className="w-4 h-4 mr-2" /> Generate Project Page</>}
             </Button>
           </div>
-        ) : (
-          /* Generated Output */
+        )}
+
+        {result && (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-1.5">
                 <Check className="w-4 h-4" />
-                Project page generated successfully
+                Project page generated for {selectedClient?.name}
               </div>
               <div className="flex items-center gap-2">
                 <CopyButton text={fullContent} label="Copy All Content" />
@@ -221,7 +297,6 @@ export default function ProjectPageCreator() {
               </div>
             </div>
 
-            {/* Meta */}
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="border border-slate-200 rounded-xl overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-2.5 bg-slate-50 border-b border-slate-200">

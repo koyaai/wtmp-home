@@ -6,10 +6,22 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { questionnaire: q } = await req.json();
+    const { questionnaire: q, client_context: cc } = await req.json();
     if (!q?.city || !q?.product_type) {
       return Response.json({ error: 'city and product_type are required' }, { status: 400 });
     }
+
+    const clientContext = cc ? `
+<client_business_context>
+Business Name: ${cc.name}
+Location: ${cc.location || ''}
+Website: ${cc.website || ''}
+Active Services: ${(cc.services || []).join(', ') || ''}
+Program Tier: ${cc.program || ''}
+Internal Notes: ${cc.notes || ''}
+</client_business_context>
+Use the above context to ensure the generated content aligns with this client's brand, service area, and positioning.
+` : '';
 
     const prompt = `You are an expert SEO copywriter specializing in home improvement and outdoor installation businesses. Generate a professional project page / case study for a completed awning or shade installation project.
 
@@ -31,6 +43,8 @@ Company Name: ${q.company_name || ''}
 Service Areas: ${q.service_areas || q.city}
 Contact / Scheduling URL: ${q.contact_url || ''}
 </project_details>
+
+${clientContext}
 
 <writing_rules>
 1. NEVER use: "high quality", "best in class", "world class", "top-notch", "state-of-the-art", "second to none"
