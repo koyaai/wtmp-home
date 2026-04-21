@@ -42,7 +42,7 @@ const navItems = [
     children: [
       { label: "GBP Profiles", icon: MapPin, page: "GBPProfiles", roles: [...ADMIN_LIKE, "seo_specialist"] },
       { label: "GBP Calendar", icon: Sparkles, page: "GenerateGBPCalendar", roles: [...ADMIN_LIKE, "seo_specialist"] },
-      { label: "GBP Connect", icon: Link2, page: "GBPConnect", roles: ADMIN_LIKE },
+      { label: "GBP Connect", icon: Link2, page: "GBPConnect", roles: [...ADMIN_LIKE, "seo_specialist"] },
     ]
   },
   { label: "PPC", icon: MousePointerClick, page: "PPC", roles: [...ADMIN_LIKE, "ppc_specialist"] },
@@ -62,7 +62,7 @@ const navItems = [
   { label: "Reporting", icon: BarChart2, page: "Reporting", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist", "lead_boomerang"] },
   { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: [...CSM_ROLES, "lead_boomerang"] },
   { label: "Will's Corner", icon: Crown, page: "WillsCorner", roles: ["admin", "leadership"] },
-  { label: "Client Memory", icon: BookOpen, page: "ClientMemory", roles: CSM_ROLES },
+  { label: "Client Memory", icon: BookOpen, page: "ClientMemory", roles: [...CSM_ROLES, "seo_specialist"] },
 ];
 
 export default function Layout({ children, currentPageName }) {
