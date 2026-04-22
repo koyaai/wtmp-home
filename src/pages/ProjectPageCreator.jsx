@@ -140,7 +140,8 @@ export default function ProjectPageCreator() {
           notes: selectedClient.notes,
         } : null,
       });
-      setResult(res.data.page);
+      const page = res.data.page?.response ?? res.data.page;
+      setResult(page);
       toast.success("Project page generated!");
     } catch (err) {
       toast.error(err.message || "Generation failed.");
