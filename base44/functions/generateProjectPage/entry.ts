@@ -118,7 +118,7 @@ Return JSON only — no markdown wrapper, no extra text:
       }
     });
 
-    return Response.json({ page: result });
+    return Response.json({ page: result?.response ?? result });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
