@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, Library } from "lucide-react";
+import { FileText, Library, Folder } from "lucide-react";
 import ContentWorkspace from "@/components/content/ContentWorkspace";
 import ContentLibrary from "@/components/content/ContentLibrary";
 
@@ -39,6 +39,29 @@ export default function Content() {
                     </SelectContent>
                 </Select>
             </div>
+
+            {/* Client Content Folders */}
+            {!selectedClient && (
+                <div>
+                    <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-wide mb-3 flex items-center gap-2">
+                        <Folder className="w-4 h-4" /> Client Content Folders
+                    </h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                        {clients.sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+                            <button
+                                key={c.id}
+                                onClick={() => { setSelectedClientId(c.id); setActiveTab("library"); }}
+                                className="flex items-center gap-3 bg-white border border-slate-200 rounded-xl px-4 py-3 text-left hover:border-indigo-300 hover:bg-indigo-50 transition-all group"
+                            >
+                                <div className="w-8 h-8 rounded-lg bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center flex-shrink-0 transition-colors">
+                                    <Library className="w-4 h-4 text-indigo-600" />
+                                </div>
+                                <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-700 truncate">{c.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {selectedClient && (
                 <>
