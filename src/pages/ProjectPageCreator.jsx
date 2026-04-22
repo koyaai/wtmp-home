@@ -140,8 +140,34 @@ export default function ProjectPageCreator() {
           notes: selectedClient.notes,
         } : null,
       });
-      setResult(res.data.page);
-      toast.success("Project page generated!");
+      const page = res.data.page;
+      setResult(page);
+
+      // Auto-save to Content Library
+      if (selectedClient && page) {
+        const fullText = [
+          `# ${page.page_title}`,
+          page.intro_paragraph,
+          page.solution_section,
+          page.features_list,
+          page.results_section,
+          page.before_after_section,
+          page.cta_section,
+        ].filter(Boolean).join("\n\n");
+
+        await base44.entities.ContentItem.create({
+          client_id: selectedClient.id,
+          client_name: selectedClient.name,
+          title: page.page_title || `Project Page — ${q.city}`,
+          mode: "generated",
+          content_type: "Landing Page",
+          final_content: fullText,
+          context_notes: `Product: ${q.product_type} | City: ${q.city}${q.state ? ", " + q.state : ""} | Slug: ${page.slug_suggestion || ""}`,
+          status: "draft",
+        });
+      }
+
+      toast.success("Project page generated and saved to Content Library!");
     } catch (err) {
       toast.error(err.message || "Generation failed.");
     } finally {
