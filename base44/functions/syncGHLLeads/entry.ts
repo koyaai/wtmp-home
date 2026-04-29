@@ -3,9 +3,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 /**
  * GHL Opportunity → LeadData field mapping (monthly rollup):
  *
- * total_opportunities (all statuses this month)  → total_leads
- * opportunities created this month               → new_leads
- * opportunities with status "won" this month     → closed_deals
+ * opportunities created this month               → total_leads (and new_leads)
+ * opportunities with status "won" updated this month → closed_deals
  * sum of monetaryValue for won opps this month   → revenue_generated
  * source breakdown JSON                          → lead_sources
  *
@@ -76,15 +75,23 @@ Deno.serve(async (req) => {
           return d >= monthStart;
         });
 
+        // total_leads = new leads created this month (not all-time pipeline count)
+        const totalLeads = thisMonth.length;
         const newLeads = thisMonth.length;
-        const totalLeads = opps.length; // all-time total in pipeline
-        const wonThisMonth = thisMonth.filter(o => o.status === 'won');
+
+        // Won deals = opportunities marked "won" that were last updated this month
+        // (GHL updates the updatedAt timestamp when status changes to won)
+        const wonThisMonth = opps.filter(o => {
+          if (o.status !== 'won') return false;
+          const updatedAt = new Date(o.updatedAt || o.dateUpdated || 0);
+          return updatedAt >= monthStart;
+        });
         const closedDeals = wonThisMonth.length;
         const revenueGenerated = wonThisMonth.reduce((sum, o) => sum + (o.monetaryValue || 0), 0);
 
-        // Source breakdown (all opps)
+        // Source breakdown (this month only)
         const sourceCounts = {};
-        for (const o of opps) {
+        for (const o of thisMonth) {
           if (o.source) sourceCounts[o.source] = (sourceCounts[o.source] || 0) + 1;
         }
         const leadSources = JSON.stringify(sourceCounts);
