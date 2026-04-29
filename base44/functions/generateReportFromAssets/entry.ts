@@ -67,11 +67,17 @@ IMPORTANT: Populate seo.gbp_metrics with the above values using the field mappin
 
   // ── 2. SEO / GSC data from stored records ─────────────────────────
   if (client.google_search_console_url || client.ga_property_id) {
-    const seoRecords = await base44.asServiceRole.entities.SEOData.filter(
-      { client_id },
-    );
-    // Get most recent record
-    const seo = seoRecords.sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
+    const seoRecords = await base44.asServiceRole.entities.SEOData.filter({ client_id });
+    // Prefer a record whose report_date falls within the requested month/year; fall back to most recent
+    const targetMonthIndex = month ? new Date(`${month} 1, ${year || new Date().getFullYear()}`).getMonth() : null;
+    const targetYear = year ? Number(year) : new Date().getFullYear();
+    const matchingRecord = targetMonthIndex !== null
+      ? seoRecords.find(r => {
+          const d = new Date(r.report_date);
+          return d.getFullYear() === targetYear && d.getMonth() === targetMonthIndex;
+        })
+      : null;
+    const seo = matchingRecord || seoRecords.sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
     if (seo) {
       sections.push(`
 GOOGLE SEARCH CONSOLE / SEO DATA (most recent stored):
@@ -91,7 +97,13 @@ GOOGLE SEARCH CONSOLE / SEO DATA (most recent stored):
   // ── 3. GA4 data from stored records ───────────────────────────────
   if (client.ga_property_id) {
     const gaRecords = await base44.asServiceRole.entities.GAData.filter({ client_id });
-    const ga = gaRecords.sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
+    const matchingGA = targetMonthIndex !== null
+      ? gaRecords.find(r => {
+          const d = new Date(r.report_date);
+          return d.getFullYear() === targetYear && d.getMonth() === targetMonthIndex;
+        })
+      : null;
+    const ga = matchingGA || gaRecords.sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
     if (ga) {
       sections.push(`
 GOOGLE ANALYTICS 4 DATA (most recent stored):
@@ -110,7 +122,13 @@ GOOGLE ANALYTICS 4 DATA (most recent stored):
   // ── 4. Lead Boomerang / Lead data from stored records ──────────────────────────
   if (client.ghl_location_id) {
     const leadRecords = await base44.asServiceRole.entities.LeadData.filter({ client_id });
-    const lead = leadRecords.sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
+    const matchingLead = targetMonthIndex !== null
+      ? leadRecords.find(r => {
+          const d = new Date(r.report_date);
+          return d.getFullYear() === targetYear && d.getMonth() === targetMonthIndex;
+        })
+      : null;
+    const lead = matchingLead || leadRecords.sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
     if (lead) {
       sections.push(`
 LEAD BOOMERANG / LEAD DATA (most recent stored):
