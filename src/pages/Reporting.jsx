@@ -549,18 +549,38 @@ export default function Reporting() {
   // ── Existing Report View ──────────────────────────────────────────
   if (view === "existing") {
     const clientData = getClientData(selectedClient?.id);
+    const hasData = report && (report.executive_summary || report.seo || report.leads || report.wins?.length > 0);
     return (
       <div className="p-6 max-w-5xl mx-auto space-y-6">
         <button onClick={() => setView("list")} className="flex items-center gap-1.5 text-sm text-blue-600 font-medium hover:text-blue-700">
           <ChevronLeft className="w-4 h-4" /> All Reports
         </button>
-        <ReportView
-          report={report}
-          clientName={selectedClient?.name}
-          dateRange={dateRange}
-          brightlocalUrl={clientData?.brightlocal_report_url}
-          onCopy={() => { navigator.clipboard.writeText(JSON.stringify(report, null, 2)); toast.success("Copied!"); }}
-        />
+        {!hasData ? (
+          <div className="bg-white rounded-2xl border border-amber-200 p-8 text-center space-y-4">
+            <AlertTriangle className="w-10 h-10 text-amber-400 mx-auto" />
+            <div>
+              <p className="font-semibold text-slate-700">This report has no data</p>
+              <p className="text-sm text-slate-400 mt-1">The report was saved but the data is empty. Regenerate it below.</p>
+            </div>
+            <Button
+              onClick={() => {
+                setView("new");
+                setReport(null);
+              }}
+              className="bg-slate-800 hover:bg-slate-700"
+            >
+              <Sparkles className="w-4 h-4" /> Regenerate Report
+            </Button>
+          </div>
+        ) : (
+          <ReportView
+            report={report}
+            clientName={selectedClient?.name}
+            dateRange={dateRange}
+            brightlocalUrl={clientData?.brightlocal_report_url}
+            onCopy={() => { navigator.clipboard.writeText(JSON.stringify(report, null, 2)); toast.success("Copied!"); }}
+          />
+        )}
       </div>
     );
   }
