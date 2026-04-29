@@ -60,19 +60,24 @@ Deno.serve(async (req) => {
     }
 
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    // Use first day of current month as report_date so each month has one canonical record
-    const reportDate = monthStart.toISOString().split('T')[0];
+    // Allow targeting a specific month via payload, default to current month
+    const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const targetYear = body.year ? Number(body.year) : now.getFullYear();
+    const targetMonth = body.month !== undefined ? Number(body.month) : now.getMonth(); // 0-indexed
+    const monthStart = new Date(targetYear, targetMonth, 1);
+    const monthEnd = new Date(targetYear, targetMonth + 1, 1);
+    // Always use first day of the month as the canonical report_date key
+    const reportDate = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-01`;
     const results = [];
 
     for (const client of ghlClients) {
       try {
         const opps = await fetchOpportunities(client.ghl_location_id, client.ghl_api_key);
 
-        // Filter to current month
+        // Filter to target month only (between monthStart and monthEnd)
         const thisMonth = opps.filter(o => {
           const d = new Date(o.createdAt || o.dateAdded || 0);
-          return d >= monthStart;
+          return d >= monthStart && d < monthEnd;
         });
 
         // total_leads = new leads created this month (not all-time pipeline count)
@@ -80,11 +85,10 @@ Deno.serve(async (req) => {
         const newLeads = thisMonth.length;
 
         // Won deals = opportunities marked "won" that were last updated this month
-        // (GHL updates the updatedAt timestamp when status changes to won)
         const wonThisMonth = opps.filter(o => {
           if (o.status !== 'won') return false;
           const updatedAt = new Date(o.updatedAt || o.dateUpdated || 0);
-          return updatedAt >= monthStart;
+          return updatedAt >= monthStart && updatedAt < monthEnd;
         });
         const closedDeals = wonThisMonth.length;
         const revenueGenerated = wonThisMonth.reduce((sum, o) => sum + (o.monetaryValue || 0), 0);
@@ -96,10 +100,12 @@ Deno.serve(async (req) => {
         }
         const leadSources = JSON.stringify(sourceCounts);
 
-        // Check if a LeadData record already exists for this client + this month
-        const existing = await db.entities.LeadData.filter({
-          client_id: client.id,
-          report_date: reportDate,
+        // Find any existing LeadData record for this client in this calendar month
+        // (handles both old daily-date records and new first-of-month records)
+        const allClientRecords = await db.entities.LeadData.filter({ client_id: client.id });
+        const existing = allClientRecords.filter(r => {
+          const d = new Date(r.report_date + 'T12:00:00');
+          return d.getFullYear() === targetYear && d.getMonth() === targetMonth;
         });
 
         const payload = {
