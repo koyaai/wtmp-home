@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, TrendingUp, Users, Calendar, DollarSign, X } from "lucide-react";
+import { Plus, TrendingUp, Users, Calendar, DollarSign, X, Pencil } from "lucide-react";
 import GHLLeads from "@/components/clients/GHLLeads";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
@@ -27,6 +27,7 @@ export default function Leads() {
   const [selectedClientId, setSelectedClientId] = useState("");
   const [leadData, setLeadData] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingRecord, setEditingRecord] = useState(null);
   const [form, setForm] = useState({});
   const [user, setUser] = useState(null);
   const [syncing, setSyncing] = useState(false);
@@ -55,14 +56,21 @@ export default function Leads() {
   const latest = leadData[0];
   const canEdit = ["leadership", "team_lead", "csm"].includes(user?.role);
 
+  const openNew = () => { setEditingRecord(null); setForm({}); setShowForm(true); };
+  const openEdit = (record) => { setEditingRecord(record); setForm({ ...record }); setShowForm(true); };
+  const closeForm = () => { setShowForm(false); setEditingRecord(null); setForm({}); };
+
   const handleSave = async () => {
     const parsed = { ...form, client_id: selectedClientId };
     ["total_leads", "new_leads", "qualified_leads", "appointments_booked", "appointments_showed", "closed_deals", "revenue_generated"].forEach(k => {
-      if (parsed[k]) parsed[k] = parseFloat(parsed[k]);
+      if (parsed[k] !== undefined && parsed[k] !== "") parsed[k] = parseFloat(parsed[k]);
     });
-    await base44.entities.LeadData.create(parsed);
-    setShowForm(false);
-    setForm({});
+    if (editingRecord) {
+      await base44.entities.LeadData.update(editingRecord.id, parsed);
+    } else {
+      await base44.entities.LeadData.create(parsed);
+    }
+    closeForm();
     base44.entities.LeadData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setLeadData);
   };
 
@@ -90,7 +98,7 @@ export default function Leads() {
             {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
           {canEdit && (
-            <Button size="sm" variant="outline" onClick={() => setShowForm(true)}>
+            <Button size="sm" variant="outline" onClick={openNew}>
               <Plus className="w-4 h-4 mr-1" /> Log Manual
             </Button>
           )}
@@ -167,6 +175,53 @@ export default function Leads() {
         </div>
       )}
 
+      {/* Monthly Records Table */}
+      {leadData.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
+            <h2 className="font-semibold text-slate-800 text-sm">Monthly Records</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 text-xs text-slate-500 uppercase tracking-wide">
+                  <th className="text-left px-4 py-2.5">Month</th>
+                  <th className="text-right px-4 py-2.5">Leads</th>
+                  <th className="text-right px-4 py-2.5">Appts Booked</th>
+                  <th className="text-right px-4 py-2.5">Showed</th>
+                  <th className="text-right px-4 py-2.5">Closed</th>
+                  <th className="text-right px-4 py-2.5">Revenue</th>
+                  {canEdit && <th className="px-4 py-2.5" />}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50">
+                {leadData.map(r => (
+                  <tr key={r.id} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-4 py-3 font-medium text-slate-700">
+                      {new Date(r.report_date + 'T12:00:00').toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-600">{r.total_leads ?? "—"}</td>
+                    <td className="px-4 py-3 text-right text-slate-600">{r.appointments_booked ?? "—"}</td>
+                    <td className="px-4 py-3 text-right text-slate-600">{r.appointments_showed ?? "—"}</td>
+                    <td className="px-4 py-3 text-right text-slate-600">{r.closed_deals ?? "—"}</td>
+                    <td className="px-4 py-3 text-right text-slate-600">
+                      {r.revenue_generated ? `$${r.revenue_generated.toLocaleString()}` : "—"}
+                    </td>
+                    {canEdit && (
+                      <td className="px-4 py-3 text-right">
+                        <button onClick={() => openEdit(r)} className="text-slate-400 hover:text-blue-600 transition-colors">
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {leadData.length === 0 && !showForm && (
         <div className="text-center py-16 text-slate-400">
           <TrendingUp className="w-10 h-10 mx-auto mb-3 text-slate-300" />
@@ -178,8 +233,8 @@ export default function Leads() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-              <h2 className="font-bold text-slate-800">Log Lead Report</h2>
-              <button onClick={() => setShowForm(false)}><X className="w-5 h-5 text-slate-400" /></button>
+              <h2 className="font-bold text-slate-800">{editingRecord ? "Edit Lead Record" : "Log Lead Report"}</h2>
+              <button onClick={closeForm}><X className="w-5 h-5 text-slate-400" /></button>
             </div>
             <div className="p-6 grid grid-cols-2 gap-4">
               {[
@@ -205,8 +260,10 @@ export default function Leads() {
               </div>
             </div>
             <div className="flex justify-end gap-3 px-6 pb-6">
-              <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
-              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSave}>Save Report</Button>
+              <Button variant="outline" onClick={closeForm}>Cancel</Button>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSave}>
+                {editingRecord ? "Update Record" : "Save Report"}
+              </Button>
             </div>
           </div>
         </div>
