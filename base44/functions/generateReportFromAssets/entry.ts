@@ -17,6 +17,19 @@ Deno.serve(async (req) => {
   const sections = [];
   let brightlocal_data = null;
 
+  // Compute target month/year for record matching
+  const targetYear = year ? Number(year) : new Date().getFullYear();
+  const targetMonthIndex = month ? new Date(`${month} 1, ${targetYear}`).getMonth() : null;
+
+  const findByMonth = (records) => {
+    if (targetMonthIndex === null) return null;
+    return records.find(r => {
+      const d = new Date(r.report_date);
+      return d.getFullYear() === targetYear && d.getMonth() === targetMonthIndex;
+    }) || null;
+  };
+  const mostRecent = (records) => records.sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
+
   // ── 1. BrightLocal ────────────────────────────────────────────────
   // If brightlocal_data was pre-fetched by the frontend, use it directly to avoid timeout
   if (passedBrightlocalData?.gbp_insights) {
@@ -68,16 +81,7 @@ IMPORTANT: Populate seo.gbp_metrics with the above values using the field mappin
   // ── 2. SEO / GSC data from stored records ─────────────────────────
   if (client.google_search_console_url || client.ga_property_id) {
     const seoRecords = await base44.asServiceRole.entities.SEOData.filter({ client_id });
-    // Prefer a record whose report_date falls within the requested month/year; fall back to most recent
-    const targetMonthIndex = month ? new Date(`${month} 1, ${year || new Date().getFullYear()}`).getMonth() : null;
-    const targetYear = year ? Number(year) : new Date().getFullYear();
-    const matchingRecord = targetMonthIndex !== null
-      ? seoRecords.find(r => {
-          const d = new Date(r.report_date);
-          return d.getFullYear() === targetYear && d.getMonth() === targetMonthIndex;
-        })
-      : null;
-    const seo = matchingRecord || seoRecords.sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
+    const seo = findByMonth(seoRecords) || mostRecent(seoRecords);
     if (seo) {
       sections.push(`
 GOOGLE SEARCH CONSOLE / SEO DATA (most recent stored):
@@ -97,13 +101,7 @@ GOOGLE SEARCH CONSOLE / SEO DATA (most recent stored):
   // ── 3. GA4 data from stored records ───────────────────────────────
   if (client.ga_property_id) {
     const gaRecords = await base44.asServiceRole.entities.GAData.filter({ client_id });
-    const matchingGA = targetMonthIndex !== null
-      ? gaRecords.find(r => {
-          const d = new Date(r.report_date);
-          return d.getFullYear() === targetYear && d.getMonth() === targetMonthIndex;
-        })
-      : null;
-    const ga = matchingGA || gaRecords.sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
+    const ga = findByMonth(gaRecords) || mostRecent(gaRecords);
     if (ga) {
       sections.push(`
 GOOGLE ANALYTICS 4 DATA (most recent stored):
@@ -122,13 +120,7 @@ GOOGLE ANALYTICS 4 DATA (most recent stored):
   // ── 4. Lead Boomerang / Lead data from stored records ──────────────────────────
   if (client.ghl_location_id) {
     const leadRecords = await base44.asServiceRole.entities.LeadData.filter({ client_id });
-    const matchingLead = targetMonthIndex !== null
-      ? leadRecords.find(r => {
-          const d = new Date(r.report_date);
-          return d.getFullYear() === targetYear && d.getMonth() === targetMonthIndex;
-        })
-      : null;
-    const lead = matchingLead || leadRecords.sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
+    const lead = findByMonth(leadRecords) || mostRecent(leadRecords);
     if (lead) {
       sections.push(`
 LEAD BOOMERANG / LEAD DATA (most recent stored):
