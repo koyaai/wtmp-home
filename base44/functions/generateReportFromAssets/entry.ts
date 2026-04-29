@@ -120,7 +120,8 @@ GOOGLE ANALYTICS 4 DATA (most recent stored):
   // ── 4. Lead Boomerang / Lead data from stored records ──────────────────────────
   if (client.ghl_location_id) {
     const leadRecords = await base44.asServiceRole.entities.LeadData.filter({ client_id });
-    const lead = findByMonth(leadRecords) || mostRecent(leadRecords);
+    // Only use exact month match for leads — don't pull a different month's data
+    const lead = findByMonth(leadRecords);
     if (lead) {
       sections.push(`
 LEAD BOOMERANG / LEAD DATA (most recent stored):
@@ -136,11 +137,35 @@ LEAD BOOMERANG / LEAD DATA (most recent stored):
     }
   }
 
+  // ── 5. PPC data from stored records ───────────────────────────────
+  const ppcRecords = await base44.asServiceRole.entities.PPCData.filter({ client_id });
+  if (ppcRecords.length > 0) {
+    // Only use exact month match for PPC — don't pull a different month's data
+    const ppc = findByMonth(ppcRecords);
+    if (ppc) {
+      sections.push(`
+PPC / GOOGLE ADS DATA:
+- Report Date: ${ppc.report_date || "N/A"}
+- Platform: ${ppc.platform || "Google Ads"}
+- Impressions: ${ppc.impressions ?? "N/A"}
+- Clicks: ${ppc.clicks ?? "N/A"}
+- CTR: ${ppc.ctr ?? "N/A"}%
+- Spend: ${ppc.spend ? `$${ppc.spend}` : "N/A"}
+- CPC: ${ppc.cpc ? `$${ppc.cpc}` : "N/A"}
+- Conversions: ${ppc.conversions ?? "N/A"}
+- Cost Per Conversion: ${ppc.cost_per_conversion ? `$${ppc.cost_per_conversion}` : "N/A"}
+- ROAS: ${ppc.roas ?? "N/A"}
+- Budget: ${ppc.budget ? `$${ppc.budget}` : "N/A"}
+- Notes: ${ppc.notes || "None"}
+IMPORTANT: Populate the ppc block with this data.`);
+    }
+  }
+
   if (sections.length === 0) {
     return Response.json({ error: 'No connected data sources found for this client.' }, { status: 422 });
   }
 
-  // ── 5. Client scorecard ───────────────────────────────────────────
+  // ── 6. Client scorecard ───────────────────────────────────────────
   let scoreSection = '';
   const scoreResults = await base44.asServiceRole.entities.ClientScore.filter({
     client_id,

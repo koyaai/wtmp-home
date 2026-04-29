@@ -62,7 +62,8 @@ Deno.serve(async (req) => {
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const reportDate = now.toISOString().split('T')[0]; // today as YYYY-MM-DD
+    // Use first day of current month as report_date so each month has one canonical record
+    const reportDate = monthStart.toISOString().split('T')[0];
     const results = [];
 
     for (const client of ghlClients) {
