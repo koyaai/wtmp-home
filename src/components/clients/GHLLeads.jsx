@@ -59,7 +59,15 @@ export default function GHLLeads({ client }) {
   const handleSync = async () => {
     setSyncing(true);
     setSyncResult(null);
-    const res = await base44.functions.invoke('syncGHLLeads', {});
+    // Parse the selected month key (e.g. "2026-04") to pass year/month to sync
+    const [syncYear, syncMonth] = selectedMonth
+      ? selectedMonth.split('-').map(Number)
+      : [new Date().getFullYear(), new Date().getMonth() + 1];
+    const res = await base44.functions.invoke('syncGHLLeads', {
+      client_id: client.id,
+      year: syncYear,
+      month: syncMonth - 1, // 0-indexed
+    });
     setSyncResult(res.data?.results?.find(r => r.client === client.name) || { action: 'done' });
     setSyncing(false);
     fetchData();

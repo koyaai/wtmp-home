@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   const base44 = createClientFromRequest(req);
@@ -6,163 +6,148 @@ Deno.serve(async (req) => {
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { client_id, month, year, date_range, brightlocal_data: passedBrightlocalData } = await req.json();
-
   if (!client_id) return Response.json({ error: 'client_id is required' }, { status: 400 });
 
-  // Fetch client
   const clients = await base44.asServiceRole.entities.Client.filter({ id: client_id });
   const client = clients?.[0];
   if (!client) return Response.json({ error: 'Client not found' }, { status: 404 });
 
-  const sections = [];
-  let brightlocal_data = null;
-
-  // Compute target month/year for record matching
+  // ── Month matching ────────────────────────────────────────────────
   const targetYear = year ? Number(year) : new Date().getFullYear();
   const targetMonthIndex = month ? new Date(`${month} 1, ${targetYear}`).getMonth() : null;
 
-  const findByMonth = (records) => {
-    if (targetMonthIndex === null) return null;
-    return records.find(r => {
-      const d = new Date(r.report_date);
-      return d.getFullYear() === targetYear && d.getMonth() === targetMonthIndex;
-    }) || null;
+  // Use T12:00:00 to avoid UTC midnight timezone shifts
+  const matchesMonth = (reportDate) => {
+    if (targetMonthIndex === null || !reportDate) return false;
+    const d = new Date(reportDate + 'T12:00:00');
+    return d.getFullYear() === targetYear && d.getMonth() === targetMonthIndex;
   };
-  const mostRecent = (records) => records.sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
 
-  // ── 1. BrightLocal ────────────────────────────────────────────────
-  // If brightlocal_data was pre-fetched by the frontend, use it directly to avoid timeout
+  const findByMonth = (records) => {
+    return records.find(r => matchesMonth(r.report_date)) || null;
+  };
+
+  const sections = [];
+
+  // ── 1. BrightLocal / GBP ─────────────────────────────────────────
+  let blData = null;
   if (passedBrightlocalData?.gbp_insights) {
-    const blRes = passedBrightlocalData;
-    brightlocal_data = blRes;
-    sections.push(`
-BRIGHTLOCAL / GBP PERFORMANCE (map these to seo.gbp_metrics in the output JSON):
-- GBP Impressions (total_views → impressions): ${blRes.gbp_insights?.total_views || "N/A"}
-  - Search Desktop: ${blRes.gbp_insights?.search_desktop || "N/A"}
-  - Search Mobile: ${blRes.gbp_insights?.search_mobile || "N/A"}
-  - Maps Desktop: ${blRes.gbp_insights?.maps_desktop || "N/A"}
-  - Maps Mobile: ${blRes.gbp_insights?.maps_mobile || "N/A"}
-- Total Actions: ${blRes.gbp_insights?.total_actions || "N/A"}
-- Website Clicks (→ website_clicks): ${blRes.gbp_insights?.website_clicks || "N/A"}
-- Direction Requests (→ direction_requests): ${blRes.gbp_insights?.direction_requests || "N/A"}
-- Phone Calls (→ call_clicks): ${blRes.gbp_insights?.phone_calls || "N/A"}
-- Avg Map Rank (→ avg_map_rank): ${blRes.local_search_grid?.avg_map_rank || "N/A"}
-- Rank Change (→ rank_change): ${blRes.local_search_grid?.rank_change || "N/A"}
-- Primary Keyword: ${blRes.local_search_grid?.keyword || "N/A"}
-IMPORTANT: Populate seo.gbp_metrics with the above values using the field mappings indicated.`);
+    blData = passedBrightlocalData;
   } else if (client.brightlocal_report_url) {
     try {
       const blRes = await base44.asServiceRole.functions.invoke('fetchBrightlocalData', {
         report_url: client.brightlocal_report_url,
       });
-      if (blRes?.gbp_insights) {
-        brightlocal_data = blRes;
-        sections.push(`
-BRIGHTLOCAL / GBP PERFORMANCE (map these to seo.gbp_metrics in the output JSON):
-- GBP Impressions (total_views → impressions): ${blRes.gbp_insights?.total_views || "N/A"}
-  - Search Desktop: ${blRes.gbp_insights?.search_desktop || "N/A"}
-  - Search Mobile: ${blRes.gbp_insights?.search_mobile || "N/A"}
-  - Maps Desktop: ${blRes.gbp_insights?.maps_desktop || "N/A"}
-  - Maps Mobile: ${blRes.gbp_insights?.maps_mobile || "N/A"}
-- Total Actions: ${blRes.gbp_insights?.total_actions || "N/A"}
-- Website Clicks (→ website_clicks): ${blRes.gbp_insights?.website_clicks || "N/A"}
-- Direction Requests (→ direction_requests): ${blRes.gbp_insights?.direction_requests || "N/A"}
-- Phone Calls (→ call_clicks): ${blRes.gbp_insights?.phone_calls || "N/A"}
-- Avg Map Rank (→ avg_map_rank): ${blRes.local_search_grid?.avg_map_rank || "N/A"}
-- Rank Change (→ rank_change): ${blRes.local_search_grid?.rank_change || "N/A"}
-- Primary Keyword: ${blRes.local_search_grid?.keyword || "N/A"}
-IMPORTANT: Populate seo.gbp_metrics with the above values using the field mappings indicated.`);
-      }
-    } catch (e) {
-      sections.push(`\nBRIGHTLOCAL: Could not fetch data (${e.message})`);
-    }
+      if (blRes?.gbp_insights) blData = blRes;
+    } catch (_) {}
   }
 
-  // ── 2. SEO / GSC data from stored records ─────────────────────────
+  if (blData) {
+    sections.push(`BRIGHTLOCAL / GBP PERFORMANCE for ${month} ${year}:
+- GBP Impressions: ${blData.gbp_insights?.total_views ?? 'N/A'}
+  - Search Desktop: ${blData.gbp_insights?.search_desktop ?? 'N/A'}
+  - Search Mobile: ${blData.gbp_insights?.search_mobile ?? 'N/A'}
+  - Maps Desktop: ${blData.gbp_insights?.maps_desktop ?? 'N/A'}
+  - Maps Mobile: ${blData.gbp_insights?.maps_mobile ?? 'N/A'}
+- Total Actions: ${blData.gbp_insights?.total_actions ?? 'N/A'}
+- Website Clicks: ${blData.gbp_insights?.website_clicks ?? 'N/A'}
+- Direction Requests: ${blData.gbp_insights?.direction_requests ?? 'N/A'}
+- Phone Calls: ${blData.gbp_insights?.phone_calls ?? 'N/A'}
+- Avg Map Rank: ${blData.local_search_grid?.avg_map_rank ?? 'N/A'}
+- Rank Change: ${blData.local_search_grid?.rank_change ?? 'N/A'}
+- Primary Keyword: ${blData.local_search_grid?.keyword ?? 'N/A'}
+Map this data to the seo.gbp_metrics block in the output JSON.`);
+  }
+
+  // ── 2. SEO / GSC ─────────────────────────────────────────────────
   if (client.google_search_console_url || client.ga_property_id) {
     const seoRecords = await base44.asServiceRole.entities.SEOData.filter({ client_id });
-    const seo = findByMonth(seoRecords) || mostRecent(seoRecords);
+    const seo = findByMonth(seoRecords);
     if (seo) {
-      sections.push(`
-GOOGLE SEARCH CONSOLE / SEO DATA (most recent stored):
-- Report Date: ${seo.report_date || "N/A"}
-- Organic Clicks: ${seo.organic_clicks ?? "N/A"}
-- Organic Impressions: ${seo.organic_impressions ?? "N/A"}
-- Avg Position: ${seo.avg_position ?? "N/A"}
-- CTR: ${seo.ctr ?? "N/A"}%
-- Top Keywords: ${seo.top_keywords || "N/A"}
-- Top Pages: ${seo.top_pages || "N/A"}
-- GBP Views: ${seo.gbp_views ?? "N/A"}
-- GBP Calls: ${seo.gbp_calls ?? "N/A"}
-- GBP Direction Requests: ${seo.gbp_direction_requests ?? "N/A"}`);
+      sections.push(`GOOGLE SEARCH CONSOLE / SEO DATA for ${month} ${year} (report_date: ${seo.report_date}):
+- Organic Clicks: ${seo.organic_clicks ?? 'N/A'}
+- Organic Impressions: ${seo.organic_impressions ?? 'N/A'}
+- Avg Position: ${seo.avg_position ?? 'N/A'}
+- CTR: ${seo.ctr ?? 'N/A'}%
+- Top Keywords: ${seo.top_keywords || 'N/A'}
+- Top Pages: ${seo.top_pages || 'N/A'}
+- GBP Views: ${seo.gbp_views ?? 'N/A'}
+- GBP Calls: ${seo.gbp_calls ?? 'N/A'}
+- GBP Direction Requests: ${seo.gbp_direction_requests ?? 'N/A'}`);
     }
   }
 
-  // ── 3. GA4 data from stored records ───────────────────────────────
+  // ── 3. GA4 ───────────────────────────────────────────────────────
   if (client.ga_property_id) {
     const gaRecords = await base44.asServiceRole.entities.GAData.filter({ client_id });
-    const ga = findByMonth(gaRecords) || mostRecent(gaRecords);
+    const ga = findByMonth(gaRecords);
     if (ga) {
-      sections.push(`
-GOOGLE ANALYTICS 4 DATA (most recent stored):
-- Report Date: ${ga.report_date || "N/A"}
-- Sessions: ${ga.sessions ?? "N/A"}
-- Users: ${ga.users ?? "N/A"}
-- New Users: ${ga.new_users ?? "N/A"}
-- Bounce Rate: ${ga.bounce_rate ?? "N/A"}%
-- Avg Session Duration: ${ga.avg_session_duration ?? "N/A"}s
-- Conversions: ${ga.conversions ?? "N/A"}
-- Top Channels: ${ga.top_channels || "N/A"}
-- Top Pages: ${ga.top_pages || "N/A"}`);
+      sections.push(`GOOGLE ANALYTICS 4 DATA for ${month} ${year} (report_date: ${ga.report_date}):
+- Sessions: ${ga.sessions ?? 'N/A'}
+- Users: ${ga.users ?? 'N/A'}
+- New Users: ${ga.new_users ?? 'N/A'}
+- Bounce Rate: ${ga.bounce_rate ?? 'N/A'}%
+- Avg Session Duration: ${ga.avg_session_duration ?? 'N/A'}s
+- Conversions: ${ga.conversions ?? 'N/A'}
+- Top Channels: ${ga.top_channels || 'N/A'}
+- Top Pages: ${ga.top_pages || 'N/A'}`);
     }
   }
 
-  // ── 4. Lead Boomerang / Lead data from stored records ──────────────────────────
+  // ── 4. GHL Lead Data ─────────────────────────────────────────────
   if (client.ghl_location_id) {
     const leadRecords = await base44.asServiceRole.entities.LeadData.filter({ client_id });
-    // Only use exact month match for leads — don't pull a different month's data
     const lead = findByMonth(leadRecords);
     if (lead) {
-      sections.push(`
-LEAD BOOMERANG / LEAD DATA (most recent stored):
-- Report Date: ${lead.report_date || "N/A"}
-- Total Leads: ${lead.total_leads ?? "N/A"}
-- New Leads: ${lead.new_leads ?? "N/A"}
-- Qualified Leads: ${lead.qualified_leads ?? "N/A"}
-- Appointments Booked: ${lead.appointments_booked ?? "N/A"}
-- Appointments Showed: ${lead.appointments_showed ?? "N/A"}
-- Closed Deals: ${lead.closed_deals ?? "N/A"}
-- Revenue Generated: ${lead.revenue_generated ? `$${lead.revenue_generated}` : "N/A"}
-- Lead Sources: ${lead.lead_sources || "N/A"}`);
+      const retainerFee = client.retainer_fee;
+      // Use new_leads as the this-month count (total_leads may include pipeline history)
+      const monthLeads = lead.new_leads ?? lead.total_leads;
+      let costPerLead = null;
+      let roiPct = null;
+      if (retainerFee && monthLeads) costPerLead = (retainerFee / monthLeads).toFixed(2);
+      if (retainerFee && lead.revenue_generated) {
+        roiPct = (((lead.revenue_generated - retainerFee) / retainerFee) * 100).toFixed(0);
+      }
+
+      sections.push(`GHL / LEAD DATA for ${month} ${year} (report_date: ${lead.report_date}):
+- New Leads This Month: ${monthLeads ?? 'N/A'}
+- Closed Deals (won this month): ${lead.closed_deals ?? 'N/A'}
+- Revenue Generated (from won deals): ${lead.revenue_generated ? `$${lead.revenue_generated.toLocaleString()}` : 'N/A'}
+- Qualified Leads: ${lead.qualified_leads ?? 'N/A (manually entered)'}
+- Appointments Booked: ${lead.appointments_booked ?? 'N/A (manually entered)'}
+- Appointments Showed: ${lead.appointments_showed ?? 'N/A (manually entered)'}
+- Monthly Retainer Fee: ${retainerFee ? `$${retainerFee}` : 'N/A'}
+- Calculated Cost Per Lead: ${costPerLead ? `$${costPerLead}` : 'N/A'}
+- Calculated ROI: ${roiPct !== null ? `${roiPct}%` : 'N/A'}
+- Lead Sources Breakdown: ${lead.lead_sources || 'N/A'}
+
+IMPORTANT: Use exactly these numbers for the leads block. Do NOT estimate or fabricate lead counts. The "New Leads This Month" figure is the correct total_leads for this report.`);
+    } else {
+      sections.push(`GHL / LEAD DATA: No data found for ${month} ${year}. The leads section should indicate data is not yet available for this month.`);
     }
   }
 
-  // ── 5. PPC data from stored records ───────────────────────────────
+  // ── 5. PPC Data ──────────────────────────────────────────────────
   const ppcRecords = await base44.asServiceRole.entities.PPCData.filter({ client_id });
-  if (ppcRecords.length > 0) {
-    // Only use exact month match for PPC — don't pull a different month's data
-    const ppc = findByMonth(ppcRecords);
-    if (ppc) {
-      sections.push(`
-PPC / GOOGLE ADS DATA:
-- Report Date: ${ppc.report_date || "N/A"}
-- Platform: ${ppc.platform || "Google Ads"}
-- Impressions: ${ppc.impressions ?? "N/A"}
-- Clicks: ${ppc.clicks ?? "N/A"}
-- CTR: ${ppc.ctr ?? "N/A"}%
-- Spend: ${ppc.spend ? `$${ppc.spend}` : "N/A"}
-- CPC: ${ppc.cpc ? `$${ppc.cpc}` : "N/A"}
-- Conversions: ${ppc.conversions ?? "N/A"}
-- Cost Per Conversion: ${ppc.cost_per_conversion ? `$${ppc.cost_per_conversion}` : "N/A"}
-- ROAS: ${ppc.roas ?? "N/A"}
-- Budget: ${ppc.budget ? `$${ppc.budget}` : "N/A"}
-- Notes: ${ppc.notes || "None"}
-IMPORTANT: Populate the ppc block with this data.`);
-    }
+  const ppc = findByMonth(ppcRecords);
+  if (ppc) {
+    sections.push(`PPC / GOOGLE ADS DATA for ${month} ${year} (report_date: ${ppc.report_date}):
+- Platform: ${ppc.platform || 'Google Ads'}
+- Impressions: ${ppc.impressions ?? 'N/A'}
+- Clicks: ${ppc.clicks ?? 'N/A'}
+- CTR: ${ppc.ctr ?? 'N/A'}%
+- Spend: ${ppc.spend ? `$${ppc.spend}` : 'N/A'}
+- CPC: ${ppc.cpc ? `$${ppc.cpc}` : 'N/A'}
+- Conversions: ${ppc.conversions ?? 'N/A'}
+- Cost Per Conversion: ${ppc.cost_per_conversion ? `$${ppc.cost_per_conversion}` : 'N/A'}
+- ROAS: ${ppc.roas ?? 'N/A'}
+- Budget: ${ppc.budget ? `$${ppc.budget}` : 'N/A'}
+- Notes: ${ppc.notes || 'None'}
+Map this data to the ppc block in the output JSON.`);
   }
 
   if (sections.length === 0) {
-    return Response.json({ error: 'No connected data sources found for this client.' }, { status: 422 });
+    return Response.json({ error: 'No data found for this client and month. Make sure data has been synced for the selected period.' }, { status: 422 });
   }
 
   // ── 6. Client scorecard ───────────────────────────────────────────
@@ -175,40 +160,40 @@ IMPORTANT: Populate the ppc block with this data.`);
   const clientScore = scoreResults[0];
   if (clientScore) {
     scoreSection = `
-CLIENT SCORECARD (CSM/CSA Evaluation):
-- Overall Grade: ${clientScore.overall_grade || "N/A"}
-- Attended Meetings: ${clientScore.attended_meetings || "N/A"}
-- Responsiveness: ${clientScore.responsiveness || "N/A"}
-- Notes: ${clientScore.notes || "None"}
-Based on this scorecard, generate a client_scorecard block with a 2-3 sentence grade explanation and 2-4 improvement tips written to the client.`;
+CLIENT SCORECARD (CSM Evaluation for ${month} ${year}):
+- Overall Grade: ${clientScore.overall_grade || 'N/A'}
+- Attended Meetings: ${clientScore.attended_meetings || 'N/A'}
+- Responsiveness: ${clientScore.responsiveness || 'N/A'}
+- Lead Handling: ${clientScore.lead_handling || 'N/A'}
+- Notes: ${clientScore.notes || 'None'}
+Generate a client_scorecard block with a 2-3 sentence grade explanation and 2-4 improvement tips written directly to the client.`;
   }
 
   const isLocalSEO = client.services?.includes('Local SEO') && !client.services?.includes('SEO');
   const retainerFee = client.retainer_fee || null;
 
-  const prompt = `You are a senior digital marketing analyst for a window treatment marketing agency. 
-Generate a comprehensive marketing performance report for "${client.name}" covering "${date_range || `${month || ''} ${year || ''}`}".
+  const prompt = `You are a senior digital marketing analyst at a window treatment marketing agency.
 
-The following data was automatically pulled from connected integrations:
-${sections.join('\n')}
+Generate a professional monthly performance report for "${client.name}" covering ${month} ${year}.
+
+DATA AVAILABLE (${month} ${year} only):
+${sections.join('\n\n')}
 ${scoreSection}
 
-Services this client is on: ${client.services?.join(', ') || 'Not specified'}
-Monthly Retainer Fee: ${retainerFee ? `$${retainerFee}` : 'Not specified (cannot calculate ROI)'}
-Location: ${client.location || 'Not specified'}
-Website: ${client.website || 'Not specified'}
+CLIENT CONTEXT:
+- Services: ${client.services?.join(', ') || 'Not specified'}
+- Monthly Retainer: ${retainerFee ? `$${retainerFee}` : 'Not specified'}
+- Location: ${client.location || 'Not specified'}
+- Website: ${client.website || 'Not specified'}
+- SEO Type: ${isLocalSEO ? 'Local SEO (GBP-focused)' : 'Full SEO'}
 
-${isLocalSEO ? 'This client is on a LOCAL SEO program. Focus on GBP/local search performance.' : 'This client is on a full SEO program. Cover both organic and local performance.'}
-
-IMPORTANT: Only populate the "ppc" block if actual PPC/Google Ads data was provided above. Lead Boomerang lead data is NOT PPC data — do NOT use it to fill PPC metrics. If no PPC data is available, leave all ppc fields as "N/A" or empty arrays.
-
-For the "leads" block: Use the Lead Boomerang data provided above. Calculate ROI where possible:
-- cost_per_lead = retainer_fee / total_leads (if both available)
-- roi_estimate = ((revenue_generated - retainer_fee) / retainer_fee) * 100 as a percentage string
-- Provide a 2-3 sentence roi_narrative explaining what the numbers mean for the client.
-If no Lead Boomerang data is available, omit or leave leads fields as N/A. — do NOT use it to fill PPC metrics. If no PPC data is available, leave all ppc fields as "N/A" or empty arrays.
-
-Analyze all provided data and generate a comprehensive combined marketing performance report. If some data is missing or unavailable, note it briefly but focus on what IS available.`;
+STRICT RULES:
+1. ONLY use data explicitly provided above for ${month} ${year}. Do NOT invent, estimate, or fabricate any numbers.
+2. For the "leads" block: use the GHL data above verbatim. "total_leads" = "New Leads This Month" figure.
+3. ONLY populate the "ppc" block if actual PPC data was provided above. Lead data is NOT PPC data.
+4. If a metric is "N/A" or not provided, output it as "N/A" — never guess.
+5. The executive_summary and narratives should be written in a friendly, professional tone for the client.
+6. Focus insights on what actually happened this month and what it means for the client's business.`;
 
   const result = await base44.integrations.Core.InvokeLLM({
     prompt,
@@ -256,20 +241,6 @@ Analyze all provided data and generate a comprehensive combined marketing perfor
             challenges: { type: "array", items: { type: "string" } }
           }
         },
-        combined_insights: { type: "array", items: { type: "string" } },
-        wins: { type: "array", items: { type: "string" } },
-        action_items: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              channel: { type: "string" },
-              priority: { type: "string", enum: ["High", "Medium", "Low"] },
-              action: { type: "string" }
-            }
-          }
-        },
-        next_period_focus: { type: "array", items: { type: "string" } },
         leads: {
           type: "object",
           properties: {
@@ -288,6 +259,20 @@ Analyze all provided data and generate a comprehensive combined marketing perfor
             highlights: { type: "array", items: { type: "string" } }
           }
         },
+        wins: { type: "array", items: { type: "string" } },
+        combined_insights: { type: "array", items: { type: "string" } },
+        action_items: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: {
+              channel: { type: "string" },
+              priority: { type: "string", enum: ["High", "Medium", "Low"] },
+              action: { type: "string" }
+            }
+          }
+        },
+        next_period_focus: { type: "array", items: { type: "string" } },
         client_scorecard: {
           type: "object",
           properties: {

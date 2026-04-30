@@ -156,8 +156,8 @@ function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl }) {
 
       <ScorecardBanner scorecard={report.client_scorecard} />
 
-      {report.leads && report.leads.total_leads && report.leads.total_leads !== "N/A" && (
-        <Section title="Leads & ROI (Lead Boomerang)" icon={Users} color={{ border: "border-teal-100", bg: "bg-teal-50", icon: "text-teal-600", text: "text-teal-700" }}>
+      {report.leads && report.leads.total_leads && report.leads.total_leads !== "N/A" && report.leads.total_leads !== "0" && (
+        <Section title="Leads & ROI (GHL Pipeline)" icon={Users} color={{ border: "border-teal-100", bg: "bg-teal-50", icon: "text-teal-600", text: "text-teal-700" }}>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
             {report.leads.total_leads && <MetricCard label="Total Leads" value={report.leads.total_leads} />}
             {report.leads.appointments_booked && <MetricCard label="Appts Booked" value={report.leads.appointments_booked} />}
@@ -422,7 +422,7 @@ export default function Reporting() {
     const res = await base44.functions.invoke('generateReportFromAssets', {
       client_id: selectedClient.id,
       month,
-      year,
+      year: Number(year),
       date_range: dateRange || `${month} ${year}`,
       brightlocal_data: brightlocalData || null,
     });
