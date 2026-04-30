@@ -208,6 +208,28 @@ function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl }) {
           )}
           {report.seo.highlights?.length > 0 && <div className="mb-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Highlights</p><BulletList items={report.seo.highlights} color="bg-violet-500" /></div>}
           {report.seo.local_seo_notes && <div className="mt-3 p-3 bg-violet-50 rounded-lg"><p className="text-xs font-semibold text-violet-700 mb-1">Local SEO Notes</p><p className="text-sm text-slate-600">{report.seo.local_seo_notes}</p></div>}
+          {report.seo.ga4_metrics && (Object.values(report.seo.ga4_metrics).some(v => v && v !== "N/A")) && (
+            <div className="mt-4">
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Website Analytics (GA4)</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {report.seo.ga4_metrics.sessions && <MetricCard label="Total Sessions" value={report.seo.ga4_metrics.sessions} />}
+                {report.seo.ga4_metrics.users && <MetricCard label="Total Users" value={report.seo.ga4_metrics.users} />}
+                {report.seo.ga4_metrics.organic_sessions && <MetricCard label="Organic Sessions" value={report.seo.ga4_metrics.organic_sessions} />}
+                {report.seo.ga4_metrics.new_users && <MetricCard label="New Users" value={report.seo.ga4_metrics.new_users} />}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                {report.seo.ga4_metrics.pageviews && <MetricCard label="Pageviews" value={report.seo.ga4_metrics.pageviews} />}
+                {report.seo.ga4_metrics.bounce_rate && <MetricCard label="Bounce Rate" value={report.seo.ga4_metrics.bounce_rate} />}
+                {report.seo.ga4_metrics.avg_session_duration && <MetricCard label="Avg. Session Duration" value={report.seo.ga4_metrics.avg_session_duration} />}
+              </div>
+              {report.seo.ga4_metrics.traffic_sources_breakdown && (
+                <div className="mt-3 p-3 bg-violet-50 rounded-lg border border-violet-100">
+                  <p className="text-xs font-semibold text-violet-700 mb-1">Traffic Sources</p>
+                  <p className="text-sm text-slate-600">{report.seo.ga4_metrics.traffic_sources_breakdown}</p>
+                </div>
+              )}
+            </div>
+          )}
           {report.seo.challenges?.length > 0 && <div className="mt-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Challenges</p><BulletList items={report.seo.challenges} color="bg-amber-400" /></div>}
         </Section>
       )}

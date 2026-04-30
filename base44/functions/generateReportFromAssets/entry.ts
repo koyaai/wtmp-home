@@ -82,15 +82,27 @@ Map this data to the seo.gbp_metrics block in the output JSON.`);
     const gaRecords = await base44.asServiceRole.entities.GAData.filter({ client_id });
     const ga = findByMonth(gaRecords);
     if (ga) {
+      // Parse traffic sources to find organic search sessions
+      let organicSessions = 'N/A';
+      if (ga.traffic_sources) {
+        try {
+          const sources = typeof ga.traffic_sources === 'string' ? JSON.parse(ga.traffic_sources) : ga.traffic_sources;
+          const organic = sources.find(s => s.source === 'Organic Search');
+          if (organic) organicSessions = organic.sessions;
+        } catch (_) {}
+      }
       sections.push(`GOOGLE ANALYTICS 4 DATA for ${month} ${year} (report_date: ${ga.report_date}):
-- Sessions: ${ga.sessions ?? 'N/A'}
-- Users: ${ga.users ?? 'N/A'}
+- Total Sessions: ${ga.sessions ?? 'N/A'}
+- Total Users: ${ga.users ?? 'N/A'}
 - New Users: ${ga.new_users ?? 'N/A'}
-- Bounce Rate: ${ga.bounce_rate ?? 'N/A'}%
-- Avg Session Duration: ${ga.avg_session_duration ?? 'N/A'}s
-- Conversions: ${ga.conversions ?? 'N/A'}
-- Top Channels: ${ga.top_channels || 'N/A'}
-- Top Pages: ${ga.top_pages || 'N/A'}`);
+- Organic Search Sessions: ${organicSessions}
+- Bounce Rate: ${ga.bounce_rate !== null && ga.bounce_rate !== undefined ? (ga.bounce_rate * 100).toFixed(0) + '%' : 'N/A'}
+- Avg Session Duration: ${ga.avg_session_duration ?? 'N/A'} seconds
+- Pageviews: ${ga.pageviews ?? 'N/A'}
+- Traffic Sources Breakdown: ${ga.traffic_sources || 'N/A'}
+- Top Pages: ${ga.top_pages || 'N/A'}
+
+Map sessions, users, new_users, organic_sessions, bounce_rate, avg_session_duration, pageviews, and traffic_sources_breakdown to the seo.ga4_metrics block in the output JSON.`);
     }
   }
 
@@ -221,7 +233,20 @@ STRICT RULES:
               }
             },
             local_seo_notes: { type: "string" },
-            challenges: { type: "array", items: { type: "string" } }
+            challenges: { type: "array", items: { type: "string" } },
+            ga4_metrics: {
+              type: "object",
+              properties: {
+                sessions: { type: "string" },
+                users: { type: "string" },
+                new_users: { type: "string" },
+                organic_sessions: { type: "string" },
+                bounce_rate: { type: "string" },
+                avg_session_duration: { type: "string" },
+                pageviews: { type: "string" },
+                traffic_sources_breakdown: { type: "string" }
+              }
+            }
           }
         },
         ppc: {
