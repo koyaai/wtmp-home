@@ -24,6 +24,7 @@ const LayoutWrapper = ({ children, currentPageName }) => Layout ?
   <Layout currentPageName={currentPageName}>{children}</Layout>
   : <>{children}</>;
 
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, isAuthenticated, navigateToLogin } = useAuth();
 
@@ -75,7 +76,6 @@ const AuthenticatedApp = () => {
       <Route path="/ProjectPageCreator" element={<LayoutWrapper currentPageName="ProjectPageCreator"><ProjectPageCreator /></LayoutWrapper>} />
       <Route path="/ClientInsights" element={<LayoutWrapper currentPageName="ClientInsights"><ClientInsights /></LayoutWrapper>} />
       <Route path="/Reporting" element={<LayoutWrapper currentPageName="Reporting"><Reporting /></LayoutWrapper>} />
-      <Route path="/report/:clientId" element={<ClientReportPublic />} />
       <Route path="/WillsCorner" element={<LayoutWrapper currentPageName="WillsCorner"><WillsCorner /></LayoutWrapper>} />
       <Route path="/ClientMemory" element={<LayoutWrapper currentPageName="ClientMemory"><ClientMemory /></LayoutWrapper>} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
@@ -87,12 +87,14 @@ const AuthenticatedApp = () => {
 
 
 function App() {
-
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <Router>
-          <AuthenticatedApp />
+          <Routes>
+            <Route path="/report/:clientId" element={<ClientReportPublic />} />
+            <Route path="/*" element={<AuthenticatedApp />} />
+          </Routes>
         </Router>
         <Toaster />
       </QueryClientProvider>
