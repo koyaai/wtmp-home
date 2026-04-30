@@ -306,8 +306,8 @@ function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl }) {
             <MetricCard label="Impressions" value={report.ppc.impressions} />
             <MetricCard label="CTR" value={report.ppc.ctr} />
           </div>
-          {report.ppc.conversions_breakdown && <div className="p-3 bg-blue-50 rounded-lg mb-4"><p className="text-xs font-semibold text-blue-700 mb-1">Conversions</p><p className="text-sm text-slate-600">{report.ppc.conversions_breakdown}</p></div>}
-          {report.ppc.top_performing_city && <div className="p-3 bg-slate-50 rounded-lg mb-4"><p className="text-xs font-semibold text-slate-500 mb-1">Top Performing City</p><p className="text-sm text-slate-700 font-medium">{report.ppc.top_performing_city}</p></div>}
+          {report.ppc.conversions_breakdown && report.ppc.conversions_breakdown !== "N/A" && <div className="p-3 bg-blue-50 rounded-lg mb-4"><p className="text-xs font-semibold text-blue-700 mb-1">Conversions</p><p className="text-sm text-slate-600">{report.ppc.conversions_breakdown}</p></div>}
+          {report.ppc.top_performing_city && report.ppc.top_performing_city !== "N/A" && <div className="p-3 bg-slate-50 rounded-lg mb-4"><p className="text-xs font-semibold text-slate-500 mb-1">Top Performing City</p><p className="text-sm text-slate-700 font-medium">{report.ppc.top_performing_city}</p></div>}
           {report.ppc.highlights?.length > 0 && <div className="mb-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Highlights</p><BulletList items={report.ppc.highlights} color="bg-blue-500" /></div>}
           {report.ppc.top_performing_keywords?.length > 0 && (
             <div className="mb-4">

@@ -242,6 +242,18 @@ export default function PPC() {
                 </div>
               ))}
               <div className="col-span-2">
+                <label className="text-xs font-semibold text-slate-600">Conversions Breakdown <span className="text-slate-400 font-normal">(e.g. 12 form fills, 4 calls)</span></label>
+                <input type="text" value={form.conversions_breakdown || ""} onChange={e => setForm(p => ({ ...p, conversions_breakdown: e.target.value }))}
+                  placeholder="e.g. 12 form fills, 4 phone calls, 2 chats"
+                  className="w-full mt-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs font-semibold text-slate-600">Top Performing City</label>
+                <input type="text" value={form.top_performing_city || ""} onChange={e => setForm(p => ({ ...p, top_performing_city: e.target.value }))}
+                  placeholder="e.g. Phoenix, AZ"
+                  className="w-full mt-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+              </div>
+              <div className="col-span-2">
                 <label className="text-xs font-semibold text-slate-600">Notes</label>
                 <textarea value={form.notes || ""} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={2}
                   className="w-full mt-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none" />

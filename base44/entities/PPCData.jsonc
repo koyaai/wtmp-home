@@ -1,0 +1,65 @@
+{
+  "name": "PPCData",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "report_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "Google Ads",
+        "Meta Ads",
+        "Microsoft Ads",
+        "Other"
+      ],
+      "default": "Google Ads"
+    },
+    "impressions": {
+      "type": "number"
+    },
+    "clicks": {
+      "type": "number"
+    },
+    "conversions": {
+      "type": "number"
+    },
+    "conversions_breakdown": {
+      "type": "string",
+      "description": "e.g. 12 form fills, 4 calls, 2 chats"
+    },
+    "top_performing_city": {
+      "type": "string",
+      "description": "City with highest conversions or clicks this month"
+    },
+    "spend": {
+      "type": "number"
+    },
+    "cpc": {
+      "type": "number"
+    },
+    "ctr": {
+      "type": "number"
+    },
+    "cost_per_conversion": {
+      "type": "number"
+    },
+    "roas": {
+      "type": "number"
+    },
+    "budget": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "report_date"
+  ]
+}

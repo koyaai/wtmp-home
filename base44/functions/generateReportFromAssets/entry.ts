@@ -151,6 +151,8 @@ IMPORTANT: Use exactly these numbers for the leads block. Do NOT estimate or fab
 - Spend: ${ppc.spend ? `$${ppc.spend}` : 'N/A'}
 - CPC: ${ppc.cpc ? `$${ppc.cpc}` : 'N/A'}
 - Conversions: ${ppc.conversions ?? 'N/A'}
+- Conversions Breakdown: ${ppc.conversions_breakdown || 'N/A'}
+- Top Performing City: ${ppc.top_performing_city || 'N/A'}
 - Cost Per Conversion: ${ppc.cost_per_conversion ? `$${ppc.cost_per_conversion}` : 'N/A'}
 - ROAS: ${ppc.roas ?? 'N/A'}
 - Budget: ${ppc.budget ? `$${ppc.budget}` : 'N/A'}
