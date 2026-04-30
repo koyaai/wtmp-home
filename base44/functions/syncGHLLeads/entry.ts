@@ -4,8 +4,8 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
  * GHL Opportunity → LeadData field mapping (monthly rollup):
  *
  * opportunities created this month               → total_leads + new_leads
- * opportunities with status "won" updated this month → closed_deals
- * sum of monetaryValue for won opps this month   → revenue_generated
+ * opportunities created this month with status "won" → closed_deals
+ * sum of monetaryValue for those won opps          → revenue_generated
  * source breakdown JSON                          → lead_sources
  *
  * NOT mappable from GHL (must be entered manually):
@@ -88,12 +88,9 @@ Deno.serve(async (req) => {
         const totalLeads = thisMonth.length;
         const newLeads = thisMonth.length;
 
-        // Won deals = opportunities marked "won" whose status changed this month
-        const wonThisMonth = opps.filter(o => {
-          if (o.status !== 'won') return false;
-          const updatedAt = new Date(o.updatedAt || o.dateUpdated || 0);
-          return updatedAt >= monthStart && updatedAt < monthEnd;
-        });
+        // Won deals = opportunities created this month that are currently "won"
+        // (matches the Lead Tracker's ghlLeads function logic)
+        const wonThisMonth = thisMonth.filter(o => o.status === 'won');
         const closedDeals = wonThisMonth.length;
         const revenueGenerated = wonThisMonth.reduce((sum, o) => sum + (o.monetaryValue || 0), 0);
 
