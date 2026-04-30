@@ -190,49 +190,108 @@ function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl }) {
         </Section>
       )}
 
-      {report.seo && (
-        <Section title="Local SEO / GBP Performance" icon={MapPin} color={{ border: "border-violet-100", bg: "bg-violet-50", icon: "text-violet-600", text: "text-violet-700" }}>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-            {report.seo.gbp_metrics?.impressions && <MetricCard label="GBP Impressions" value={report.seo.gbp_metrics.impressions} />}
-            {report.seo.gbp_metrics?.website_clicks && <MetricCard label="Website Clicks" value={report.seo.gbp_metrics.website_clicks} />}
-            {report.seo.gbp_metrics?.call_clicks && <MetricCard label="Calls" value={report.seo.gbp_metrics.call_clicks} />}
-            {report.seo.gbp_metrics?.direction_requests && <MetricCard label="Directions" value={report.seo.gbp_metrics.direction_requests} />}
-          </div>
-          {(report.seo.gbp_metrics?.avg_map_rank || report.seo.organic_clicks) && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
-              {report.seo.gbp_metrics?.avg_map_rank && <MetricCard label="Avg Map Rank" value={report.seo.gbp_metrics.avg_map_rank} />}
-              {report.seo.gbp_metrics?.rank_change && <MetricCard label="Rank Change" value={report.seo.gbp_metrics.rank_change} />}
-              {report.seo.organic_clicks && <MetricCard label="Organic Clicks" value={report.seo.organic_clicks} />}
-              {report.seo.avg_position && <MetricCard label="Avg. Position" value={report.seo.avg_position} />}
-            </div>
-          )}
-          {report.seo.highlights?.length > 0 && <div className="mb-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Highlights</p><BulletList items={report.seo.highlights} color="bg-violet-500" /></div>}
-          {report.seo.local_seo_notes && <div className="mt-3 p-3 bg-violet-50 rounded-lg"><p className="text-xs font-semibold text-violet-700 mb-1">Local SEO Notes</p><p className="text-sm text-slate-600">{report.seo.local_seo_notes}</p></div>}
-          {report.seo.ga4_metrics && (Object.values(report.seo.ga4_metrics).some(v => v && v !== "N/A")) && (
-            <div className="mt-4">
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Website Analytics (GA4)</p>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {report.seo.ga4_metrics.sessions && <MetricCard label="Total Sessions" value={report.seo.ga4_metrics.sessions} />}
-                {report.seo.ga4_metrics.users && <MetricCard label="Total Users" value={report.seo.ga4_metrics.users} />}
-                {report.seo.ga4_metrics.organic_sessions && <MetricCard label="Organic Sessions" value={report.seo.ga4_metrics.organic_sessions} />}
-                {report.seo.ga4_metrics.new_users && <MetricCard label="New Users" value={report.seo.ga4_metrics.new_users} />}
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
-                {report.seo.ga4_metrics.pageviews && <MetricCard label="Pageviews" value={report.seo.ga4_metrics.pageviews} />}
-                {report.seo.ga4_metrics.bounce_rate && <MetricCard label="Bounce Rate" value={report.seo.ga4_metrics.bounce_rate} />}
-                {report.seo.ga4_metrics.avg_session_duration && <MetricCard label="Avg. Session Duration" value={report.seo.ga4_metrics.avg_session_duration} />}
-              </div>
-              {report.seo.ga4_metrics.traffic_sources_breakdown && (
-                <div className="mt-3 p-3 bg-violet-50 rounded-lg border border-violet-100">
-                  <p className="text-xs font-semibold text-violet-700 mb-1">Traffic Sources</p>
-                  <p className="text-sm text-slate-600">{report.seo.ga4_metrics.traffic_sources_breakdown}</p>
+      {report.seo && (() => {
+        const seo = report.seo;
+        const gbp = seo.gbp_metrics || {};
+        const ga4 = seo.ga4_metrics || {};
+        const hasVal = (v) => v && v !== "N/A" && v !== "0";
+
+        // Build unified metric cards — only include ones with real values
+        const gbpCards = [
+          { label: "GBP Impressions", value: gbp.impressions },
+          { label: "Website Clicks", value: gbp.website_clicks },
+          { label: "Calls", value: gbp.call_clicks },
+          { label: "Directions", value: gbp.direction_requests },
+          { label: "Avg Map Rank", value: gbp.avg_map_rank },
+          { label: "Rank Change", value: gbp.rank_change },
+        ].filter(c => hasVal(c.value));
+
+        const searchCards = [
+          { label: "Organic Clicks", value: seo.organic_clicks },
+          { label: "Avg. Position", value: seo.avg_position },
+        ].filter(c => hasVal(c.value));
+
+        const ga4Cards = [
+          { label: "Total Sessions", value: ga4.sessions },
+          { label: "Total Users", value: ga4.users },
+          { label: "Organic Sessions", value: ga4.organic_sessions },
+          { label: "New Users", value: ga4.new_users },
+          { label: "Pageviews", value: ga4.pageviews },
+          { label: "Bounce Rate", value: ga4.bounce_rate },
+          { label: "Avg. Session Duration", value: ga4.avg_session_duration },
+        ].filter(c => hasVal(c.value));
+
+        // Parse traffic sources JSON for clean display
+        let trafficSources = [];
+        if (ga4.traffic_sources_breakdown) {
+          try {
+            const parsed = typeof ga4.traffic_sources_breakdown === 'string'
+              ? JSON.parse(ga4.traffic_sources_breakdown)
+              : ga4.traffic_sources_breakdown;
+            if (Array.isArray(parsed)) trafficSources = parsed;
+          } catch (_) {}
+        }
+        const totalSessions = trafficSources.reduce((s, t) => s + (t.sessions || 0), 0);
+
+        const allMetricCards = [...gbpCards, ...searchCards, ...ga4Cards];
+        if (allMetricCards.length === 0 && !seo.highlights?.length && !seo.local_seo_notes) return null;
+
+        return (
+          <Section title="Local SEO / GBP Performance" icon={MapPin} color={{ border: "border-violet-100", bg: "bg-violet-50", icon: "text-violet-600", text: "text-violet-700" }}>
+            {/* GBP Metrics */}
+            {gbpCards.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Google Business Profile</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {gbpCards.map(c => <MetricCard key={c.label} label={c.label} value={c.value} />)}
                 </div>
-              )}
-            </div>
-          )}
-          {report.seo.challenges?.length > 0 && <div className="mt-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Challenges</p><BulletList items={report.seo.challenges} color="bg-amber-400" /></div>}
-        </Section>
-      )}
+              </div>
+            )}
+
+            {/* Search Console */}
+            {searchCards.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Google Search Console</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {searchCards.map(c => <MetricCard key={c.label} label={c.label} value={c.value} />)}
+                </div>
+              </div>
+            )}
+
+            {/* GA4 */}
+            {ga4Cards.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Website Analytics (GA4)</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {ga4Cards.map(c => <MetricCard key={c.label} label={c.label} value={c.value} />)}
+                </div>
+              </div>
+            )}
+
+            {/* Traffic Sources */}
+            {trafficSources.length > 0 && (
+              <div className="mb-4">
+                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Traffic Sources</p>
+                <div className="space-y-2">
+                  {trafficSources.filter(t => t.sessions > 0).map(t => (
+                    <div key={t.source} className="flex items-center gap-3">
+                      <p className="text-sm text-slate-700 w-36 flex-shrink-0">{t.source}</p>
+                      <div className="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-violet-400 rounded-full" style={{ width: `${Math.min(100, (t.sessions / totalSessions) * 100)}%` }} />
+                      </div>
+                      <span className="text-xs text-slate-500 w-20 text-right">{t.sessions} ({Math.round((t.sessions / totalSessions) * 100)}%)</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {seo.highlights?.length > 0 && <div className="mb-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Highlights</p><BulletList items={seo.highlights} color="bg-violet-500" /></div>}
+            {seo.local_seo_notes && <div className="mt-3 p-3 bg-violet-50 rounded-lg border border-violet-100"><p className="text-xs font-semibold text-violet-700 mb-1">Local SEO Notes</p><p className="text-sm text-slate-600">{seo.local_seo_notes}</p></div>}
+            {seo.challenges?.length > 0 && <div className="mt-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Challenges</p><BulletList items={seo.challenges} color="bg-amber-400" /></div>}
+          </Section>
+        );
+      })()}
 
       {report.ppc && (
         <Section title="PPC Performance" icon={Target} color={{ border: "border-blue-100", bg: "bg-blue-50", icon: "text-blue-600", text: "text-blue-700" }}>
