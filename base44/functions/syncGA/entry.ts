@@ -121,9 +121,10 @@ Deno.serve(async (req) => {
         })));
       }
 
-      const record = await base44.asServiceRole.entities.GAData.create({
+      // Upsert by client_id + month
+      const gaPayload = {
         client_id,
-        report_date: range.end,
+        report_date: range.start,
         period_start: range.start,
         period_end: range.end,
         sessions: Math.round(getValue(0)),
@@ -135,7 +136,22 @@ Deno.serve(async (req) => {
         top_pages: topPages,
         traffic_sources: trafficSources,
         notes: `Auto-synced from GA4. Period: ${range.start} to ${range.end}`,
+      };
+
+      const allGaRecords = await base44.asServiceRole.entities.GAData.filter({ client_id });
+      const targetYearGa = new Date(range.start + 'T12:00:00').getFullYear();
+      const targetMonthGa = new Date(range.start + 'T12:00:00').getMonth();
+      const existingGa = allGaRecords.find(r => {
+        const d = new Date(r.report_date + 'T12:00:00');
+        return d.getFullYear() === targetYearGa && d.getMonth() === targetMonthGa;
       });
+
+      let record;
+      if (existingGa) {
+        record = await base44.asServiceRole.entities.GAData.update(existingGa.id, gaPayload);
+      } else {
+        record = await base44.asServiceRole.entities.GAData.create(gaPayload);
+      }
 
       results.push(record);
     }

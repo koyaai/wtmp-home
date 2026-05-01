@@ -23,8 +23,13 @@ Deno.serve(async (req) => {
     return d.getFullYear() === targetYear && d.getMonth() === targetMonthIndex;
   };
 
+  // Find best matching record — prefer most recently updated if duplicates exist
   const findByMonth = (records) => {
-    return records.find(r => matchesMonth(r.report_date)) || null;
+    const matches = records.filter(r => matchesMonth(r.report_date));
+    if (matches.length === 0) return null;
+    if (matches.length === 1) return matches[0];
+    // Sort by updated_date desc to get the freshest record
+    return matches.sort((a, b) => new Date(b.updated_date || 0) - new Date(a.updated_date || 0))[0];
   };
 
   const sections = [];
@@ -60,7 +65,7 @@ Map this data to the seo.gbp_metrics block in the output JSON.`);
   }
 
   // ── 2. SEO / GSC ─────────────────────────────────────────────────
-  if (client.google_search_console_url || client.ga_property_id) {
+  {
     const seoRecords = await base44.asServiceRole.entities.SEOData.filter({ client_id });
     const seo = findByMonth(seoRecords);
     if (seo) {
@@ -78,7 +83,7 @@ Map this data to the seo.gbp_metrics block in the output JSON.`);
   }
 
   // ── 3. GA4 ───────────────────────────────────────────────────────
-  if (client.ga_property_id) {
+  {
     const gaRecords = await base44.asServiceRole.entities.GAData.filter({ client_id });
     const ga = findByMonth(gaRecords);
     if (ga) {
@@ -107,7 +112,7 @@ Map sessions, users, new_users, organic_sessions, bounce_rate, avg_session_durat
   }
 
   // ── 4. GHL Lead Data ─────────────────────────────────────────────
-  if (client.ghl_location_id) {
+  {
     const leadRecords = await base44.asServiceRole.entities.LeadData.filter({ client_id });
     const lead = findByMonth(leadRecords);
     if (lead) {

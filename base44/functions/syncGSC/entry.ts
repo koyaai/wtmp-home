@@ -131,11 +131,19 @@ Deno.serve(async (req) => {
         topPages = JSON.stringify((pgData.rows || []).map(r => ({ page: r.keys[0], clicks: Math.round(r.clicks), impressions: Math.round(r.impressions), position: Math.round(r.position * 10) / 10 })));
       }
 
-      // Save to SEOData entity
+      // Save to SEOData entity — upsert by client_id + month
+      const rangeMonthStart = range.start; // first day of month
+      const allSeoRecords = await base44.asServiceRole.entities.SEOData.filter({ client_id });
+      const targetYear2 = new Date(range.start + 'T12:00:00').getFullYear();
+      const targetMonth2 = new Date(range.start + 'T12:00:00').getMonth();
+      const existingSeo = allSeoRecords.find(r => {
+        const d = new Date(r.report_date + 'T12:00:00');
+        return d.getFullYear() === targetYear2 && d.getMonth() === targetMonth2;
+      });
 
-      const seoRecord = await base44.entities.SEOData.create({
+      const seoPayload = {
         client_id,
-        report_date: range.end,
+        report_date: rangeMonthStart,
         organic_clicks: Math.round(row.clicks || 0),
         organic_impressions: Math.round(row.impressions || 0),
         avg_position: row.position ? Math.round(row.position * 10) / 10 : null,
@@ -143,7 +151,14 @@ Deno.serve(async (req) => {
         top_keywords: topKeywords,
         top_pages: topPages,
         notes: `Auto-synced from GSC. Period: ${range.start} to ${range.end}`,
-      });
+      };
+
+      let seoRecord;
+      if (existingSeo) {
+        seoRecord = await base44.asServiceRole.entities.SEOData.update(existingSeo.id, seoPayload);
+      } else {
+        seoRecord = await base44.asServiceRole.entities.SEOData.create(seoPayload);
+      }
 
       results.push(seoRecord);
     }
