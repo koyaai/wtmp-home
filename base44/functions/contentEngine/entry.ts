@@ -190,20 +190,24 @@ Generate high-quality content applying all four advanced capabilities:
 - Use competitor information gain opportunities if competitor data is provided
 - Avoid generic marketing copy. Score 7+ on every dimension and 70+ entropy.
 - TARGET LENGTH: 600–700 words for the generated content body. Do not go shorter.
+- DO NOT use em-dashes (—) anywhere. Use commas, colons, or rewrite the sentence instead.
+- LOCATION USE: If a location is provided, mention it naturally 1–2 times maximum. Do NOT repeat the city name in every paragraph or subheading.
+- SUBHEADING VARIETY: Vary subheading structure and tone. Mix question-style, benefit-led, action-led, and descriptive formats. Do not repeat the same pattern.
+- PLAIN LANGUAGE: Avoid unnecessarily complex or decorative vocabulary. Write conversationally.
 ${content_type === 'Blog Post' ? `
 BLOG POST REQUIREMENTS:
 - Open with a 2–3 sentence summary paragraph (labeled "Overview" or as a natural intro paragraph) that tells the reader exactly what the blog covers and why it matters. This goes BEFORE the main body.
 - Include a "Frequently Asked Questions" section near the bottom with EXACTLY 3–5 specific, high-quality questions (no more than 5).
 - Questions must cover: practical concerns, local context, pricing, technical details, or comparisons.
 - Format: Q: [question] / A: [detailed answer]
-- End with a strong, specific Call to Action (CTA) paragraph after the FAQ section. The CTA must reference the client/business name and include a clear next step (e.g., "Call us today", "Book a free measure and quote", "Get in touch"). Make it action-oriented and relevant to the content.
+- End with a strong, specific CTA paragraph after the FAQ section. The CTA must: name a clear next step, briefly explain what the client can expect when they reach out (e.g. a free consultation, in-home visit, or measurement appointment), reference the business name, and close with warmth or urgency. Do NOT write generic lines like "contact us today" or "get in touch." Make it feel human and specific.
 - CONTENT VARIETY — use these formatting elements where they genuinely improve clarity and readability:
   • Bullet point lists: use for steps, features, options, or comparisons (3+ items).
   • Numbered lists: use for sequential processes or ranked recommendations.
   • Key Takeaways box: include a short "Key Takeaways" section (3–5 bullet points) summarizing the most important points — place it after the intro summary or at the end before the FAQ.
   • Comparison tables: use markdown table format (| Col | Col |) when comparing products, options, materials, price ranges, or pros/cons — only when a table genuinely adds value.
   • Vary paragraph length — mix short punchy paragraphs with more detailed explanatory ones.
-  • Do NOT force every element into every blog — use judgment based on topic. A how-to article suits numbered steps; a product comparison suits a table; a tips article suits bullet points.
+  • Do NOT force every element into every blog — use judgment based on topic.
 ` : ''}
 Return JSON:
 {

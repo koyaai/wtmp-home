@@ -84,15 +84,18 @@ Additional Info: ${q.additional_info || 'none'}
 <writing_rules>
 CRITICAL – apply to EVERY page:
 1. NEVER use: "high quality", "best in class", "world class", "top-notch", "state-of-the-art"
-2. ALWAYS tie every product/service benefit to local climate or lifestyle (use the climate description)
-3. ALWAYS mention the specific cities served naturally in body text
+2. Tie product/service benefits to local climate or lifestyle — but LIMIT the city name to appearing naturally 1–2 times per section maximum. Do NOT repeat the city in every sentence or subheading.
+3. Mention cities served in body text once or twice per page — not in every paragraph.
 4. Use second person: "you", "your home" throughout
-5. Every claim must be concrete and specific – no vague superlatives
+5. Every claim must be concrete and specific — no vague superlatives
 6. Use ## for main section headers, ### for sub-sections
-7. End every full page with a CTA section that includes "${cta}"
-8. After the hero intro paragraph on every full page (NOT Gallery), place the exact text: [GLOBAL TRUST SECTION]
-   This is a placeholder for a 3-column trust block the web team will insert.
-9. Length: 400–600 words body content for full pages; 50–100 words per blurb for Gallery
+7. SUBHEADING VARIETY — vary the structure and tone of subheadings across each page. Do NOT repeat the pattern "[City] + noun" more than once per page. Mix question-style ("Which Shade Is Right for You?"), benefit-led ("Fade Protection That Lasts"), action-led ("Choose Your Style"), and descriptive headings ("The Consultation Process") naturally.
+8. DO NOT use em-dashes (—) anywhere in the content. Use commas, colons, periods, or rewrite the sentence instead.
+9. End every full page with a CTA section that includes "${cta}" — write a compelling, specific 3–4 sentence CTA that: names a clear next step, explains what happens when they reach out (e.g. "we'll visit your home, take precise measurements, and walk you through every option"), and ends with urgency or warmth. Avoid generic "contact us today" language.
+10. After the hero intro paragraph on every full page (NOT Gallery), place the exact text: [GLOBAL TRUST SECTION]
+    This is a placeholder for a 3-column trust block the web team will insert.
+11. Length: 400–600 words body content for full pages; 50–100 words per blurb for Gallery
+12. PLAIN LANGUAGE — avoid unnecessarily complex or decorative vocabulary. Write conversationally. If a simpler word works, use it.
 </writing_rules>
 
 <proven_opening_lines>
