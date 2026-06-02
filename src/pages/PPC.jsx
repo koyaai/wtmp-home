@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
-import { Plus, DollarSign, MousePointer, TrendingUp, Target, X, RefreshCw } from "lucide-react";
+import { Plus, DollarSign, MousePointer, TrendingUp, Target, X, RefreshCw, Trash2, MessageSquarePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
@@ -32,6 +32,8 @@ export default function PPC() {
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState("");
   const [syncMonths, setSyncMonths] = useState(1);
+  const [notesEntry, setNotesEntry] = useState(null); // auto-sync entry being annotated
+  const [notesForm, setNotesForm] = useState({ notes: "", top_performing_city: "", conversions_breakdown: "" });
 
   useEffect(() => {
     base44.entities.Client.list().then(all => {
@@ -59,6 +61,27 @@ export default function PPC() {
     setShowForm(false);
     setForm({ platform: 'Google Ads' });
     base44.entities.PPCData.filter({ client_id: selectedClientId }, '-report_date', 12).then(setPpcData);
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm("Delete this manual log entry?")) return;
+    await base44.entities.PPCData.delete(id);
+    base44.entities.PPCData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setPpcData);
+  };
+
+  const openNotesModal = (entry) => {
+    setNotesEntry(entry);
+    setNotesForm({
+      notes: entry.notes || "",
+      top_performing_city: entry.top_performing_city || "",
+      conversions_breakdown: entry.conversions_breakdown || "",
+    });
+  };
+
+  const handleSaveNotes = async () => {
+    await base44.entities.PPCData.update(notesEntry.id, notesForm);
+    setNotesEntry(null);
+    base44.entities.PPCData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setPpcData);
   };
 
   const handleGoogleAdsSync = async () => {
@@ -178,6 +201,7 @@ export default function PPC() {
                    <th className="px-4 py-3 text-right">Spend</th>
                    <th className="px-4 py-3 text-right">Clicks</th>
                    <th className="px-4 py-3 text-right">CPC</th>
+                   {canEdit && <th className="px-4 py-3 text-right">Actions</th>}
                  </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
@@ -189,11 +213,32 @@ export default function PPC() {
                        {d.source === 'google_ads_sync'
                          ? <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Auto</span>
                          : <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Manual</span>}
+                       {d.source === 'google_ads_sync' && d.notes && (
+                         <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">Notes ✓</span>
+                       )}
                      </td>
                     <td className="px-4 py-3 text-right font-medium text-slate-800">{d.spend ? `$${d.spend.toLocaleString()}` : "—"}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{d.clicks?.toLocaleString() || "—"}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{d.cpc ? `$${d.cpc}` : "—"}</td>
-                  </tr>
+                    {canEdit && (
+                      <td className="px-4 py-3 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {d.source === 'google_ads_sync' && (
+                            <button onClick={() => openNotesModal(d)} title="Add notes / context"
+                              className="text-blue-500 hover:text-blue-700 transition-colors">
+                              <MessageSquarePlus className="w-4 h-4" />
+                            </button>
+                          )}
+                          {d.source !== 'google_ads_sync' && (
+                            <button onClick={() => handleDelete(d.id)} title="Delete entry"
+                              className="text-red-400 hover:text-red-600 transition-colors">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
+                    </tr>
                 ))}
               </tbody>
             </table>
@@ -205,6 +250,49 @@ export default function PPC() {
         <div className="text-center py-16 text-slate-400">
           <Target className="w-10 h-10 mx-auto mb-3 text-slate-300" />
           <p className="text-sm">No PPC data yet. Log a report to get started.</p>
+        </div>
+      )}
+
+      {notesEntry && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+              <div>
+                <h2 className="font-bold text-slate-800">Add Context / Notes</h2>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Auto-synced entry — {new Date(notesEntry.report_date).toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                </p>
+              </div>
+              <button onClick={() => setNotesEntry(null)}><X className="w-5 h-5 text-slate-400" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Top Performing ZIP / City</label>
+                <input type="text" value={notesForm.top_performing_city}
+                  onChange={e => setNotesForm(p => ({ ...p, top_performing_city: e.target.value }))}
+                  placeholder="e.g. Phoenix AZ 85001, Scottsdale"
+                  className="w-full mt-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Conversions Breakdown</label>
+                <input type="text" value={notesForm.conversions_breakdown}
+                  onChange={e => setNotesForm(p => ({ ...p, conversions_breakdown: e.target.value }))}
+                  placeholder="e.g. 12 form fills, 4 calls, 2 chats"
+                  className="w-full mt-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20" />
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-600">Notes / Context</label>
+                <textarea value={notesForm.notes}
+                  onChange={e => setNotesForm(p => ({ ...p, notes: e.target.value }))}
+                  rows={4} placeholder="e.g. CPC is lower than usual because we paused broad match keywords. Best zip codes were 85001 and 85251."
+                  className="w-full mt-1 px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 resize-none" />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 px-6 pb-6">
+              <Button variant="outline" onClick={() => setNotesEntry(null)}>Cancel</Button>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleSaveNotes}>Save Notes</Button>
+            </div>
+          </div>
         </div>
       )}
 
