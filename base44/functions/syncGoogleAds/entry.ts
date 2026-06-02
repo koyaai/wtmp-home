@@ -113,11 +113,12 @@ Deno.serve(async (req) => {
       const roas = spend > 0 ? parseFloat((convValue / spend).toFixed(2)) : null;
       const costPerConversion = conversions > 0 ? parseFloat((spend / conversions).toFixed(2)) : null;
 
-      // Find any existing record for this client/platform within the same month
-      // (handles records saved on different days of the month)
+      // Only look for auto-synced records (source: 'google_ads_sync') for this month
+      // Never touch manually logged records
       const allForClient = await base44.asServiceRole.entities.PPCData.filter({
         client_id,
         platform: 'Google Ads',
+        source: 'google_ads_sync',
       });
       const existing = allForClient.filter(r => {
         if (!r.report_date) return false;
@@ -129,6 +130,7 @@ Deno.serve(async (req) => {
         client_id,
         report_date: periodStart,
         platform: 'Google Ads',
+        source: 'google_ads_sync',
         impressions,
         clicks,
         conversions: parseFloat(conversions.toFixed(1)),

@@ -187,7 +187,12 @@ export default function PPC() {
                 {ppcData.map(d => (
                   <tr key={d.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 text-slate-600">{new Date(d.report_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</td>
-                    <td className="px-4 py-3"><span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{d.platform}</span></td>
+                    <td className="px-4 py-3 flex items-center gap-1.5">
+                       <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{d.platform}</span>
+                       {d.source === 'google_ads_sync'
+                         ? <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Auto</span>
+                         : <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">Manual</span>}
+                     </td>
                     <td className="px-4 py-3 text-right font-medium text-slate-800">{d.spend ? `$${d.spend.toLocaleString()}` : "—"}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{d.clicks?.toLocaleString() || "—"}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{d.conversions || "—"}</td>
