@@ -150,19 +150,13 @@ IMPORTANT: Use exactly these numbers for the leads block. Do NOT estimate or fab
   if (ppc) {
     sections.push(`PPC / GOOGLE ADS DATA for ${month} ${year} (report_date: ${ppc.report_date}):
 - Platform: ${ppc.platform || 'Google Ads'}
-- Impressions: ${ppc.impressions ?? 'N/A'}
-- Clicks: ${ppc.clicks ?? 'N/A'}
-- CTR: ${ppc.ctr ?? 'N/A'}%
 - Spend: ${ppc.spend ? `$${ppc.spend}` : 'N/A'}
-- CPC: ${ppc.cpc ? `$${ppc.cpc}` : 'N/A'}
-- Conversions: ${ppc.conversions ?? 'N/A'}
-- Conversions Breakdown: ${ppc.conversions_breakdown || 'N/A'}
-- Top Performing City: ${ppc.top_performing_city || 'N/A'}
-- Cost Per Conversion: ${ppc.cost_per_conversion ? `$${ppc.cost_per_conversion}` : 'N/A'}
-- ROAS: ${ppc.roas ?? 'N/A'}
+- Clicks: ${ppc.clicks ?? 'N/A'}
+- CPC (Cost Per Click): ${ppc.cpc ? `$${ppc.cpc}` : 'N/A'}
 - Budget: ${ppc.budget ? `$${ppc.budget}` : 'N/A'}
 - Notes: ${ppc.notes || 'None'}
-Map this data to the ppc block in the output JSON.`);
+
+IMPORTANT: Do NOT use conversions or ROAS from this data — they are unreliable. Lead/conversion data comes from GHL (see above). Map spend, clicks, and cpc to the ppc block.`);
   }
 
   if (sections.length === 0) {
@@ -209,7 +203,7 @@ CLIENT CONTEXT:
 STRICT RULES:
 1. ONLY use data explicitly provided above for ${month} ${year}. Do NOT invent, estimate, or fabricate any numbers.
 2. For the "leads" block: use the GHL data above verbatim. "total_leads" = "New Leads This Month" figure.
-3. ONLY populate the "ppc" block if actual PPC data was provided above. Lead data is NOT PPC data.
+3. ONLY populate the "ppc" block if actual PPC data was provided above. Lead data is NOT PPC data. The "ppc" block must ONLY contain spend, clicks, and CPC — never conversions or ROAS.
 4. If a metric is "N/A" or not provided, output it as "N/A" — never guess.
 5. The executive_summary and narratives should be written in a friendly, professional tone for the client.
 6. Focus insights on what actually happened this month and what it means for the client's business.`;
@@ -261,15 +255,8 @@ STRICT RULES:
           properties: {
             highlights: { type: "array", items: { type: "string" } },
             total_spend: { type: "string" },
-            total_leads: { type: "string" },
-            cost_per_lead: { type: "string" },
             total_clicks: { type: "string" },
-            impressions: { type: "string" },
             avg_cpc: { type: "string" },
-            ctr: { type: "string" },
-            conversions_breakdown: { type: "string" },
-            top_performing_city: { type: "string" },
-            top_performing_keywords: { type: "array", items: { type: "string" } },
             challenges: { type: "array", items: { type: "string" } }
           }
         },

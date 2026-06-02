@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, DollarSign, MousePointer, TrendingUp, Target, X, RefreshCw } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
@@ -83,8 +84,8 @@ export default function PPC() {
   const chartData = [...ppcData].reverse().map(d => ({
     date: new Date(d.report_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     spend: d.spend,
-    conversions: d.conversions,
-    roas: d.roas,
+    clicks: d.clicks,
+    cpc: d.cpc,
   }));
 
   return (
@@ -127,15 +128,13 @@ export default function PPC() {
         )}
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         <MetricCard label="Total Spend" value={latest?.spend ? `$${latest.spend.toLocaleString()}` : null} icon={DollarSign} color="bg-blue-500"
           sub={latest?.budget ? `Budget: $${latest.budget.toLocaleString()}` : null} />
-        <MetricCard label="Conversions" value={latest?.conversions} icon={Target} color="bg-emerald-500"
-          sub={latest?.cost_per_conversion ? `$${latest.cost_per_conversion} / conv.` : null} />
         <MetricCard label="Clicks" value={latest?.clicks?.toLocaleString()} icon={MousePointer} color="bg-violet-500"
           sub={latest?.ctr ? `${latest.ctr}% CTR` : null} />
-        <MetricCard label="ROAS" value={latest?.roas ? `${latest.roas}x` : null} icon={TrendingUp} color="bg-amber-500"
-          sub={latest?.cpc ? `$${latest.cpc} CPC` : null} />
+        <MetricCard label="Cost Per Click" value={latest?.cpc ? `$${latest.cpc}` : null} icon={TrendingUp} color="bg-amber-500"
+          sub={latest?.spend && latest?.clicks ? `$${(latest.spend / latest.clicks).toFixed(2)} avg` : null} />
       </div>
 
       {chartData.length > 1 && (
@@ -152,13 +151,13 @@ export default function PPC() {
             </ResponsiveContainer>
           </div>
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-            <p className="font-semibold text-slate-800 mb-4">Conversions Over Time</p>
+            <p className="font-semibold text-slate-800 mb-4">Clicks Over Time</p>
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={chartData}>
                 <XAxis dataKey="date" tick={{ fontSize: 11 }} />
                 <YAxis tick={{ fontSize: 11 }} />
                 <Tooltip />
-                <Line type="monotone" dataKey="conversions" stroke="#10b981" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="clicks" stroke="#8b5cf6" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -174,14 +173,12 @@ export default function PPC() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 text-xs text-slate-500 font-semibold">
-                  <th className="px-4 py-3 text-left">Date</th>
-                  <th className="px-4 py-3 text-left">Platform</th>
-                  <th className="px-4 py-3 text-right">Spend</th>
-                  <th className="px-4 py-3 text-right">Clicks</th>
-                  <th className="px-4 py-3 text-right">Conv.</th>
-                  <th className="px-4 py-3 text-right">ROAS</th>
-                  <th className="px-4 py-3 text-right">CPC</th>
-                </tr>
+                   <th className="px-4 py-3 text-left">Date</th>
+                   <th className="px-4 py-3 text-left">Platform</th>
+                   <th className="px-4 py-3 text-right">Spend</th>
+                   <th className="px-4 py-3 text-right">Clicks</th>
+                   <th className="px-4 py-3 text-right">CPC</th>
+                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {ppcData.map(d => (
@@ -195,8 +192,6 @@ export default function PPC() {
                      </td>
                     <td className="px-4 py-3 text-right font-medium text-slate-800">{d.spend ? `$${d.spend.toLocaleString()}` : "—"}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{d.clicks?.toLocaleString() || "—"}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{d.conversions || "—"}</td>
-                    <td className="px-4 py-3 text-right text-slate-600">{d.roas ? `${d.roas}x` : "—"}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{d.cpc ? `$${d.cpc}` : "—"}</td>
                   </tr>
                 ))}
