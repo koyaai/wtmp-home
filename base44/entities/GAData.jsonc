@@ -1,0 +1,54 @@
+{
+  "name": "GAData",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "report_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date"
+    },
+    "sessions": {
+      "type": "number"
+    },
+    "users": {
+      "type": "number"
+    },
+    "new_users": {
+      "type": "number"
+    },
+    "pageviews": {
+      "type": "number"
+    },
+    "bounce_rate": {
+      "type": "number"
+    },
+    "avg_session_duration": {
+      "type": "number"
+    },
+    "top_pages": {
+      "type": "string",
+      "description": "JSON array of top pages by sessions"
+    },
+    "traffic_sources": {
+      "type": "string",
+      "description": "JSON array of traffic source breakdown"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "report_date"
+  ]
+}

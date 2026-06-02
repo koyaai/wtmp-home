@@ -1,0 +1,107 @@
+{
+  "name": "ClientInsight",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name for display"
+    },
+    "source_text": {
+      "type": "string",
+      "description": "Original transcript or email pasted in"
+    },
+    "source_type": {
+      "type": "string",
+      "enum": [
+        "Meeting Transcript",
+        "Email",
+        "Call Notes",
+        "Other"
+      ],
+      "default": "Meeting Transcript"
+    },
+    "summary": {
+      "type": "string",
+      "description": "AI-generated summary"
+    },
+    "todos": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "resolved": {
+            "type": "boolean"
+          },
+          "team": {
+            "type": "string"
+          },
+          "point_person": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Extracted to-do action items"
+    },
+    "requests": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Extracted client requests"
+    },
+    "red_flags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "resolved": {
+            "type": "boolean"
+          },
+          "team": {
+            "type": "string"
+          },
+          "point_person": {
+            "type": "string"
+          },
+          "solution": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Extracted red flags \u2014 require a solution before resolving"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "new",
+        "reviewed",
+        "archived"
+      ],
+      "default": "new"
+    },
+    "meeting_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name"
+  ]
+}

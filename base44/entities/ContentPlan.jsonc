@@ -1,0 +1,86 @@
+{
+  "name": "ContentPlan",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "platform": {
+      "type": "string",
+      "enum": [
+        "Instagram",
+        "Facebook",
+        "TikTok",
+        "LinkedIn",
+        "YouTube",
+        "Google Business Profile",
+        "Blog",
+        "Other"
+      ]
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "Reel/Video",
+        "Static Image",
+        "Carousel",
+        "Story",
+        "Blog Post",
+        "GBP Post",
+        "Other"
+      ]
+    },
+    "topic": {
+      "type": "string",
+      "description": "Content topic or idea"
+    },
+    "caption_direction": {
+      "type": "string",
+      "description": "Guidance on what the caption should say"
+    },
+    "visual_direction": {
+      "type": "string",
+      "description": "Visual/design direction for the creator"
+    },
+    "target_audience": {
+      "type": "string"
+    },
+    "cta": {
+      "type": "string",
+      "description": "Call to action"
+    },
+    "hashtags": {
+      "type": "string"
+    },
+    "scheduled_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "idea",
+        "in_production",
+        "ready_for_review",
+        "approved",
+        "scheduled",
+        "published"
+      ],
+      "default": "idea"
+    },
+    "assigned_to": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "title",
+    "platform"
+  ]
+}

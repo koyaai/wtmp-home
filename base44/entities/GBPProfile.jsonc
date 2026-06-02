@@ -1,0 +1,157 @@
+{
+  "name": "GBPProfile",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Optional reference to Client"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client/business name"
+    },
+    "gbp_location_name": {
+      "type": "string",
+      "description": "Google Business Profile API location name (e.g. accounts/123/locations/456)"
+    },
+    "gbp_account_name": {
+      "type": "string",
+      "description": "Google Business Profile API account name"
+    },
+    "primary_city": {
+      "type": "string",
+      "description": "Primary city for local SEO"
+    },
+    "secondary_cities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Additional cities served"
+    },
+    "service_radius": {
+      "type": "string",
+      "description": "How far they travel for service"
+    },
+    "has_showroom": {
+      "type": "boolean",
+      "description": "Whether they have a physical showroom"
+    },
+    "showroom_address": {
+      "type": "string",
+      "description": "Physical showroom address if applicable"
+    },
+    "appointment_required": {
+      "type": "boolean",
+      "description": "Whether appointment is required"
+    },
+    "core_services": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Main installation/service offerings"
+    },
+    "secondary_services": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Additional services offered"
+    },
+    "primary_service_keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Main SEO keywords for services"
+    },
+    "secondary_service_keywords": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Secondary SEO keywords"
+    },
+    "products_offered": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of products offered"
+    },
+    "target_customer_types": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Target customer segments"
+    },
+    "years_in_business": {
+      "type": "string",
+      "description": "Years operating"
+    },
+    "average_rating": {
+      "type": "string",
+      "description": "Google rating average"
+    },
+    "review_count": {
+      "type": "string",
+      "description": "Number of reviews"
+    },
+    "warranty_details": {
+      "type": "string",
+      "description": "Warranty information"
+    },
+    "certifications": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Professional certifications"
+    },
+    "brands_carried": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Premium brands carried"
+    },
+    "main_offer": {
+      "type": "string",
+      "description": "Primary promotional offer"
+    },
+    "recurring_promotions": {
+      "type": "string",
+      "description": "Regular promotions or sales periods"
+    },
+    "free_consultation": {
+      "type": "boolean",
+      "description": "Offers free consultation"
+    },
+    "free_measurement": {
+      "type": "boolean",
+      "description": "Offers free measurement"
+    },
+    "financing_available": {
+      "type": "boolean",
+      "description": "Financing options available"
+    },
+    "seasonal_peak_months": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Peak business months"
+    },
+    "notes_for_local_positioning": {
+      "type": "string",
+      "description": "Additional notes for local SEO strategy"
+    }
+  },
+  "required": [
+    "client_name",
+    "primary_city",
+    "core_services"
+  ]
+}

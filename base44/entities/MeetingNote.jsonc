@@ -1,0 +1,35 @@
+{
+  "name": "MeetingNote",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "title": {
+      "type": "string"
+    },
+    "meeting_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "attendees": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "action_items": {
+      "type": "string"
+    },
+    "next_meeting_date": {
+      "type": "string",
+      "format": "date"
+    }
+  },
+  "required": [
+    "client_id",
+    "title",
+    "meeting_date"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "name": "LeadData",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "report_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "total_leads": {
+      "type": "number"
+    },
+    "new_leads": {
+      "type": "number"
+    },
+    "qualified_leads": {
+      "type": "number"
+    },
+    "appointments_booked": {
+      "type": "number"
+    },
+    "appointments_showed": {
+      "type": "number"
+    },
+    "closed_deals": {
+      "type": "number"
+    },
+    "revenue_generated": {
+      "type": "number"
+    },
+    "lead_sources": {
+      "type": "string",
+      "description": "JSON breakdown by source"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "report_date"
+  ]
+}

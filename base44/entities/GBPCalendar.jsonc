@@ -1,0 +1,47 @@
+{
+  "name": "GBPCalendar",
+  "type": "object",
+  "properties": {
+    "gbp_profile_id": {
+      "type": "string",
+      "description": "Reference to GBPProfile"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name for display"
+    },
+    "month": {
+      "type": "string",
+      "description": "Month name"
+    },
+    "season": {
+      "type": "string",
+      "enum": [
+        "Spring",
+        "Summer",
+        "Fall",
+        "Winter"
+      ],
+      "description": "Season for content alignment"
+    },
+    "priority_service": {
+      "type": "string",
+      "description": "Optional priority service to focus on"
+    },
+    "posts_per_week": {
+      "type": "number",
+      "description": "Number of posts per week"
+    },
+    "calendar_data": {
+      "type": "object",
+      "description": "Generated GBP calendar JSON structure"
+    }
+  },
+  "required": [
+    "client_name",
+    "month",
+    "season",
+    "posts_per_week",
+    "calendar_data"
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "name": "ContentItem",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name for display"
+    },
+    "title": {
+      "type": "string",
+      "description": "Content title or topic"
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "generated",
+        "analyzed",
+        "rewritten"
+      ],
+      "description": "How this content was created"
+    },
+    "original_content": {
+      "type": "string",
+      "description": "Original content before rewrite/analysis"
+    },
+    "final_content": {
+      "type": "string",
+      "description": "Final generated or rewritten content"
+    },
+    "entropy_score": {
+      "type": "number",
+      "description": "Overall entropy score 0-100"
+    },
+    "dimension_scores": {
+      "type": "object",
+      "description": "12 dimension scores"
+    },
+    "analysis": {
+      "type": "object",
+      "description": "Full analysis output (problems, strategy, etc.)"
+    },
+    "context_notes": {
+      "type": "string",
+      "description": "User-provided context or topic notes"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": [
+        "Blog Post",
+        "GBP Post",
+        "Service Page",
+        "Landing Page",
+        "Social Caption",
+        "Email",
+        "Other"
+      ],
+      "description": "Type of content"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "approved",
+        "published"
+      ],
+      "default": "draft"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "title",
+    "mode"
+  ]
+}

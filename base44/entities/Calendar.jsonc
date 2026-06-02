@@ -1,0 +1,77 @@
+{
+  "name": "Calendar",
+  "type": "object",
+  "properties": {
+    "brand_profile_id": {
+      "type": "string",
+      "description": "Reference to BrandProfile"
+    },
+    "brand_name": {
+      "type": "string",
+      "description": "Brand name for display"
+    },
+    "month": {
+      "type": "string",
+      "description": "Month name (e.g., January, February)"
+    },
+    "season": {
+      "type": "string",
+      "enum": [
+        "Spring",
+        "Summer",
+        "Fall",
+        "Winter"
+      ],
+      "description": "Season for content alignment"
+    },
+    "priority_product": {
+      "type": "string",
+      "description": "Optional priority product to focus on"
+    },
+    "campaign_goal": {
+      "type": "string",
+      "enum": [
+        "Lead Generation",
+        "Engagement Growth",
+        "Product Push",
+        "Brand Authority"
+      ],
+      "description": "Primary campaign objective"
+    },
+    "posts_per_week": {
+      "type": "number",
+      "description": "Number of posts to generate per week"
+    },
+    "format_preferences": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Preferred content formats selected during generation"
+    },
+    "calendar_data": {
+      "type": "object",
+      "description": "Generated calendar JSON structure"
+    },
+    "brand_voice_score": {
+      "type": "number",
+      "description": "AI-calculated score (0-100) measuring brand voice alignment"
+    },
+    "score": {
+      "type": "string",
+      "enum": [
+        "thumbs_up",
+        "thumbs_down"
+      ],
+      "description": "Quality score for learning"
+    }
+  },
+  "required": [
+    "brand_name",
+    "month",
+    "season",
+    "campaign_goal",
+    "posts_per_week",
+    "calendar_data"
+  ]
+}

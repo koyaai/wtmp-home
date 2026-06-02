@@ -113,10 +113,16 @@ Deno.serve(async (req) => {
       const roas = spend > 0 ? parseFloat((convValue / spend).toFixed(2)) : null;
       const costPerConversion = conversions > 0 ? parseFloat((spend / conversions).toFixed(2)) : null;
 
-      const existing = await base44.asServiceRole.entities.PPCData.filter({
+      // Find any existing record for this client/platform within the same month
+      // (handles records saved on different days of the month)
+      const allForClient = await base44.asServiceRole.entities.PPCData.filter({
         client_id,
-        report_date: periodStart,
         platform: 'Google Ads',
+      });
+      const existing = allForClient.filter(r => {
+        if (!r.report_date) return false;
+        const d = new Date(r.report_date + 'T12:00:00');
+        return d.getFullYear() === startDate.getFullYear() && d.getMonth() === startDate.getMonth();
       });
 
       const record = {

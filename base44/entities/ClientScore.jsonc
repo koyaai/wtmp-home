@@ -1,0 +1,93 @@
+{
+  "name": "ClientScore",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "month": {
+      "type": "string",
+      "description": "e.g. January"
+    },
+    "year": {
+      "type": "number"
+    },
+    "attended_meetings": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "description": "Grade for attended set meetings"
+    },
+    "responsiveness": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "description": "Grade for responsiveness & engagement in client portal"
+    },
+    "project_posts_submission": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "description": "Grade for submission of project posts"
+    },
+    "lead_handling": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "description": "Grade for lead handling"
+    },
+    "overall_grade": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "description": "Overall client grade"
+    },
+    "notes": {
+      "type": "string",
+      "description": "CSM/CSA notes"
+    },
+    "roadblocks": {
+      "type": "string",
+      "description": "Existing roadblocks"
+    },
+    "author": {
+      "type": "string",
+      "description": "Who filled this out"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "month",
+    "year"
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "name": "CSMUpdate",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "update_type": {
+      "type": "string",
+      "enum": [
+        "status_update",
+        "issue",
+        "win",
+        "churn_risk",
+        "upsell_opportunity",
+        "general"
+      ],
+      "default": "general"
+    },
+    "content": {
+      "type": "string"
+    },
+    "author": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "content"
+  ]
+}

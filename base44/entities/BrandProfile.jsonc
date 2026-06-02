@@ -1,0 +1,108 @@
+{
+  "name": "BrandProfile",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Optional reference to Client"
+    },
+    "name": {
+      "type": "string",
+      "description": "Brand/client name"
+    },
+    "location": {
+      "type": "string",
+      "description": "Geographic location"
+    },
+    "climate_type": {
+      "type": "string",
+      "enum": [
+        "Hot/Humid",
+        "Hot/Dry",
+        "Temperate",
+        "Cold/Snowy",
+        "Coastal",
+        "Desert",
+        "Tropical"
+      ],
+      "description": "Climate type affecting product needs"
+    },
+    "products_offered": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "List of products offered"
+    },
+    "price_tier": {
+      "type": "string",
+      "enum": [
+        "Budget",
+        "Mid-Range",
+        "Premium",
+        "Luxury"
+      ],
+      "description": "Price positioning"
+    },
+    "target_audience": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Primary audiences"
+    },
+    "brand_document_url": {
+      "type": "string",
+      "description": "Uploaded brand sheet or style guide document URL"
+    },
+    "brand_analysis": {
+      "type": "object",
+      "description": "AI-extracted brand information from document",
+      "properties": {
+        "brand_voice": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tone_attributes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unique_selling_propositions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "key_messaging": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "competitors_mentioned": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "avoid_terms": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "name",
+    "location",
+    "products_offered",
+    "price_tier",
+    "target_audience"
+  ]
+}

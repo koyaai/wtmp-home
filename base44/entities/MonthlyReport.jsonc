@@ -1,0 +1,40 @@
+{
+  "name": "MonthlyReport",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "client_name": {
+      "type": "string"
+    },
+    "month": {
+      "type": "string",
+      "description": "e.g. January"
+    },
+    "year": {
+      "type": "number"
+    },
+    "date_range": {
+      "type": "string",
+      "description": "Human readable e.g. October \u2013 December 2025"
+    },
+    "report_data": {
+      "type": "object",
+      "description": "AI-generated combined report JSON"
+    },
+    "seo_file_url": {
+      "type": "string"
+    },
+    "ppc_file_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "month",
+    "year"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "name": "SEOData",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string"
+    },
+    "report_date": {
+      "type": "string",
+      "format": "date"
+    },
+    "organic_clicks": {
+      "type": "number"
+    },
+    "organic_impressions": {
+      "type": "number"
+    },
+    "avg_position": {
+      "type": "number"
+    },
+    "ctr": {
+      "type": "number"
+    },
+    "top_keywords": {
+      "type": "string",
+      "description": "JSON array or comma-separated top keywords"
+    },
+    "top_pages": {
+      "type": "string",
+      "description": "JSON array of top pages by clicks"
+    },
+    "gbp_views": {
+      "type": "number"
+    },
+    "gbp_calls": {
+      "type": "number"
+    },
+    "gbp_direction_requests": {
+      "type": "number"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "report_date"
+  ]
+}

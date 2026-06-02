@@ -1,0 +1,27 @@
+{
+  "name": "GBPSettings",
+  "type": "object",
+  "properties": {
+    "access_token": {
+      "type": "string",
+      "description": "Google OAuth access token"
+    },
+    "refresh_token": {
+      "type": "string",
+      "description": "Google OAuth refresh token"
+    },
+    "token_expiry": {
+      "type": "string",
+      "description": "ISO timestamp of token expiry"
+    },
+    "connected": {
+      "type": "boolean",
+      "description": "Whether GBP is connected"
+    },
+    "connected_at": {
+      "type": "string",
+      "description": "When the connection was made"
+    }
+  },
+  "required": []
+}

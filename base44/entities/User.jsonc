@@ -17,5 +17,6 @@
       ],
       "default": "csm"
     }
-  }
+  },
+  "required": []
 }
