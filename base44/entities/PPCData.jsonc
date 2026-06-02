@@ -19,6 +19,14 @@
       ],
       "default": "Google Ads"
     },
+    "source": {
+      "type": "string",
+      "enum": [
+        "google_ads_sync",
+        "manual"
+      ],
+      "description": "Whether this record was auto-synced or manually entered"
+    },
     "impressions": {
       "type": "number"
     },

@@ -57,7 +57,7 @@ Deno.serve(async (req) => {
       const periodStart = fmt(startDate);
       const periodEnd = fmt(endDate);
 
-      const query = `SELECT metrics.impressions, metrics.clicks, metrics.conversions, metrics.cost_micros, metrics.ctr, metrics.average_cpc, metrics.conversions_value FROM campaign WHERE segments.date BETWEEN '${periodStart}' AND '${periodEnd}'`;
+      const query = `SELECT campaign.id, campaign.name, metrics.impressions, metrics.clicks, metrics.conversions, metrics.cost_micros, metrics.ctr, metrics.average_cpc, metrics.conversions_value FROM campaign WHERE segments.date BETWEEN '${periodStart}' AND '${periodEnd}' AND campaign.status != 'REMOVED'`;
 
       // searchStream is the correct REST endpoint for Google Ads query API
       const adsRes = await fetch(
@@ -99,11 +99,14 @@ Deno.serve(async (req) => {
       let ctrSum = 0, ctrCount = 0;
 
       for (const row of rows) {
+        // Google Ads API returns camelCase field names in responses
         impressions += parseInt(row.metrics?.impressions || 0);
         clicks += parseInt(row.metrics?.clicks || 0);
         conversions += parseFloat(row.metrics?.conversions || 0);
-        costMicros += parseInt(row.metrics?.cost_micros || 0);
-        convValue += parseFloat(row.metrics?.conversions_value || 0);
+        const rawCost = row.metrics?.costMicros ?? row.metrics?.cost_micros;
+        costMicros += rawCost ? parseInt(String(rawCost), 10) : 0;
+        const rawConvValue = row.metrics?.conversionsValue ?? row.metrics?.conversions_value;
+        convValue += parseFloat(rawConvValue || 0);
         if (row.metrics?.ctr) { ctrSum += parseFloat(row.metrics.ctr); ctrCount++; }
       }
 
@@ -147,7 +150,8 @@ Deno.serve(async (req) => {
         await base44.asServiceRole.entities.PPCData.create(record);
       }
 
-      results.push({ period: `${periodStart} – ${periodEnd}`, impressions, clicks, spend: spend.toFixed(2) });
+      // Sample first row for debugging cost_micros
+      results.push({ period: `${periodStart} – ${periodEnd}`, impressions, clicks, spend: spend.toFixed(2), conversions });
     }
 
     return Response.json({ success: true, synced: results.length, results });
