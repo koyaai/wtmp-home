@@ -43,9 +43,20 @@
             "type": "boolean"
           },
           "team": {
-            "type": "string"
+            "type": "string",
+            "description": "Legacy single team (kept for backward compat)"
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Multi-team assignment"
           },
           "point_person": {
+            "type": "string"
+          },
+          "slack_link": {
             "type": "string"
           }
         }
@@ -74,12 +85,23 @@
             "type": "boolean"
           },
           "team": {
-            "type": "string"
+            "type": "string",
+            "description": "Legacy single team (kept for backward compat)"
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Multi-team assignment"
           },
           "point_person": {
             "type": "string"
           },
           "solution": {
+            "type": "string"
+          },
+          "slack_link": {
             "type": "string"
           }
         }

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { CheckCircle2, Pencil, Trash2, Check, X, Clock, Calendar, Link2 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { CheckCircle2, Pencil, Trash2, Check, X, Clock, Calendar, Link2, ChevronDown } from "lucide-react";
 import { format, isPast, differenceInDays, parseISO } from "date-fns";
 
 export const TEAMS = [
@@ -19,6 +19,13 @@ export const teamColors = {
   "Customer Success": "bg-teal-100 text-teal-700",
 };
 
+// Normalize item team field to array
+function getTeamsArray(item) {
+  if (Array.isArray(item.teams) && item.teams.length > 0) return item.teams;
+  if (item.team) return [item.team];
+  return [];
+}
+
 export function DeadlineBadge({ date }) {
   if (!date) return <span className="text-slate-300 text-xs">—</span>;
   let d;
@@ -29,6 +36,56 @@ export function DeadlineBadge({ date }) {
   return <span className="text-xs text-slate-500 inline-flex items-center gap-1"><Calendar className="w-3 h-3" />{format(d, "MMM d, yyyy")}</span>;
 }
 
+// Multi-select team dropdown
+function TeamMultiSelect({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const toggle = (team) => {
+    if (value.includes(team)) {
+      onChange(value.filter(t => t !== team));
+    } else {
+      onChange([...value, team]);
+    }
+  };
+
+  return (
+    <div className="relative col-span-1" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between border border-slate-200 rounded px-2 py-1.5 text-xs bg-white focus:outline-none text-left"
+      >
+        <span className="truncate text-slate-600">
+          {value.length === 0 ? "No team assigned" : value.join(", ")}
+        </span>
+        <ChevronDown className="w-3 h-3 text-slate-400 flex-shrink-0 ml-1" />
+      </button>
+      {open && (
+        <div className="absolute z-50 top-full left-0 mt-1 w-52 bg-white border border-slate-200 rounded-lg shadow-lg py-1 max-h-52 overflow-y-auto">
+          {TEAMS.map(team => (
+            <label key={team} className="flex items-center gap-2 px-3 py-1.5 hover:bg-slate-50 cursor-pointer text-xs">
+              <input
+                type="checkbox"
+                checked={value.includes(team)}
+                onChange={() => toggle(team)}
+                className="rounded"
+              />
+              <span className={`px-1.5 py-0.5 rounded-full text-xs font-medium ${teamColors[team]}`}>{team}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleResolved, canEdit }) {
   const [editing, setEditing] = useState(false);
   const [resolvingFlag, setResolvingFlag] = useState(false);
@@ -36,7 +93,7 @@ export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleR
   const [form, setForm] = useState({
     text: item.text || "",
     date: item.date || "",
-    team: item.team || "",
+    teams: getTeamsArray(item),
     point_person: item.point_person || "",
     solution: item.solution || "",
     slack_link: item.slack_link || "",
@@ -44,9 +101,10 @@ export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleR
 
   const isFlag = type === "red_flags";
   const resolved = item.resolved;
+  const itemTeams = getTeamsArray(item);
 
   const handleSave = () => {
-    onSave({ ...item, ...form, date: form.date || null });
+    onSave({ ...item, ...form, teams: form.teams, team: form.teams[0] || "", date: form.date || null });
     setEditing(false);
   };
 
@@ -80,14 +138,10 @@ export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleR
               autoFocus
             />
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              <select
-                value={form.team}
-                onChange={e => setForm(f => ({ ...f, team: e.target.value }))}
-                className="border border-slate-200 rounded px-2 py-1.5 text-xs bg-white focus:outline-none col-span-1"
-              >
-                <option value="">No team assigned</option>
-                {TEAMS.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
+              <TeamMultiSelect
+                value={form.teams}
+                onChange={teams => setForm(f => ({ ...f, teams }))}
+              />
               <input
                 placeholder="Point person"
                 value={form.point_person}
@@ -161,12 +215,19 @@ export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleR
           )}
         </td>
 
-        {/* Team */}
-        <td className="px-3 py-3 w-36">
-          {item.team
-            ? <span className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${teamColors[item.team] || "bg-slate-100 text-slate-600"}`}>{item.team}</span>
-            : <span className="text-slate-300 text-xs">—</span>
-          }
+        {/* Team(s) */}
+        <td className="px-3 py-3 w-44">
+          {itemTeams.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {itemTeams.map(t => (
+                <span key={t} className={`text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${teamColors[t] || "bg-slate-100 text-slate-600"}`}>
+                  {t}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <span className="text-slate-300 text-xs">—</span>
+          )}
         </td>
 
         {/* Point Person */}
@@ -197,7 +258,7 @@ export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleR
         <td className="pr-4 pl-2 py-3 w-8 text-right">
           {canEdit && (
             <button
-              onClick={() => { setForm({ text: item.text || "", date: item.date || "", team: item.team || "", point_person: item.point_person || "", solution: item.solution || "", slack_link: item.slack_link || "" }); setEditing(true); }}
+              onClick={() => { setForm({ text: item.text || "", date: item.date || "", teams: getTeamsArray(item), point_person: item.point_person || "", solution: item.solution || "", slack_link: item.slack_link || "" }); setEditing(true); }}
               className="text-slate-300 hover:text-slate-600 transition-colors opacity-0 group-hover:opacity-100"
             >
               <Pencil className="w-3.5 h-3.5" />
