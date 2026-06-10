@@ -27,6 +27,10 @@
       ],
       "description": "Grade for attended set meetings"
     },
+    "attended_meetings_notes": {
+      "type": "string",
+      "description": "Context notes for attended meetings grade"
+    },
     "responsiveness": {
       "type": "string",
       "enum": [
@@ -37,6 +41,10 @@
         "F"
       ],
       "description": "Grade for responsiveness & engagement in client portal"
+    },
+    "responsiveness_notes": {
+      "type": "string",
+      "description": "Context notes for responsiveness grade"
     },
     "project_posts_submission": {
       "type": "string",
@@ -49,6 +57,10 @@
       ],
       "description": "Grade for submission of project posts"
     },
+    "project_posts_submission_notes": {
+      "type": "string",
+      "description": "Context notes for project posts grade"
+    },
     "lead_handling": {
       "type": "string",
       "enum": [
@@ -59,6 +71,10 @@
         "F"
       ],
       "description": "Grade for lead handling"
+    },
+    "lead_handling_notes": {
+      "type": "string",
+      "description": "Context notes for lead handling grade"
     },
     "overall_grade": {
       "type": "string",

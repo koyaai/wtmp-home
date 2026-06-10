@@ -24,10 +24,10 @@ const gradeTextColor = (g) => ({
 }[g] || "text-slate-400");
 
 const METRICS = [
-  { key: "attended_meetings", label: "Attended Set Meetings" },
-  { key: "responsiveness", label: "Responsiveness & Engagement in Client Portal" },
-  { key: "project_posts_submission", label: "Submission of Project Posts" },
-  { key: "lead_handling", label: "Lead Handling" },
+  { key: "attended_meetings", label: "Attended Set Meetings", notesKey: "attended_meetings_notes" },
+  { key: "responsiveness", label: "Responsiveness & Engagement in Client Portal", notesKey: "responsiveness_notes" },
+  { key: "project_posts_submission", label: "Submission of Project Posts", notesKey: "project_posts_submission_notes" },
+  { key: "lead_handling", label: "Lead Handling", notesKey: "lead_handling_notes" },
 ];
 
 function GradeSelector({ value, onChange }) {
@@ -60,6 +60,7 @@ export default function ClientScore({ clientId, clientName }) {
   const [month, setMonth] = useState(MONTHS[now.getMonth()]);
   const [year, setYear] = useState(now.getFullYear());
   const [scores, setScores] = useState({});
+  const [categoryNotes, setCategoryNotes] = useState({});
   const [notes, setNotes] = useState("");
   const [roadblocks, setRoadblocks] = useState("");
   const [saving, setSaving] = useState(false);
@@ -77,11 +78,18 @@ export default function ClientScore({ clientId, clientName }) {
     if (results.length > 0) {
       const r = results[0];
       setScores({ attended_meetings: r.attended_meetings, responsiveness: r.responsiveness, project_posts_submission: r.project_posts_submission, lead_handling: r.lead_handling });
+      setCategoryNotes({
+        attended_meetings_notes: r.attended_meetings_notes || "",
+        responsiveness_notes: r.responsiveness_notes || "",
+        project_posts_submission_notes: r.project_posts_submission_notes || "",
+        lead_handling_notes: r.lead_handling_notes || "",
+      });
       setNotes(r.notes || "");
       setRoadblocks(r.roadblocks || "");
       setExistingId(r.id);
     } else {
       setScores({});
+      setCategoryNotes({});
       setNotes("");
       setRoadblocks("");
       setExistingId(null);
@@ -103,6 +111,7 @@ export default function ClientScore({ clientId, clientName }) {
       month,
       year,
       ...scores,
+      ...categoryNotes,
       overall_grade: overall,
       notes,
       roadblocks,
@@ -158,12 +167,19 @@ export default function ClientScore({ clientId, clientName }) {
         {/* Metric Grades */}
         <div className="space-y-4">
           {METRICS.map(m => (
-            <div key={m.key}>
+            <div key={m.key} className="pb-3 border-b border-slate-50 last:border-0 last:pb-0">
               <div className="flex items-center justify-between mb-1.5">
                 <p className="text-sm text-slate-700">{m.label}</p>
                 {scores[m.key] && <span className={`text-sm font-bold ${gradeTextColor(scores[m.key])}`}>{scores[m.key]}</span>}
               </div>
               <GradeSelector value={scores[m.key]} onChange={v => setScores(s => ({ ...s, [m.key]: v }))} />
+              <textarea
+                value={categoryNotes[m.notesKey] || ""}
+                onChange={e => setCategoryNotes(n => ({ ...n, [m.notesKey]: e.target.value }))}
+                rows={2}
+                placeholder="Add context for this grade..."
+                className="w-full mt-2 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-600 placeholder-slate-300 focus:outline-none focus:ring-1 focus:ring-blue-200 resize-none bg-slate-50"
+              />
             </div>
           ))}
         </div>
