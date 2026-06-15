@@ -4,6 +4,7 @@ import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, ArrowRight, Download, ChevronLeft, BarChart2, Plus, Link2, Star, Trash2, CalendarClock, MapPin } from "lucide-react";
 import ScheduledReports from "@/components/reporting/ScheduledReports";
+import YTDSummary from "@/components/reporting/YTDSummary";
 import { toast } from "sonner";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -566,9 +567,14 @@ export default function Reporting() {
             className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${mainTab === "scheduled" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
             <CalendarClock className="w-4 h-4" /> Scheduled
           </button>
+          <button onClick={() => setMainTab("ytd")}
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm rounded-lg font-medium transition-colors ${mainTab === "ytd" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
+            <TrendingUp className="w-4 h-4" /> YTD Summary
+          </button>
         </div>
 
         {mainTab === "scheduled" && <ScheduledReports clients={clients} />}
+        {mainTab === "ytd" && <YTDSummary clients={clients} />}
 
         {mainTab === "reports" && (
           <>
