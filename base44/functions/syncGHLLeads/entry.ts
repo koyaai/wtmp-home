@@ -96,10 +96,16 @@ Deno.serve(async (req) => {
 
         // Source breakdown (this month only)
         const sourceCounts = {};
+        const tagCounts = {};
         for (const o of thisMonth) {
           if (o.source) sourceCounts[o.source] = (sourceCounts[o.source] || 0) + 1;
+          const tags = (o.tags || []).map(t => t.trim()).filter(Boolean);
+          for (const tag of tags) {
+            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+          }
         }
         const leadSources = JSON.stringify(sourceCounts);
+        const leadTags = JSON.stringify(tagCounts);
 
         // Find any existing LeadData record for this client in this calendar month
         // Use T12:00:00 to avoid UTC midnight timezone shifts
@@ -117,6 +123,7 @@ Deno.serve(async (req) => {
           closed_deals: closedDeals,
           revenue_generated: revenueGenerated > 0 ? revenueGenerated : undefined,
           lead_sources: leadSources,
+          lead_tags: leadTags,
           notes: `Auto-synced from GHL on ${new Date().toISOString().split('T')[0]}`,
         };
 

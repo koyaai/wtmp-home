@@ -121,6 +121,27 @@ export default function Leads() {
           icon={DollarSign} color="bg-amber-500" />
       </div>
 
+      {/* Lead Tags */}
+      {latest?.lead_tags && (() => {
+        try {
+          const tags = JSON.parse(latest.lead_tags);
+          const entries = Object.entries(tags);
+          if (entries.length === 0) return null;
+          return (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+              <h2 className="font-semibold text-slate-800 mb-3">Lead Tags (From GHL Sync)</h2>
+              <div className="flex flex-wrap gap-2">
+                {entries.sort((a,b) => b[1] - a[1]).map(([tag, count]) => (
+                  <span key={tag} className="bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full text-xs font-medium">
+                    {tag} ({count})
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        } catch { return null; }
+      })()}
+
       {/* Funnel */}
       {latest && (
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">

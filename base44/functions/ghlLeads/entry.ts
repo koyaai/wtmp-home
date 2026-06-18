@@ -88,6 +88,7 @@ Deno.serve(async (req) => {
       else p.open++;
 
       // Store lightweight opp for the list
+      const tags = (opp.tags || []).map(t => t.trim()).filter(Boolean);
       m.opportunities.push({
         id: opp.id,
         name: opp.name || 'Unnamed',
@@ -97,8 +98,15 @@ Deno.serve(async (req) => {
         status: opp.status || 'open',
         value: opp.monetaryValue || 0,
         source: opp.source || null,
+        tags,
         createdAt: opp.createdAt,
       });
+
+      // Tag breakdown
+      for (const tag of tags) {
+        m.tags = m.tags || {};
+        m.tags[tag] = (m.tags[tag] || 0) + 1;
+      }
     }
 
     // Sort months descending

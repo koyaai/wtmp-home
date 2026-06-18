@@ -211,6 +211,24 @@ export default function GHLLeads({ client }) {
         </div>
       )}
 
+      {/* Tags Breakdown */}
+      {(() => {
+        const tags = Object.entries(monthData.tags || {}).sort((a, b) => b[1] - a[1]);
+        if (tags.length === 0) return null;
+        return (
+          <div className="bg-white rounded-xl border border-slate-100 p-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Lead Tags</p>
+            <div className="flex flex-wrap gap-2">
+              {tags.map(([tag, count]) => (
+                <span key={tag} className="inline-flex items-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-full text-xs font-medium">
+                  {tag} <span className="text-amber-500">({count})</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Pipeline Breakdown */}
       {pipelines.length > 0 && (
         <div className="space-y-2">
@@ -280,6 +298,13 @@ export default function GHLLeads({ client }) {
                 <div>
                   <p className="text-sm font-medium text-slate-700">{opp.name}</p>
                   <p className="text-xs text-slate-400">{opp.contactName} · {opp.source || 'No source'}</p>
+                  {opp.tags?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {opp.tags.map(tag => (
+                        <span key={tag} className="text-[10px] bg-amber-50 text-amber-700 border border-amber-200 px-1.5 py-0.5 rounded">{tag}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
                 <div className="text-right flex flex-col items-end gap-1">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${statusStyles[opp.status] || statusStyles.open}`}>
