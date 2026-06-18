@@ -142,6 +142,27 @@ export default function Leads() {
         } catch { return null; }
       })()}
 
+      {/* Session Sources */}
+      {latest?.lead_session_sources && (() => {
+        try {
+          const sources = JSON.parse(latest.lead_session_sources);
+          const entries = Object.entries(sources);
+          if (entries.length === 0) return null;
+          return (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+              <h2 className="font-semibold text-slate-800 mb-3">Session Sources (From GHL Sync)</h2>
+              <div className="flex flex-wrap gap-2">
+                {entries.sort((a,b) => b[1] - a[1]).map(([source, count]) => (
+                  <span key={source} className="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full text-xs font-medium">
+                    {source} ({count})
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        } catch { return null; }
+      })()}
+
       {/* Funnel */}
       {latest && (
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
