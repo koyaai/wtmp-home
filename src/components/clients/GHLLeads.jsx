@@ -211,6 +211,24 @@ export default function GHLLeads({ client }) {
         </div>
       )}
 
+      {/* Session Source Breakdown */}
+      {(() => {
+        const sources = Object.entries(monthData.sessionSources || {}).sort((a, b) => b[1] - a[1]);
+        if (sources.length === 0) return null;
+        return (
+          <div className="bg-white rounded-xl border border-slate-100 p-4">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Session Sources</p>
+            <div className="flex flex-wrap gap-2">
+              {sources.map(([source, count]) => (
+                <span key={source} className="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full text-xs font-medium">
+                  {source} <span className="text-blue-500">({count})</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Tags Breakdown */}
       {(() => {
         const tags = Object.entries(monthData.tags || {}).sort((a, b) => b[1] - a[1]);
@@ -297,7 +315,13 @@ export default function GHLLeads({ client }) {
               <div key={opp.id} className="flex items-center justify-between px-4 py-2.5">
                 <div>
                   <p className="text-sm font-medium text-slate-700">{opp.name}</p>
-                  <p className="text-xs text-slate-400">{opp.contactName} · {opp.source || 'No source'}</p>
+                  <p className="text-xs text-slate-400">{opp.contactName}{opp.source ? ` · ${opp.source}` : ''}</p>
+                  {(opp.sessionSource || opp.utmSource) && (
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Session: {[opp.sessionSource, opp.utmSource].filter(Boolean).join(' / ')}
+                      {opp.utmCampaign ? ` | ${opp.utmCampaign}` : ''}
+                    </p>
+                  )}
                   {opp.tags?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
                       {opp.tags.map(tag => (

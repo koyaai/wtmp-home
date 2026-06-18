@@ -38,6 +38,10 @@
       "type": "string",
       "description": "JSON breakdown by tag"
     },
+    "lead_session_sources": {
+      "type": "string",
+      "description": "JSON breakdown by session/campaign source"
+    },
     "notes": {
       "type": "string"
     }

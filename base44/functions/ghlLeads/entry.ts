@@ -87,6 +87,12 @@ Deno.serve(async (req) => {
       else if (opp.status === 'lost') p.lost++;
       else p.open++;
 
+      // Extract attribution / session source data
+      const sessionSource = opp.sessionSource || opp.attributionSource || null;
+      const utmSource = opp.utmSource || opp.utm_source || null;
+      const utmMedium = opp.utmMedium || opp.utm_medium || null;
+      const utmCampaign = opp.utmCampaign || opp.utm_campaign || null;
+
       // Store lightweight opp for the list
       const tags = (opp.tags || []).map(t => t.trim()).filter(Boolean);
       m.opportunities.push({
@@ -98,9 +104,19 @@ Deno.serve(async (req) => {
         status: opp.status || 'open',
         value: opp.monetaryValue || 0,
         source: opp.source || null,
+        sessionSource,
+        utmSource,
+        utmMedium,
+        utmCampaign,
         tags,
         createdAt: opp.createdAt,
       });
+
+      // Session source breakdown
+      if (sessionSource) {
+        m.sessionSources = m.sessionSources || {};
+        m.sessionSources[sessionSource] = (m.sessionSources[sessionSource] || 0) + 1;
+      }
 
       // Tag breakdown
       for (const tag of tags) {
