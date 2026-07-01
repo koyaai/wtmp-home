@@ -332,8 +332,9 @@ export default function GHLLeads({ client }) {
                 </div>
                 <div className="text-right flex flex-col items-end gap-1">
                   <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${statusStyles[opp.status] || statusStyles.open}`}>
-                    {opp.stage}
+                    {opp.stage !== opp.status ? opp.stage : opp.status}
                   </span>
+                  <span className="text-xs text-slate-400 capitalize">{opp.status}</span>
                   {opp.value > 0 && <p className="text-xs text-slate-500">${opp.value.toLocaleString()}</p>}
                 </div>
               </div>

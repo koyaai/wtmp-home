@@ -75,14 +75,15 @@ Deno.serve(async (req) => {
       m.sources[src] = (m.sources[src] || 0) + 1;
 
       // Pipeline breakdown
-      const pipelineName = opp.pipeline?.name || 'Default';
-      const stageName = opp.stage?.name || 'Unknown';
+      const pipelineName = opp.pipeline?.name || opp.pipelineName || 'Default';
+      const stageName = opp.pipelineStage?.name || opp.stage?.name || opp.stageName || opp.pipelineStageName || null;
       if (!m.pipelines[pipelineName]) {
         m.pipelines[pipelineName] = { total: 0, won: 0, lost: 0, open: 0, revenue_won: 0, stages: {} };
       }
       const p = m.pipelines[pipelineName];
       p.total++;
-      p.stages[stageName] = (p.stages[stageName] || 0) + 1;
+      const stageKey = stageName || 'Unknown';
+      p.stages[stageKey] = (p.stages[stageKey] || 0) + 1;
       if (opp.status === 'won') { p.won++; p.revenue_won += opp.monetaryValue || 0; }
       else if (opp.status === 'lost') p.lost++;
       else p.open++;
@@ -99,7 +100,7 @@ Deno.serve(async (req) => {
         id: opp.id,
         name: opp.name || 'Unnamed',
         contactName: `${opp.contact?.firstName || ''} ${opp.contact?.lastName || ''}`.trim() || opp.contact?.name || 'Unknown',
-        stage: stageName,
+        stage: stageName || opp.status || 'open',
         pipeline: pipelineName,
         status: opp.status || 'open',
         value: opp.monetaryValue || 0,
