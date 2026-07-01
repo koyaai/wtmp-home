@@ -3,7 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Plus, TrendingUp, Users, Calendar, DollarSign, X, Pencil } from "lucide-react";
 import GHLLeads from "@/components/clients/GHLLeads";
 import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Cell } from "recharts";
 
 function MetricCard({ label, value, icon: Icon, color, sub }) {
   return (
@@ -188,6 +188,32 @@ export default function Leads() {
           </div>
         </div>
       )}
+
+      {/* Session Source Chart */}
+      {latest?.lead_session_sources && (() => {
+        try {
+          const sources = JSON.parse(latest.lead_session_sources);
+          const entries = Object.entries(sources).sort((a, b) => b[1] - a[1]);
+          if (entries.length === 0) return null;
+          const colors = ["#3b82f6","#8b5cf6","#10b981","#f59e0b","#ef4444","#06b6d4","#ec4899","#84cc16"];
+          const chartData = entries.map(([name, value]) => ({ name, value }));
+          return (
+            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+              <h2 className="font-semibold text-slate-800 mb-4">Lead Volume by Session Source</h2>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                  <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={120} />
+                  <Tooltip formatter={(v) => [v, "Leads"]} />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                    {chartData.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          );
+        } catch { return null; }
+      })()}
 
       {chartData.length > 1 && (
         <div className="grid md:grid-cols-2 gap-4">
