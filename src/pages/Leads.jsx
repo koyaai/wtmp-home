@@ -142,25 +142,38 @@ export default function Leads() {
         } catch { return null; }
       })()}
 
-      {/* Session Sources */}
-      {latest?.lead_session_sources && (() => {
-        try {
-          const sources = JSON.parse(latest.lead_session_sources);
-          const entries = Object.entries(sources);
-          if (entries.length === 0) return null;
-          return (
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-              <h2 className="font-semibold text-slate-800 mb-3">Session Sources (From GHL Sync)</h2>
-              <div className="flex flex-wrap gap-2">
-                {entries.sort((a,b) => b[1] - a[1]).map(([source, count]) => (
-                  <span key={source} className="bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-1 rounded-full text-xs font-medium">
-                    {source} ({count})
-                  </span>
-                ))}
-              </div>
-            </div>
-          );
-        } catch { return null; }
+      {/* Session Source Chart — aggregate across all records */}
+      {(() => {
+        const combined = {};
+        leadData.forEach(d => {
+          if (!d.lead_session_sources) return;
+          try {
+            const parsed = JSON.parse(d.lead_session_sources);
+            Object.entries(parsed).forEach(([k, v]) => {
+              combined[k] = (combined[k] || 0) + (v || 0);
+            });
+          } catch {}
+        });
+        const entries = Object.entries(combined).sort((a, b) => b[1] - a[1]);
+        if (entries.length === 0) return null;
+        const colors = ["#3b82f6","#8b5cf6","#10b981","#f59e0b","#ef4444","#06b6d4","#ec4899","#84cc16"];
+        const sourceChartData = entries.map(([name, value]) => ({ name, value }));
+        const barHeight = Math.max(sourceChartData.length * 40, 160);
+        return (
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
+            <h2 className="font-semibold text-slate-800 mb-4">Lead Volume by Session Source</h2>
+            <ResponsiveContainer width="100%" height={barHeight}>
+              <BarChart data={sourceChartData} layout="vertical" margin={{ left: 10, right: 30, top: 4, bottom: 4 }}>
+                <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
+                <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={130} />
+                <Tooltip formatter={(v) => [v, "Leads"]} />
+                <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                  {sourceChartData.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        );
       })()}
 
       {/* Funnel */}
@@ -188,32 +201,6 @@ export default function Leads() {
           </div>
         </div>
       )}
-
-      {/* Session Source Chart */}
-      {latest?.lead_session_sources && (() => {
-        try {
-          const sources = JSON.parse(latest.lead_session_sources);
-          const entries = Object.entries(sources).sort((a, b) => b[1] - a[1]);
-          if (entries.length === 0) return null;
-          const colors = ["#3b82f6","#8b5cf6","#10b981","#f59e0b","#ef4444","#06b6d4","#ec4899","#84cc16"];
-          const chartData = entries.map(([name, value]) => ({ name, value }));
-          return (
-            <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100">
-              <h2 className="font-semibold text-slate-800 mb-4">Lead Volume by Session Source</h2>
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20 }}>
-                  <XAxis type="number" tick={{ fontSize: 11 }} allowDecimals={false} />
-                  <YAxis type="category" dataKey="name" tick={{ fontSize: 11 }} width={120} />
-                  <Tooltip formatter={(v) => [v, "Leads"]} />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                    {chartData.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          );
-        } catch { return null; }
-      })()}
 
       {chartData.length > 1 && (
         <div className="grid md:grid-cols-2 gap-4">
