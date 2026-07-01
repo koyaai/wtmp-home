@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
         const sessionSourceCounts = {};
         for (const o of thisMonth) {
           if (o.source) sourceCounts[o.source] = (sourceCounts[o.source] || 0) + 1;
-          const tags = (o.tags || []).map(t => t.trim()).filter(Boolean);
+          const tags = (o.contact?.tags || o.tags || []).map(t => (typeof t === 'string' ? t : t?.name || '')).map(t => t.trim()).filter(Boolean);
           for (const tag of tags) {
             tagCounts[tag] = (tagCounts[tag] || 0) + 1;
           }

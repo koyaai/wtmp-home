@@ -94,8 +94,13 @@ Deno.serve(async (req) => {
       const utmMedium = opp.utmMedium || opp.utm_medium || null;
       const utmCampaign = opp.utmCampaign || opp.utm_campaign || null;
 
-      // Store lightweight opp for the list
-      const tags = (opp.tags || []).map(t => t.trim()).filter(Boolean);
+      // Tags — GHL stores them on the contact, not the opportunity
+      // opp.contact.tags is sometimes included in the opportunities search response
+      const tags = (
+        opp.contact?.tags ||
+        opp.tags ||
+        []
+      ).map(t => (typeof t === 'string' ? t : t?.name || '')).map(t => t.trim()).filter(Boolean);
       m.opportunities.push({
         id: opp.id,
         name: opp.name || 'Unnamed',
