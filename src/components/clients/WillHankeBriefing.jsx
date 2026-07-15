@@ -75,7 +75,7 @@ Rules:
           className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white border-0 flex-shrink-0"
         >
           {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" fill="white" />}
-          {loading ? "Briefing…" : "Catch me up"}
+          {loading ? "Briefing…" : "Press the Will Button!"}
         </Button>
       </div>
 
