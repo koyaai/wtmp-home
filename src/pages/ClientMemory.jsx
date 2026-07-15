@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Search, Brain, Loader2, ChevronDown, ChevronUp, Calendar, MessageSquare, AlertTriangle, CheckSquare, Sparkles, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import WillHankeBriefing from "@/components/clients/WillHankeBriefing";
 
 const SOURCE_COLORS = {
   "Meeting Transcript": "bg-blue-100 text-blue-700",
@@ -178,6 +179,9 @@ export default function ClientMemory() {
 
       {selectedClientId && (
         <>
+          {/* Will Hanke — Catch-Up Briefing */}
+          <WillHankeBriefing clientName={selectedClient?.name || "this client"} insights={insights} />
+
           {/* AI Query */}
           <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 p-5 space-y-3">
             <div className="flex items-center gap-2">
