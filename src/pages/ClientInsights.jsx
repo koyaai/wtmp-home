@@ -4,6 +4,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Brain } from "lucide-react";
 import InsightInput from "@/components/csm/InsightInput";
 import InsightCard from "@/components/csm/InsightCard";
+import ClientSelect from "@/components/clients/ClientSelect";
 
 export default function ClientInsights() {
   const [clients, setClients] = useState([]);
@@ -43,16 +44,7 @@ export default function ClientInsights() {
         </div>
 
         {/* Client Selector */}
-        <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-          <SelectTrigger className="bg-white">
-            <SelectValue placeholder="Select a client..." />
-          </SelectTrigger>
-          <SelectContent>
-            {clients.map(c => (
-              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ClientSelect clients={clients} value={selectedClientId} onChange={setSelectedClientId} placeholder="Select a client..." className="w-full" />
 
         {selectedClientId && (
           <>

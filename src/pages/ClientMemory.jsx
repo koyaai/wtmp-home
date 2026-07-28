@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Search, Brain, Loader2, ChevronDown, ChevronUp, Calendar, MessageSquare, AlertTriangle, CheckSquare, Sparkles, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import WillHankeBriefing from "@/components/clients/WillHankeBriefing";
+import ClientSelect from "@/components/clients/ClientSelect";
 
 const SOURCE_COLORS = {
   "Meeting Transcript": "bg-blue-100 text-blue-700",
@@ -167,14 +168,13 @@ export default function ClientMemory() {
       {/* Client Picker */}
       <div className="bg-white rounded-xl border border-slate-100 shadow-sm p-4">
         <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Select Client</label>
-        <select
+        <ClientSelect
+          clients={clients}
           value={selectedClientId}
-          onChange={e => { setSelectedClientId(e.target.value); setAiAnswer(null); setKeyword(""); setDateFrom(""); setDateTo(""); }}
-          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200 bg-white"
-        >
-          <option value="">Choose a client…</option>
-          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+          onChange={(id) => { setSelectedClientId(id); setAiAnswer(null); setKeyword(""); setDateFrom(""); setDateTo(""); }}
+          placeholder="Choose a client…"
+          className="w-full"
+        />
       </div>
 
       {selectedClientId && (

@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Plus, TrendingUp, Eye, MousePointer, BarChart2, X, RefreshCw, Users, Clock, Search, Activity, CalendarClock } from "lucide-react";
 import SyncScheduleModal from "@/components/seo/SyncScheduleModal";
 import { Button } from "@/components/ui/button";
+import ClientSelect from "@/components/clients/ClientSelect";
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line, Cell, Legend
@@ -158,10 +159,7 @@ export default function SEO() {
           <p className="text-slate-500 text-sm mt-0.5">Unified view of organic search & website performance</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <ClientSelect clients={clients} value={selectedClientId} onChange={setSelectedClientId} />
           <select value={syncMonths} onChange={e => setSyncMonths(Number(e.target.value))}
             className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20">
             <option value={1}>Last 1 Month</option>

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { TrendingUp, MousePointerClick, Users, Loader2 } from "lucide-react";
+import ClientSelect from "@/components/clients/ClientSelect";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
@@ -98,13 +99,7 @@ export default function YTDSummary({ clients }) {
     <div className="space-y-6">
       {/* Controls */}
       <div className="flex items-center gap-3 flex-wrap">
-        <select
-          value={selectedClientId}
-          onChange={e => setSelectedClientId(e.target.value)}
-          className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
-        >
-          {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+        <ClientSelect clients={clients} value={selectedClientId} onChange={setSelectedClientId} />
         <select
           value={year}
           onChange={e => setYear(Number(e.target.value))}

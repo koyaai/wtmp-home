@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import ClientSelect from "@/components/clients/ClientSelect";
 import { Plus, Trash2, Send, CheckCircle2, Clock, Loader2, ToggleLeft, ToggleRight } from "lucide-react";
 import { toast } from "sonner";
 
@@ -32,17 +33,16 @@ function ScheduleForm({ clients, onSave, onCancel, initial }) {
       <div className="grid sm:grid-cols-2 gap-4">
         <div>
           <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Client</label>
-          <select
+          <ClientSelect
+            clients={clients}
             value={form.client_id}
-            onChange={e => {
-              const c = clients.find(cl => cl.id === e.target.value);
-              setForm(f => ({ ...f, client_id: e.target.value, client_name: c?.name || "" }));
+            onChange={(id) => {
+              const c = clients.find(cl => cl.id === id);
+              setForm(f => ({ ...f, client_id: id, client_name: c?.name || "" }));
             }}
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-200"
-          >
-            <option value="">Select a client…</option>
-            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+            placeholder="Select a client…"
+            className="w-full"
+          />
         </div>
         <div>
           <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide block mb-1">Send on day of month</label>

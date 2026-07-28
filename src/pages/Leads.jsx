@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, TrendingUp, Users, Calendar, DollarSign, X, Pencil } from "lucide-react";
 import GHLLeads from "@/components/clients/GHLLeads";
+import ClientSelect from "@/components/clients/ClientSelect";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Cell } from "recharts";
 
@@ -93,10 +94,7 @@ export default function Leads() {
           <p className="text-slate-500 text-sm mt-0.5">Monitor leads & conversion performance per client</p>
         </div>
         <div className="flex items-center gap-3">
-          <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <ClientSelect clients={clients} value={selectedClientId} onChange={setSelectedClientId} />
           {canEdit && (
             <Button size="sm" variant="outline" onClick={openNew}>
               <Plus className="w-4 h-4 mr-1" /> Log Manual

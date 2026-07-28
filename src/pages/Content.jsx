@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FileText, Library, Folder } from "lucide-react";
 import ContentWorkspace from "@/components/content/ContentWorkspace";
 import ContentLibrary from "@/components/content/ContentLibrary";
+import ClientSelect from "@/components/clients/ClientSelect";
 
 export default function Content() {
     const [selectedClientId, setSelectedClientId] = useState(null);
@@ -28,16 +29,7 @@ export default function Content() {
             {/* Client Selector */}
             <div className="bg-white border border-slate-200 rounded-xl p-4">
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2 block">Select Client</label>
-                <Select value={selectedClientId || ""} onValueChange={setSelectedClientId}>
-                    <SelectTrigger className="w-full max-w-sm">
-                        <SelectValue placeholder="Choose a client..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {clients.map(c => (
-                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <ClientSelect clients={clients} value={selectedClientId || ""} onChange={setSelectedClientId} placeholder="Choose a client..." className="w-full max-w-sm" />
             </div>
 
             {/* Client Content Folders */}

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, ArrowRight, Download, ChevronLeft, BarChart2, Plus, Link2, Star, Trash2, CalendarClock, MapPin } from "lucide-react";
 import ScheduledReports from "@/components/reporting/ScheduledReports";
 import YTDSummary from "@/components/reporting/YTDSummary";
+import ClientSelect from "@/components/clients/ClientSelect";
 import { toast } from "sonner";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -687,18 +688,14 @@ export default function Reporting() {
         {/* Client Picker */}
         <div>
           <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5 block">Client</label>
-          <select
+          <ClientSelect
+            clients={clients}
             value={selectedClient?.id || ""}
-            onChange={e => handleClientChange(e.target.value)}
-            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white"
-          >
-            <option value="">Select a client…</option>
-            {clients.map(c => (
-              <option key={c.id} value={c.id}>
-                {c.name}{isLocalSEOClient(c.id) ? " (Local SEO)" : ""}
-              </option>
-            ))}
-          </select>
+            onChange={handleClientChange}
+            placeholder="Select a client…"
+            className="w-full"
+            formatLabel={(c) => `${c.name}${isLocalSEOClient(c.id) ? " (Local SEO)" : ""}`}
+          />
           {isLocalSEO && (
             <p className="text-xs text-violet-600 mt-1.5 font-medium">📍 Local SEO client — GBP-focused report (no SEO PDF needed)</p>
           )}

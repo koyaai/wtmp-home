@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import ClientSelect from "@/components/clients/ClientSelect";
 import { Loader2, Sparkles, Trash2, ChevronDown, ChevronUp, User, Calendar, MessageSquare, Upload, FileText, X } from "lucide-react";
 import { toast } from "sonner";
 
@@ -269,11 +270,7 @@ Parse and extract:
         <div className="grid sm:grid-cols-3 gap-4">
           <div>
             <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Client *</label>
-            <select value={clientId} onChange={e => setClientId(e.target.value)}
-              className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-200 bg-white">
-              <option value="">Select client…</option>
-              {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <ClientSelect clients={clients} value={clientId} onChange={setClientId} placeholder="Select client…" className="w-full" />
           </div>
           <div>
             <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Meeting Date *</label>

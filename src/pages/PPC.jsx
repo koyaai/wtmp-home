@@ -3,6 +3,7 @@ import { base44 } from "@/api/base44Client";
 import { Plus, DollarSign, MousePointer, TrendingUp, Target, X, RefreshCw, Trash2, MessageSquarePlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import ClientSelect from "@/components/clients/ClientSelect";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
 function MetricCard({ label, value, icon: Icon, color, sub }) {
@@ -119,10 +120,7 @@ export default function PPC() {
           <p className="text-slate-500 text-sm mt-0.5">Monitor ad performance across all platforms</p>
         </div>
         <div className="flex items-center gap-3">
-          <select value={selectedClientId} onChange={e => setSelectedClientId(e.target.value)}
-            className="px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-            {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <ClientSelect clients={clients} value={selectedClientId} onChange={setSelectedClientId} />
           {canEdit && (
             <>
               <select
