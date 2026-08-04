@@ -79,7 +79,7 @@ export default function ClientPostMortem({ client }) {
       <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3">
         <AlertCircle className="w-5 h-5 text-rose-500 flex-shrink-0 mt-0.5" />
         <div className="flex-1">
-          <p className="text-sm font-semibold text-rose-800">This client is offboarded</p>
+          <p className="text-sm font-semibold text-rose-800">This client is {client.status}</p>
           <p className="text-xs text-rose-600 mt-0.5">Upload the post-mortem document and capture lessons learned. All records are retained in the Post-Mortem Archive for year-end review.</p>
         </div>
         {!showForm && (
