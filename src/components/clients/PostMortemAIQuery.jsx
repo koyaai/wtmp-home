@@ -22,12 +22,16 @@ export default function PostMortemAIQuery({ postMortems }) {
     setAnswer(null);
 
     const context = postMortems.map(pm =>
-      `[${pm.client_name} — ${pm.reason} — offboarded ${pm.offboarding_date || "unknown"}]\n${pm.summary_notes || "(no notes)"}`
+      `[${pm.client_name} — ${pm.reason} — offboarded ${pm.offboarding_date || "unknown"}]\n${pm.summary_notes || "(no summary notes — see attached document)"}${pm.document_name ? `\n[Attached document: ${pm.document_name}]` : ""}`
     ).join("\n\n---\n\n");
+
+    // Pass uploaded document files to the LLM so it can read their actual contents
+    const fileUrls = postMortems.filter(pm => pm.document_url).map(pm => pm.document_url);
 
     try {
       const result = await base44.integrations.Core.InvokeLLM({
-        prompt: `You are an analyst reviewing a marketing agency's post-mortem archive — records documenting why clients were offboarded and the lessons learned. Below are all ${postMortems.length} post-mortem records.\n\n${context}\n\n---\n\nQuestion: ${prompt}\n\nAnswer based only on the provided post-mortem records. Be specific — cite client names, reasons, and dates when relevant. Group findings into clear themes. If the records don't contain enough info to answer, say so.`,
+        prompt: `You are an analyst reviewing a marketing agency's post-mortem archive — records documenting why clients were offboarded and the lessons learned. Below are all ${postMortems.length} post-mortem records, and the attached documents contain the full post-mortem write-ups for each client.\n\n${context}\n\n---\n\nQuestion: ${prompt}\n\nAnswer based on the provided post-mortem records AND the attached documents. Be specific — cite client names, reasons, and dates when relevant. Group findings into clear themes. If the records don't contain enough info to answer, say so.`,
+        file_urls: fileUrls.length > 0 ? fileUrls : null,
       });
       setAnswer(result);
     } catch (err) {
