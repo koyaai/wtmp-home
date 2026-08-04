@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import PostMortemForm from "@/components/clients/PostMortemForm";
+import PostMortemAIQuery from "@/components/clients/PostMortemAIQuery";
 import { FileText, Plus, X, Download, Calendar, Loader2, FolderOpen, AlertCircle } from "lucide-react";
 
 const REASON_COLORS = {
@@ -82,6 +83,9 @@ export default function PostMortemArchive() {
         <input type="text" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search client or notes…"
           className="px-3 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/20 flex-1 min-w-[200px]" />
       </div>
+
+      {/* AI Query */}
+      {postMortems.length > 0 && <PostMortemAIQuery postMortems={postMortems} />}
 
       {/* Form Modal */}
       {showForm && (
