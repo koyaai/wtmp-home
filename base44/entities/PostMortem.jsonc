@@ -49,5 +49,103 @@
     "client_id",
     "client_name",
     "offboarding_date"
-  ]
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "leadership"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "team_lead"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "csm"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "leadership"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "team_lead"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "csm"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "leadership"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "team_lead"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "csm"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "leadership"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "team_lead"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "csm"
+          }
+        }
+      ]
+    }
+  }
 }
