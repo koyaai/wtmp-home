@@ -7,8 +7,10 @@ import { base44 } from "@/api/base44Client";
 const REASONS = ["Churned", "Mutual Parting", "Project Completed", "Budget Cuts", "Dissatisfaction", "Other"];
 
 export default function PostMortemForm({ clients, onSaved, onCancel }) {
+  const [clientMode, setClientMode] = useState("existing");
   const [form, setForm] = useState({
     client_id: "",
+    past_client_name: "",
     offboarding_date: "",
     reason: "Churned",
     summary_notes: "",
@@ -23,19 +25,23 @@ export default function PostMortemForm({ clients, onSaved, onCancel }) {
     e.preventDefault();
     setError("");
 
-    if (!form.client_id) return setError("Please select a client.");
+    if (clientMode === "existing") {
+      if (!form.client_id) return setError("Please select a client.");
+    } else {
+      if (!form.past_client_name.trim()) return setError("Please enter the past client's name.");
+    }
     if (!form.offboarding_date) return setError("Please set an offboarding date.");
     if (!file) return setError("Please upload a post-mortem document.");
 
-    const client = clients.find(c => c.id === form.client_id);
-    if (!client) return setError("Client not found.");
+    const client = clientMode === "existing" ? clients.find(c => c.id === form.client_id) : null;
+    if (clientMode === "existing" && !client) return setError("Client not found.");
 
     setUploading(true);
     try {
       const { file_url } = await base44.integrations.Core.UploadFile({ file });
       await base44.entities.PostMortem.create({
-        client_id: form.client_id,
-        client_name: client.name,
+        client_id: clientMode === "existing" ? form.client_id : "past_client",
+        client_name: client ? client.name : form.past_client_name.trim(),
         document_url: file_url,
         document_name: file.name,
         offboarding_date: form.offboarding_date,
@@ -55,13 +61,29 @@ export default function PostMortemForm({ clients, onSaved, onCancel }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-xs font-semibold text-slate-600 mb-1">Client *</label>
-          <ClientSelect
-            clients={clients}
-            value={form.client_id}
-            onChange={(id) => set("client_id", id)}
-            placeholder="Select offboarded client…"
-            className="w-full"
-          />
+          <div className="flex gap-1 mb-2 p-1 bg-slate-100 rounded-lg">
+            <button type="button" onClick={() => setClientMode("existing")}
+              className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${clientMode === "existing" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"}`}>
+              Existing Client
+            </button>
+            <button type="button" onClick={() => setClientMode("past")}
+              className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${clientMode === "past" ? "bg-white text-slate-800 shadow-sm" : "text-slate-500"}`}>
+              Past Client
+            </button>
+          </div>
+          {clientMode === "existing" ? (
+            <ClientSelect
+              clients={clients}
+              value={form.client_id}
+              onChange={(id) => set("client_id", id)}
+              placeholder="Select offboarded client…"
+              className="w-full"
+            />
+          ) : (
+            <input type="text" value={form.past_client_name} onChange={e => set("past_client_name", e.target.value)}
+              placeholder="Type past client name…"
+              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500/20" />
+          )}
         </div>
         <div>
           <label className="block text-xs font-semibold text-slate-600 mb-1">Offboarding Date *</label>
