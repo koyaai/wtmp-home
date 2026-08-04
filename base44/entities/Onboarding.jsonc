@@ -1,0 +1,48 @@
+{
+  "name": "Onboarding",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name for display"
+    },
+    "meeting_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of the onboarding meeting"
+    },
+    "transcript_url": {
+      "type": "string",
+      "description": "Uploaded onboarding meeting transcript file URL"
+    },
+    "transcript_name": {
+      "type": "string",
+      "description": "Original transcript file name"
+    },
+    "form_url": {
+      "type": "string",
+      "description": "Uploaded onboarding form results file URL"
+    },
+    "form_name": {
+      "type": "string",
+      "description": "Original onboarding form file name"
+    },
+    "summary_notes": {
+      "type": "string",
+      "description": "Key onboarding details, goals, and context captured"
+    },
+    "author": {
+      "type": "string",
+      "description": "Who created this onboarding record"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "meeting_date"
+  ]
+}
