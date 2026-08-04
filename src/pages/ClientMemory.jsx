@@ -4,6 +4,7 @@ import { Search, Brain, Loader2, ChevronDown, ChevronUp, Calendar, MessageSquare
 import { Button } from "@/components/ui/button";
 import WillHankeBriefing from "@/components/clients/WillHankeBriefing";
 import ClientSelect from "@/components/clients/ClientSelect";
+import MemoryRecordCard from "@/components/clients/MemoryRecordCard";
 
 const SOURCE_COLORS = {
   "Meeting Transcript": "bg-blue-100 text-blue-700",
@@ -111,19 +112,81 @@ export default function ClientMemory() {
   const [aiQuery, setAiQuery] = useState("");
   const [aiAnswer, setAiAnswer] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const [memoryRecords, setMemoryRecords] = useState([]);
 
   useEffect(() => {
     base44.entities.Client.list().then(setClients).catch(() => {});
   }, []);
 
   useEffect(() => {
-    if (!selectedClientId) { setInsights([]); return; }
+    if (!selectedClientId) { setInsights([]); setMemoryRecords([]); return; }
     setLoadingInsights(true);
-    base44.entities.ClientInsight.filter({ client_id: selectedClientId })
-      .then(data => {
-        setInsights(data.sort((a, b) => new Date(b.meeting_date || b.created_date) - new Date(a.meeting_date || a.created_date)));
-      })
-      .finally(() => setLoadingInsights(false));
+    // Fetch all client-specific data sources in parallel
+    Promise.all([
+      base44.entities.ClientInsight.filter({ client_id: selectedClientId }).catch(() => []),
+      base44.entities.Onboarding.filter({ client_id: selectedClientId }).catch(() => []),
+      base44.entities.PostMortem.filter({ client_id: selectedClientId }).catch(() => []),
+      base44.entities.WillMeeting.filter({ client_id: selectedClientId }).catch(() => []),
+      base44.entities.MeetingNote.filter({ client_id: selectedClientId }).catch(() => []),
+      base44.entities.CSMUpdate.filter({ client_id: selectedClientId }).catch(() => []),
+      base44.entities.ClientScore.filter({ client_id: selectedClientId }).catch(() => []),
+    ]).then(([insightsData, onboardingData, postMortemData, willData, meetingNotesData, csmData, scoreData]) => {
+      setInsights(insightsData.sort((a, b) => new Date(b.meeting_date || b.created_date) - new Date(a.meeting_date || a.created_date)));
+
+      // Normalize all non-insight sources into unified memory records
+      const records = [
+        ...onboardingData.map(r => ({
+          id: r.id, type: "Onboarding", date: r.meeting_date,
+          title: "Onboarding Meeting",
+          summary: r.summary_notes,
+          files: [r.transcript_url && r.transcript_name ? { url: r.transcript_url, name: r.transcript_name } : null,
+                 r.form_url && r.form_name ? { url: r.form_url, name: r.form_name } : null].filter(Boolean),
+          contextText: `Onboarding (meeting ${r.meeting_date || "unknown"}): ${r.summary_notes || ""}`,
+        })),
+        ...postMortemData.map(r => ({
+          id: r.id, type: "Post-Mortem", date: r.offboarding_date,
+          subtype: r.reason,
+          title: `Offboarded — ${r.reason}`,
+          summary: r.summary_notes,
+          files: r.document_url ? [{ url: r.document_url, name: r.document_name || "Post-Mortem Doc" }] : [],
+          contextText: `Post-Mortem (offboarded ${r.offboarding_date || "unknown"}, reason: ${r.reason}): ${r.summary_notes || ""}`,
+        })),
+        ...willData.map(r => ({
+          id: r.id, type: "Will Meeting", date: r.meeting_date,
+          title: `Will's Meeting — ${r.attendees ? "with " + r.attendees : ""}`,
+          summary: r.parsed?.summary,
+          details: [
+            ...(r.parsed?.highlights || []).map(h => "Highlight: " + h),
+            ...(r.parsed?.action_items || []).map(a => "Action: " + a),
+            ...(r.parsed?.follow_ups || []).map(f => "Follow-up: " + f),
+          ],
+          contextText: `Will's Meeting (${r.meeting_date || "unknown"}): ${r.parsed?.summary || ""} ${r.raw_transcript || ""}`.slice(0, 2000),
+        })),
+        ...meetingNotesData.map(r => ({
+          id: r.id, type: "Meeting Note", date: r.meeting_date,
+          title: r.title,
+          summary: r.summary,
+          details: [r.action_items, r.next_meeting_date && `Next meeting: ${r.next_meeting_date}`].filter(Boolean),
+          contextText: `Meeting Note (${r.meeting_date || "unknown"} — ${r.title}): ${r.summary || ""} ${r.action_items || ""}`,
+        })),
+        ...csmData.map(r => ({
+          id: r.id, type: "CSM Update", date: r.created_date?.slice(0, 10),
+          subtype: r.update_type,
+          summary: r.content,
+          contextText: `CSM Update (${r.update_type || "general"}): ${r.content || ""}`,
+        })),
+        ...scoreData.map(r => ({
+          id: r.id, type: "Client Score", date: `${r.year}-${String(new Date(`${r.month} 1 2000`).getMonth() + 1).padStart(2, "0")}-01`,
+          subtype: `Overall: ${r.overall_grade || "—"}`,
+          title: `${r.month} ${r.year} Scorecard`,
+          summary: r.notes,
+          details: [r.roadblocks && `Roadblocks: ${r.roadblocks}`].filter(Boolean),
+          contextText: `Client Score (${r.month} ${r.year}, overall ${r.overall_grade || "none"}): ${r.notes || ""} ${r.roadblocks || ""}`,
+        })),
+      ].sort((a, b) => new Date(b.date || b.created_date || 0) - new Date(a.date || a.created_date || 0));
+
+      setMemoryRecords(records);
+    }).finally(() => setLoadingInsights(false));
   }, [selectedClientId]);
 
   const filtered = useMemo(() => {
@@ -139,15 +202,29 @@ export default function ClientMemory() {
     });
   }, [insights, keyword, dateFrom, dateTo]);
 
+  const filteredMemory = useMemo(() => {
+    return memoryRecords.filter(rec => {
+      if (dateFrom && rec.date && rec.date < dateFrom) return false;
+      if (dateTo && rec.date && rec.date > dateTo) return false;
+      if (keyword) {
+        const kw = keyword.toLowerCase();
+        const haystack = [rec.title, rec.summary, rec.subtype, ...(rec.details || []), ...(rec.files?.map(f => f.name) || [])].join(" ").toLowerCase();
+        if (!haystack.includes(kw)) return false;
+      }
+      return true;
+    });
+  }, [memoryRecords, keyword, dateFrom, dateTo]);
+
   const handleAiQuery = async () => {
     if (!aiQuery.trim() || !selectedClientId) return;
     setAiLoading(true);
     setAiAnswer(null);
     const clientName = clients.find(c => c.id === selectedClientId)?.name || "this client";
-    const context = insights.slice(0, 30).map(ins => `[${ins.meeting_date || "unknown date"} — ${ins.source_type}]\nSummary: ${ins.summary || ""}\nRequests: ${(ins.requests || []).join(", ")}\nTodos: ${(ins.todos || []).map(t => t.text).join(", ")}\nRed Flags: ${(ins.red_flags || []).map(f => f.text).join(", ")}`).join("\n\n---\n\n");
+    const insightContext = insights.slice(0, 30).map(ins => `[${ins.meeting_date || "unknown date"} — ${ins.source_type}]\nSummary: ${ins.summary || ""}\nRequests: ${(ins.requests || []).join(", ")}\nTodos: ${(ins.todos || []).map(t => t.text).join(", ")}\nRed Flags: ${(ins.red_flags || []).map(f => f.text).join(", ")}`).join("\n\n---\n\n");
+    const memoryContext = memoryRecords.map(r => `[${r.type}${r.subtype ? " — " + r.subtype : ""} | ${r.date || "unknown date"}]\n${r.contextText || r.summary || ""}`).join("\n\n---\n\n");
 
     const result = await base44.integrations.Core.InvokeLLM({
-      prompt: `You are a client relationship assistant for a marketing agency. Below is the history of insights, meeting notes, and transcripts for client "${clientName}".\n\nClient History:\n${context}\n\n---\n\nUser Question: ${aiQuery}\n\nAnswer based only on the provided history. Be specific — mention dates and exact details when available. If the information isn't in the history, say so.`,
+      prompt: `You are a client relationship assistant for a marketing agency. Below is the complete history of everything known about client "${clientName}" — including onboarding records, meeting insights, transcripts, CSM updates, meeting notes, client scorecards, and post-mortem documentation.\n\nClient History:\n${insightContext}\n\n${memoryContext}\n\n---\n\nUser Question: ${aiQuery}\n\nAnswer based only on the provided history. Be specific — mention dates and exact details when available. If the information isn't in the history, say so.`,
     });
     setAiAnswer(result);
     setAiLoading(false);
@@ -248,12 +325,13 @@ export default function ClientMemory() {
           ) : filtered.length === 0 ? (
             <div className="text-center py-16 text-slate-400">
               <Brain className="w-10 h-10 mx-auto mb-3 opacity-30" />
-              <p className="text-sm">{insights.length === 0 ? "No insights saved for this client yet." : "No results match your filters."}</p>
+              <p className="text-sm">{(insights.length + memoryRecords.length) === 0 ? "No memory records saved for this client yet." : "No results match your filters."}</p>
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-xs text-slate-400 font-medium">{filtered.length} record{filtered.length !== 1 ? "s" : ""} found</p>
-              {filtered.map(ins => <InsightCard key={ins.id} insight={ins} />)}
+              <p className="text-xs text-slate-400 font-medium">{filtered.length + filteredMemory.length} record{(filtered.length + filteredMemory.length) !== 1 ? "s" : ""} found</p>
+              {filtered.map(ins => <InsightCard key={"ins-" + ins.id} insight={ins} />)}
+              {filteredMemory.map(rec => <MemoryRecordCard key={"mem-" + rec.id} record={rec} />)}
             </div>
           )}
         </>
