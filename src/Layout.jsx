@@ -25,7 +25,8 @@ import {
   BarChart2,
   Crown,
   BookOpen,
-  FileText
+  FileText,
+  Archive
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -63,6 +64,7 @@ const navItems = [
   { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: [...CSM_ROLES, "lead_boomerang"] },
   { label: "Will's Corner", icon: Crown, page: "WillsCorner", roles: ["admin", "leadership"] },
   { label: "Client Memory", icon: BookOpen, page: "ClientMemory", roles: [...CSM_ROLES, "seo_specialist"] },
+  { label: "Post-Mortem Archive", icon: Archive, page: "PostMortemArchive", roles: [...ADMIN_LIKE, "csm"] },
 ];
 
 export default function Layout({ children, currentPageName }) {

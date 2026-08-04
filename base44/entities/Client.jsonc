@@ -32,7 +32,8 @@
         "active",
         "onboarding",
         "paused",
-        "churned"
+        "churned",
+        "offboarded"
       ],
       "default": "active"
     },

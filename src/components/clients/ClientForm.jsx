@@ -62,7 +62,7 @@ export default function ClientForm({ initial, onSave, onCancel }) {
             <label className="block text-xs font-semibold text-slate-600 mb-1">Status</label>
             <select value={form.status} onChange={e => set("status", e.target.value)}
               className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20">
-              {["active", "onboarding", "paused", "churned"].map(s => (
+              {["active", "onboarding", "paused", "churned", "offboarded"].map(s => (
                 <option key={s} value={s} className="capitalize">{s}</option>
               ))}
             </select>

@@ -1,0 +1,53 @@
+{
+  "name": "PostMortem",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name for display"
+    },
+    "document_url": {
+      "type": "string",
+      "description": "Uploaded post-mortem document URL"
+    },
+    "document_name": {
+      "type": "string",
+      "description": "Original file name"
+    },
+    "offboarding_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Date the client was offboarded"
+    },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "Churned",
+        "Mutual Parting",
+        "Project Completed",
+        "Budget Cuts",
+        "Dissatisfaction",
+        "Other"
+      ],
+      "default": "Churned",
+      "description": "Primary reason for offboarding"
+    },
+    "summary_notes": {
+      "type": "string",
+      "description": "Key takeaways and what went wrong"
+    },
+    "author": {
+      "type": "string",
+      "description": "Who created this post-mortem"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "offboarding_date"
+  ]
+}
