@@ -16,9 +16,12 @@ const MESSAGES = {
   todo_deleted: (name, text) => `🗑️ *To-Do Deleted* — ${name}\n${text}`,
   csm_update: (name, type, content) => `📢 *CSM Update (${type})* — ${name}\n${content}`,
   insight_added: (name, data) => {
-    const lines = [`🧠 *New Client Insight* — ${name}`];
+    const date = data.meeting_date
+      ? new Date(data.meeting_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+      : new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    const headline = `🧠 *New Insight* — ${name} · ${date}`;
+    const lines = [];
     if (data.source_type) lines.push(`📂 ${data.source_type}`);
-    if (data.meeting_date) lines.push(`📅 ${new Date(data.meeting_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`);
     if (data.summary) lines.push(`\n*Summary*\n${data.summary}`);
     if (data.red_flags?.length) {
       lines.push(`\n🚩 *Red Flags (${data.red_flags.length})*`);
@@ -34,7 +37,7 @@ const MESSAGES = {
       lines.push(`\n💬 *Client Requests (${data.requests.length})*`);
       data.requests.slice(0, 5).forEach((r, i) => lines.push(`${i + 1}. ${r}`));
     }
-    return lines.join("\n");
+    return { headline, body: lines.join("\n").trim() };
   },
   meeting_note: (name, note) => {
     const lines = [`🗒️ *Meeting Note* — ${name}\n*${note.title}*`];
@@ -71,8 +74,13 @@ export function useSlackAnnounce(clientId) {
     }
     const fn = MESSAGES[type];
     if (!fn) return;
+    if (type === "insight_added") {
+      const { headline, body } = fn(client.name, text);
+      setToast({ mode: "confirm", headline, body, preview: `${headline}\n\n${body}` });
+      return;
+    }
     const msg = type === "csm_update" ? fn(client.name, updateType, content)
-      : (type === "meeting_note" || type === "insight_added") ? fn(client.name, text)
+      : (type === "meeting_note") ? fn(client.name, text)
       : fn(client.name, text);
     setToast({ mode: "confirm", text: msg });
   }, [client]);
@@ -80,7 +88,19 @@ export function useSlackAnnounce(clientId) {
   const confirm = useCallback(async () => {
     setToast(t => ({ ...t, sending: true }));
     try {
-      const res = await base44.functions.invoke("sendSlackMessage", { client_id: clientId, text: toast.text });
+      let res;
+      if (toast.headline && toast.body) {
+        // Threaded: headline first, then full body as a reply
+        const headRes = await base44.functions.invoke("sendSlackMessage", { client_id: clientId, text: toast.headline });
+        if (!headRes.data?.ok || !headRes.data?.ts) {
+          setToast({ mode: "error", error: headRes.data?.error || "Headline post failed" });
+          setTimeout(() => setToast(null), 4000);
+          return;
+        }
+        res = await base44.functions.invoke("sendSlackMessage", { client_id: clientId, text: toast.body, thread_ts: headRes.data.ts });
+      } else {
+        res = await base44.functions.invoke("sendSlackMessage", { client_id: clientId, text: toast.text });
+      }
       if (res.data?.ok) {
         setToast({ mode: "success" });
         setTimeout(() => setToast(null), 2500);

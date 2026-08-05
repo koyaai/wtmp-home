@@ -108,24 +108,25 @@ export default async function(req) {
         continue;
       }
 
-      // Compose message
+      // Compose headline + threaded body
       const dateStr = new Date().toLocaleDateString("en-US", {
         weekday: "long", year: "numeric", month: "long", day: "numeric",
       });
-      let msg = `📋 *EOD Client Report — ${client.name}*\n${dateStr}\n`;
+      const headline = `📋 *EOD Report — ${client.name}* · ${dateStr}`;
 
+      let body = "";
       if (openRedFlags.length > 0) {
-        msg += `\n🚩 *Red Flags (${openRedFlags.length})* — sorted by age\n`;
+        body += `\n🚩 *Red Flags (${openRedFlags.length})* — sorted by age\n`;
         openRedFlags.forEach((f, i) => {
-          msg += `${i + 1}. ${f.item.text}${ageLabel(f.days)}${f.item.solution ? ` _→ ${f.item.solution}_` : ""}\n`;
+          body += `${i + 1}. ${f.item.text}${ageLabel(f.days)}${f.item.solution ? ` _→ ${f.item.solution}_` : ""}\n`;
         });
       }
 
       if (openTodos.length > 0) {
-        msg += `\n✅ *Open To-Dos (${openTodos.length})* — sorted by age\n`;
+        body += `\n✅ *Open To-Dos (${openTodos.length})* — sorted by age\n`;
         openTodos.forEach((t, i) => {
           const deadline = t.item.date ? ` _(due ${t.item.date})_` : "";
-          msg += `${i + 1}. ${t.item.text}${ageLabel(t.days)}${deadline}\n`;
+          body += `${i + 1}. ${t.item.text}${ageLabel(t.days)}${deadline}\n`;
         });
       }
 
@@ -133,19 +134,31 @@ export default async function(req) {
         const staleMsg = daysSinceActivity === null
           ? "No recorded activity yet"
           : `No activity for ${daysSinceActivity} days (threshold: ${threshold} days)`;
-        msg += `\n⚠️ *Stale Warning*\n${staleMsg}\n`;
+        body += `\n⚠️ *Stale Warning*\n${staleMsg}\n`;
       }
 
-      // Send to Slack via the existing sendSlackMessage function
+      body = body.trim();
+
+      // Send headline first, then full body as a threaded reply
       try {
-        const res = await base44.functions.invoke("sendSlackMessage", {
+        const headRes = await base44.functions.invoke("sendSlackMessage", {
           client_id: client.id,
-          text: msg,
+          text: headline,
         });
-        if (res.data?.ok) {
-          sent++;
+        if (!headRes.data?.ok || !headRes.data?.ts) {
+          errors.push({ client: client.name, error: headRes.data?.error || "Headline post failed" });
         } else {
-          errors.push({ client: client.name, error: res.data?.error || "Unknown error" });
+          const threadTs = headRes.data.ts;
+          const bodyRes = await base44.functions.invoke("sendSlackMessage", {
+            client_id: client.id,
+            text: body,
+            thread_ts: threadTs,
+          });
+          if (bodyRes.data?.ok) {
+            sent++;
+          } else {
+            errors.push({ client: client.name, error: bodyRes.data?.error || "Body post failed" });
+          }
         }
       } catch (err) {
         errors.push({ client: client.name, error: err.message });

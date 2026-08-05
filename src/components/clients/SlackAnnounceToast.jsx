@@ -33,7 +33,7 @@ export default function SlackAnnounceToast({ toast, onConfirm, onSkip }) {
                 </button>
               </div>
               <div className="px-4 py-2.5 mx-4 my-2 bg-slate-50 rounded-lg border border-slate-100">
-                <p className="text-xs text-slate-600 whitespace-pre-wrap line-clamp-4">{toast.text}</p>
+                <p className="text-xs text-slate-600 whitespace-pre-wrap line-clamp-4">{toast.preview || toast.text}</p>
               </div>
               <div className="flex gap-2 px-4 pb-3.5">
                 <button

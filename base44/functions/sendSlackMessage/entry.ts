@@ -7,7 +7,7 @@ export default async function(req) {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { channel, text, channel_id, client_id } = body || {};
+    const { channel, text, channel_id, client_id, thread_ts } = body || {};
 
     if (!text || !text.trim()) {
       return Response.json({ error: 'Message text is required' }, { status: 400 });
@@ -73,6 +73,7 @@ export default async function(req) {
         text: text.trim(),
         username: 'WTMP Home',
         icon_emoji: ':rocket:',
+        ...(thread_ts ? { thread_ts } : {}),
       }),
     });
     const postData = await postRes.json();
