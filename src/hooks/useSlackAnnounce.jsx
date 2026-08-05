@@ -15,6 +15,27 @@ const MESSAGES = {
   todo_updated: (name, text) => `📝 *To-Do Updated* — ${name}\n${text}`,
   todo_deleted: (name, text) => `🗑️ *To-Do Deleted* — ${name}\n${text}`,
   csm_update: (name, type, content) => `📢 *CSM Update (${type})* — ${name}\n${content}`,
+  insight_added: (name, data) => {
+    const lines = [`🧠 *New Client Insight* — ${name}`];
+    if (data.source_type) lines.push(`📂 ${data.source_type}`);
+    if (data.meeting_date) lines.push(`📅 ${new Date(data.meeting_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`);
+    if (data.summary) lines.push(`\n*Summary*\n${data.summary}`);
+    if (data.red_flags?.length) {
+      lines.push(`\n🚩 *Red Flags (${data.red_flags.length})*`);
+      data.red_flags.slice(0, 8).forEach((f, i) => lines.push(`${i + 1}. ${typeof f === "string" ? f : f.text}`));
+      if (data.red_flags.length > 8) lines.push(`_…+${data.red_flags.length - 8} more_`);
+    }
+    if (data.todos?.length) {
+      lines.push(`\n✅ *Next Steps / To-Dos (${data.todos.length})*`);
+      data.todos.slice(0, 8).forEach((t, i) => lines.push(`${i + 1}. ${typeof t === "string" ? t : t.text}`));
+      if (data.todos.length > 8) lines.push(`_…+${data.todos.length - 8} more_`);
+    }
+    if (data.requests?.length) {
+      lines.push(`\n💬 *Client Requests (${data.requests.length})*`);
+      data.requests.slice(0, 5).forEach((r, i) => lines.push(`${i + 1}. ${r}`));
+    }
+    return lines.join("\n");
+  },
   meeting_note: (name, note) => {
     const lines = [`🗒️ *Meeting Note* — ${name}\n*${note.title}*`];
     if (note.meeting_date) lines.push(`📅 ${new Date(note.meeting_date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`);
@@ -51,7 +72,7 @@ export function useSlackAnnounce(clientId) {
     const fn = MESSAGES[type];
     if (!fn) return;
     const msg = type === "csm_update" ? fn(client.name, updateType, content)
-      : type === "meeting_note" ? fn(client.name, text)
+      : (type === "meeting_note" || type === "insight_added") ? fn(client.name, text)
       : fn(client.name, text);
     setToast({ mode: "confirm", text: msg });
   }, [client]);

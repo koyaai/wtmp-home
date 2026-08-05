@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Sparkles, AlertCircle, Upload, FileText, X } from "lucide-react";
+import { useSlackAnnounce } from "@/hooks/useSlackAnnounce.jsx";
 
 export default function InsightInput({ clientId, clientName, onSaved }) {
   const [mode, setMode] = useState("paste"); // "paste" | "file"
@@ -14,6 +15,7 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
+  const { prompt: promptSlack, toastElement: slackToast } = useSlackAnnounce(clientId);
 
   const handleFileSelect = async (e) => {
     const file = e.target.files[0];
@@ -60,6 +62,11 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
         requests,
         red_flags: (red_flags || []).map(f => ({ text: f, resolved: false, date: null, team: "", point_person: "", solution: "" })),
         status: "new"
+      });
+
+      promptSlack({
+        type: "insight_added",
+        text: { source_type: sourceType, meeting_date: meetingDate || null, summary, red_flags, todos, requests }
       });
 
       setSourceText("");
@@ -169,6 +176,7 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
       <Button onClick={handleProcess} disabled={loading || !canSubmit} className="w-full">
         {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</> : <><Sparkles className="w-4 h-4" /> Extract Insights</>}
       </Button>
+      {slackToast}
     </div>
   );
 }
