@@ -6,7 +6,7 @@ import { buildMentions } from "@/utils/slackMentions";
 
 // Project management team members to tag on individual red-flag / to-do
 // messages posted after a client insight summary (so they can create tasks).
-const PM_MENTIONS = ["D04N8BHPLAU", "D0ATV43LQCB"].map((id) => `<@${id}>`).join(" ");
+const PM_MENTIONS = ["U04MJKKEVBL", "U0ALEJ5B0F9"].map((id) => `<@${id}>`).join(" ");
 
 const MESSAGES = {
   red_flag_added: (name, text) => `🚩 *New Red Flag* — ${name}\n${text}`,
