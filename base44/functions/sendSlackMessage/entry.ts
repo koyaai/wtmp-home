@@ -22,12 +22,21 @@ export default async function(req) {
     if (!targetChannel && client_id) {
       const client = await base44.asServiceRole.entities.Client.get(client_id);
       if (client?.slack_channel) {
-        resolvedChannelName = client.slack_channel;
+        // If the saved value is already a Slack channel ID (starts with C/G/D), use it directly.
+        if (/^[CGD][A-Z0-9]{8,}$/.test(client.slack_channel)) {
+          targetChannel = client.slack_channel;
+        } else {
+          resolvedChannelName = client.slack_channel;
+        }
       } else {
         return Response.json({ error: 'This client has no Slack channel configured. Set it in the client record first.' }, { status: 400 });
       }
     } else if (!targetChannel && channel) {
-      resolvedChannelName = channel;
+      if (/^[CGD][A-Z0-9]{8,}$/.test(channel)) {
+        targetChannel = channel;
+      } else {
+        resolvedChannelName = channel;
+      }
     }
 
     if (!targetChannel && !resolvedChannelName) {
