@@ -33,10 +33,6 @@ const MESSAGES = {
       data.todos.slice(0, 8).forEach((t, i) => lines.push(`${i + 1}. ${typeof t === "string" ? t : t.text}`));
       if (data.todos.length > 8) lines.push(`_…+${data.todos.length - 8} more_`);
     }
-    if (data.requests?.length) {
-      lines.push(`\n💬 *Client Requests (${data.requests.length})*`);
-      data.requests.slice(0, 5).forEach((r, i) => lines.push(`${i + 1}. ${r}`));
-    }
     // Individual bold messages for each to-do / red flag — posted as top-level
     // messages so each gets its own thread for team discussion.
     const itemMessages = [];
