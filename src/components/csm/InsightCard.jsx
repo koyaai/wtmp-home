@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { CheckSquare, MessageSquare, AlertTriangle, ChevronDown, ChevronUp, Trash2, Archive, Pencil, Check, X, Plus } from "lucide-react";
 import { TEAMS } from "@/components/clients/TrackerItemRow";
 import { format, isPast, differenceInDays, parseISO } from "date-fns";
@@ -113,6 +114,8 @@ export default function InsightCard({ insight, onUpdate }) {
     await base44.entities.ClientInsight.delete(insight.id);
     onUpdate();
   };
+
+  const deleteCount = redFlags.length + todos.length + (insight.requests?.length || 0);
 
   const todos = (insight.todos || []).map(normalizeItem);
   const redFlags = (insight.red_flags || []).map(normalizeItem);
@@ -230,9 +233,28 @@ export default function InsightCard({ insight, onUpdate }) {
                 <Archive className="w-3 h-3" /> Archive
               </Button>
             )}
-            <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700 ml-auto" onClick={handleDelete}>
-              <Trash2 className="w-3 h-3" />
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="sm" variant="ghost" className="text-red-500 hover:text-red-700 ml-auto">
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete this insight?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This permanently removes the transcript and all items it created
+                    {deleteCount > 0 ? ` — ${redFlags.length} red flag${redFlags.length !== 1 ? "s" : ""}, ${todos.length} to-do${todos.length !== 1 ? "s" : ""}${insight.requests?.length ? `, ${insight.requests.length} request${insight.requests.length !== 1 ? "s" : ""}` : ""}.` : "."} They will also be removed from the client tracker.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white">
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
       )}
