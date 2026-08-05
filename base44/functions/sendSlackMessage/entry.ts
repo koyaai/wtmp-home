@@ -7,21 +7,36 @@ export default async function(req) {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const body = await req.json();
-    const { channel, text, channel_id } = body || {};
+    const { channel, text, channel_id, client_id } = body || {};
 
     if (!text || !text.trim()) {
       return Response.json({ error: 'Message text is required' }, { status: 400 });
     }
-    if (!channel && !channel_id) {
-      return Response.json({ error: 'Channel is required (channel name or channel_id)' }, { status: 400 });
-    }
 
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('slackbot');
 
-    // If a channel name was passed (e.g. "general" or "#general"), resolve it to an ID.
+    // Resolve the target channel: explicit channel_id > explicit channel name > client's saved slack_channel.
     let targetChannel = channel_id;
+    let resolvedChannelName = null;
+
+    if (!targetChannel && client_id) {
+      const client = await base44.asServiceRole.entities.Client.get(client_id);
+      if (client?.slack_channel) {
+        resolvedChannelName = client.slack_channel;
+      } else {
+        return Response.json({ error: 'This client has no Slack channel configured. Set it in the client record first.' }, { status: 400 });
+      }
+    } else if (!targetChannel && channel) {
+      resolvedChannelName = channel;
+    }
+
+    if (!targetChannel && !resolvedChannelName) {
+      return Response.json({ error: 'Channel is required (channel name, channel_id, or client_id)' }, { status: 400 });
+    }
+
+    // If a channel name was passed (e.g. "general" or "#general"), resolve it to an ID.
     if (!targetChannel) {
-      const cleanName = channel.replace(/^#/, '').trim();
+      const cleanName = resolvedChannelName.replace(/^#/, '').trim();
       const listRes = await fetch('https://slack.com/api/conversations.list?limit=1000', {
         headers: { Authorization: `Bearer ${accessToken}` },
       });

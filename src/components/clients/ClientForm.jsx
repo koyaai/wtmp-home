@@ -108,6 +108,7 @@ export default function ClientForm({ initial, onSave, onCancel }) {
           <Field label="Google Search Console URL" name="google_search_console_url" placeholder="https://..." value={form.google_search_console_url} onChange={set} />
           <Field label="Google Business Profile URL" name="gbp_url" placeholder="https://..." value={form.gbp_url} onChange={set} />
           <Field label="GA4 Property ID" name="ga_property_id" placeholder="e.g. 123456789" value={form.ga_property_id} onChange={set} />
+          <Field label="Slack Channel" name="slack_channel" placeholder="e.g. sunshine-blinds or C1234567890" value={form.slack_channel} onChange={set} />
         </div>
       </div>
 

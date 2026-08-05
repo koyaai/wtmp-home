@@ -112,6 +112,10 @@
       "type": "string",
       "description": "WordPress Application Password for REST API (not the login password)"
     },
+    "slack_channel": {
+      "type": "string",
+      "description": "Slack channel name or ID for this client (e.g. 'sunshine-blinds')"
+    },
     "notes": {
       "type": "string",
       "description": "General notes"
