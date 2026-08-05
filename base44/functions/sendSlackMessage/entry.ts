@@ -1,0 +1,64 @@
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+
+export default async function(req) {
+  try {
+    const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await req.json();
+    const { channel, text, channel_id } = body || {};
+
+    if (!text || !text.trim()) {
+      return Response.json({ error: 'Message text is required' }, { status: 400 });
+    }
+    if (!channel && !channel_id) {
+      return Response.json({ error: 'Channel is required (channel name or channel_id)' }, { status: 400 });
+    }
+
+    const { accessToken } = await base44.asServiceRole.connectors.getConnection('slackbot');
+
+    // If a channel name was passed (e.g. "general" or "#general"), resolve it to an ID.
+    let targetChannel = channel_id;
+    if (!targetChannel) {
+      const cleanName = channel.replace(/^#/, '').trim();
+      const listRes = await fetch('https://slack.com/api/conversations.list?limit=1000', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const listData = await listRes.json();
+      if (!listData.ok) {
+        return Response.json({ error: `Failed to list channels: ${listData.error}` }, { status: 502 });
+      }
+      const found = listData.channels.find(
+        (c) => c.name.toLowerCase() === cleanName.toLowerCase()
+      );
+      if (!found) {
+        return Response.json({ error: `Channel "#${cleanName}" not found. For private channels, invite the bot first.` }, { status: 404 });
+      }
+      targetChannel = found.id;
+    }
+
+    const postRes = await fetch('https://slack.com/api/chat.postMessage', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        channel: targetChannel,
+        text: text.trim(),
+        username: 'WTMP Home',
+        icon_emoji: ':rocket:',
+      }),
+    });
+    const postData = await postRes.json();
+
+    if (!postData.ok) {
+      return Response.json({ error: `Slack error: ${postData.error}` }, { status: 502 });
+    }
+
+    return Response.json({ ok: true, channel: targetChannel, ts: postData.ts });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+}
