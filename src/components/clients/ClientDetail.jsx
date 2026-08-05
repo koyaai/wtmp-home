@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { ArrowLeft, Edit, Trash2, Globe, Phone, Mail, MapPin, DollarSign, Plus, ChevronDown, ChevronUp, Info } from "lucide-react";
 import HealthBadge from "@/components/clients/HealthBadge";
+import StaleBadge from "@/components/clients/StaleBadge";
 import { Button } from "@/components/ui/button";
 import MeetingNotes from "@/components/clients/MeetingNotes";
 import CSMUpdates from "@/components/clients/CSMUpdates";
@@ -36,7 +37,7 @@ const serviceColors = {
   "Customer Success": "bg-emerald-100 text-emerald-700",
 };
 
-export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit, userRole, health }) {
+export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit, userRole, health, lastActivityDate }) {
   const [activeTab, setActiveTab] = useState("snapshot");
 
   const showFinancials = ["leadership"].includes(userRole);
@@ -64,6 +65,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
                 {client.program && <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${programColors[client.program]}`}>{client.program}</span>}
                 {client.location && <span className="text-xs text-slate-500 flex items-center gap-1"><MapPin className="w-3 h-3" />{client.location}</span>}
                 {health && <HealthBadge score={health.score} showDot />}
+                <StaleBadge client={client} lastActivityDate={lastActivityDate} />
               </div>
               {health && health.reasons?.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">

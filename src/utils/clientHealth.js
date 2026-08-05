@@ -1,7 +1,8 @@
 /**
  * Client Health Scoring Engine
- * Analyzes CSM updates, open red flags, and client status to derive health score.
+ * Analyzes CSM updates, open red flags, client status, and stale activity to derive health score.
  */
+import { isClientStale, getStaleDays, getStaleThreshold } from "@/utils/clientActivity";
 
 export const HEALTH = {
   HEALTHY: { label: "Healthy", color: "bg-emerald-100 text-emerald-700", dot: "bg-emerald-500" },
@@ -16,7 +17,7 @@ export const HEALTH = {
  * @param {Array} allInsights - all ClientInsight records
  * @returns {{ score: 'HEALTHY'|'AT_RISK'|'CRITICAL', reasons: string[] }}
  */
-export function computeClientHealth(client, allUpdates, allInsights) {
+export function computeClientHealth(client, allUpdates, allInsights, lastActivityDates = {}) {
   const reasons = [];
   const now = Date.now();
   const days30 = 30 * 24 * 60 * 60 * 1000;
@@ -55,6 +56,14 @@ export function computeClientHealth(client, allUpdates, allInsights) {
   if (openRedFlags >= 2) reasons.push(`${openRedFlags} unresolved red flags`);
   else if (openRedFlags === 1) reasons.push("1 unresolved red flag");
 
+  // Stale check — a stale client that is otherwise Healthy gets bumped to AT_RISK
+  const lastActivity = lastActivityDates[client.id];
+  if (isClientStale(client, lastActivity)) {
+    const days = getStaleDays(client, lastActivity);
+    const threshold = getStaleThreshold(client.program);
+    reasons.push(`No activity for ${days ?? "?"} days (threshold: ${threshold}d)`);
+  }
+
   // Determine final score
   if (recentChurnRisk || openRedFlags >= 2 || client.status === "paused" && openRedFlags >= 1) {
     return { score: "CRITICAL", reasons };
@@ -68,10 +77,10 @@ export function computeClientHealth(client, allUpdates, allInsights) {
 /**
  * Build a map of clientId → health result for all clients.
  */
-export function buildHealthMap(clients, allUpdates, allInsights) {
+export function buildHealthMap(clients, allUpdates, allInsights, lastActivityDates = {}) {
   const map = {};
   for (const client of clients) {
-    map[client.id] = computeClientHealth(client, allUpdates, allInsights);
+    map[client.id] = computeClientHealth(client, allUpdates, allInsights, lastActivityDates);
   }
   return map;
 }

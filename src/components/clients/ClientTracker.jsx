@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { AlertTriangle, CheckSquare, Search, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import TrackerItemRow from "./TrackerItemRow";
+import { useSlackAnnounce } from "@/hooks/useSlackAnnounce.jsx";
 
 const ALLOWED_ROLES = ["admin", "leadership", "team_lead", "csm"];
 
@@ -70,6 +71,7 @@ export default function ClientTracker({ clientId }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [flagsOpen, setFlagsOpen] = useState(true);
   const [todosOpen, setTodosOpen] = useState(true);
+  const { prompt: promptSlack, toastElement: slackToast } = useSlackAnnounce(clientId);
 
   useEffect(() => {
     base44.auth.me().then(setUser).catch(() => {});
@@ -90,19 +92,30 @@ export default function ClientTracker({ clientId }) {
     items[index] = newItem;
     await base44.entities.ClientInsight.update(insight.id, { [field]: items });
     loadInsights();
+    promptSlack({ type: field === "red_flags" ? "red_flag_updated" : "todo_updated", text: newItem.text });
   };
 
   const deleteItem = async (insight, field, index) => {
+    const itemText = normalizeItem(insight[field][index]).text;
     const items = (insight[field] || []).map(normalizeItem).filter((_, i) => i !== index);
     await base44.entities.ClientInsight.update(insight.id, { [field]: items });
     loadInsights();
+    promptSlack({ type: field === "red_flags" ? "red_flag_deleted" : "todo_deleted", text: itemText });
   };
 
   const toggleResolved = async (insight, field, index) => {
     const items = (insight[field] || []).map(normalizeItem);
-    items[index] = { ...items[index], resolved: !items[index].resolved };
+    const wasResolved = items[index].resolved;
+    items[index] = { ...items[index], resolved: !wasResolved };
     await base44.entities.ClientInsight.update(insight.id, { [field]: items });
     loadInsights();
+    const isFlag = field === "red_flags";
+    const text = items[index].text;
+    if (!wasResolved) {
+      promptSlack({ type: isFlag ? "red_flag_resolved" : "todo_completed", text });
+    } else {
+      promptSlack({ type: isFlag ? "red_flag_reopened" : "todo_reopened", text });
+    }
   };
 
   const addItem = async (field) => {
@@ -113,6 +126,7 @@ export default function ClientTracker({ clientId }) {
     items.push({ text: "New item", date: null, resolved: false, team: null, point_person: null, solution: null });
     await base44.entities.ClientInsight.update(target.id, { [field]: items });
     loadInsights();
+    promptSlack({ type: field === "red_flags" ? "red_flag_added" : "todo_added", text: "New item" });
   };
 
   // Flatten all items across insights
@@ -280,6 +294,7 @@ export default function ClientTracker({ clientId }) {
           </div>
         )}
       </div>
+      {slackToast}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSlackAnnounce } from "@/hooks/useSlackAnnounce.jsx";
 
 const typeColors = {
   win: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -19,6 +20,7 @@ export default function CSMUpdates({ clientId, canEdit }) {
   const [showForm, setShowForm] = useState(false);
   const [content, setContent] = useState("");
   const [type, setType] = useState("general");
+  const { prompt: promptSlack, toastElement: slackToast } = useSlackAnnounce(clientId);
 
   useEffect(() => {
     base44.entities.CSMUpdate.filter({ client_id: clientId }, "-created_date").then(setUpdates);
@@ -26,11 +28,14 @@ export default function CSMUpdates({ clientId, canEdit }) {
 
   const handleAdd = async () => {
     if (!content.trim()) return;
+    const postedContent = content;
+    const postedType = type;
     await base44.entities.CSMUpdate.create({ client_id: clientId, content, update_type: type });
     setContent("");
     setType("general");
     setShowForm(false);
     base44.entities.CSMUpdate.filter({ client_id: clientId }, "-created_date").then(setUpdates);
+    promptSlack({ type: "csm_update", updateType: postedType, content: postedContent });
   };
 
   const handleDelete = async (id) => {
@@ -89,6 +94,7 @@ export default function CSMUpdates({ clientId, canEdit }) {
       {updates.length === 0 && !showForm && (
         <div className="text-center py-8 text-slate-400 text-sm">No updates yet.</div>
       )}
+      {slackToast}
     </div>
   );
 }
