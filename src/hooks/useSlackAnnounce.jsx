@@ -4,6 +4,10 @@ import { base44 } from "@/api/base44Client";
 import SlackAnnounceToast from "@/components/clients/SlackAnnounceToast";
 import { buildMentions } from "@/utils/slackMentions";
 
+// Project management team members to tag on individual red-flag / to-do
+// messages posted after a client insight summary (so they can create tasks).
+const PM_MENTIONS = ["D04N8BHPLAU", "D0ATV43LQCB"].map((id) => `<@${id}>`).join(" ");
+
 const MESSAGES = {
   red_flag_added: (name, text) => `🚩 *New Red Flag* — ${name}\n${text}`,
   red_flag_resolved: (name, text) => `✅ *Red Flag Resolved* — ${name}\n${text}`,
@@ -87,7 +91,9 @@ export function useSlackAnnounce(clientId) {
       const tag = buildMentions(client);
       const suffix = tag ? ` ${tag}` : "";
       const taggedHeadline = headline + suffix;
-      const taggedItems = itemMessages.map((m) => m + suffix);
+      // Items get the CSM/CSA mentions PLUS the PM team (for task creation)
+      const itemSuffix = `${suffix} ${PM_MENTIONS}`;
+      const taggedItems = itemMessages.map((m) => m + itemSuffix);
       setToast({ mode: "confirm", headline: taggedHeadline, body, itemMessages: taggedItems, preview: `${taggedHeadline}\n\n${body}${taggedItems.length ? `\n\n+ ${taggedItems.length} item thread(s)` : ""}` });
       return;
     }
