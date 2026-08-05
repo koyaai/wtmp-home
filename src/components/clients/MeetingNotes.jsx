@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, X, Calendar, ChevronDown, ChevronUp, Pencil, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useSlackAnnounce } from "@/hooks/useSlackAnnounce.jsx";
 
 function NoteForm({ clientId, initial, onSave, onCancel }) {
   const [form, setForm] = useState({
@@ -63,12 +64,14 @@ export default function MeetingNotes({ clientId, canEdit }) {
   const [expandedId, setExpandedId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [search, setSearch] = useState("");
+  const { prompt: promptSlack, toastElement: slackToast } = useSlackAnnounce(clientId);
 
   useEffect(() => {
     base44.entities.MeetingNote.filter({ client_id: clientId }, "-meeting_date").then(setNotes);
   }, [clientId]);
 
   const handleSave = async (data) => {
+    const isNew = !data.id;
     if (data.id) {
       await base44.entities.MeetingNote.update(data.id, data);
     } else {
@@ -76,6 +79,9 @@ export default function MeetingNotes({ clientId, canEdit }) {
     }
     setShowForm(false);
     base44.entities.MeetingNote.filter({ client_id: clientId }, "-meeting_date").then(setNotes);
+    if (isNew) {
+      promptSlack({ type: "meeting_note", text: data });
+    }
   };
 
   const handleDelete = async (id) => {
@@ -173,6 +179,7 @@ export default function MeetingNotes({ clientId, canEdit }) {
           {search ? "No meetings match your search." : "No meeting notes yet."}
         </div>
       )}
+      {slackToast}
     </div>
   );
 }
