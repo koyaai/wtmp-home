@@ -18,7 +18,7 @@ export default function ClientForm({ initial, onSave, onCancel }) {
   const [form, setForm] = useState({
     name: "", contact_name: "", contact_email: "", contact_phone: "",
     website: "", location: "", status: "active", services: [],
-    retainer_fee: "", start_date: "", csm_assigned: "",
+    retainer_fee: "", start_date: "", csm_assigned: "", csm_slack_id: "", csa_slack_id: "",
     google_search_console_url: "", gbp_url: "", ghl_location_id: "", ghl_api_key: "",
     google_ads_account_id: "", ga_property_id: "", wordpress_url: "", wordpress_username: "",
     wordpress_app_password: "", notes: "",
@@ -82,6 +82,10 @@ export default function ClientForm({ initial, onSave, onCancel }) {
         </div>
         <div className="mt-3">
           <Field label="Assigned CSM (email)" name="csm_assigned" placeholder="csm@agency.com" value={form.csm_assigned} onChange={set} />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+          <Field label="CSM Slack ID" name="csm_slack_id" placeholder="e.g. U012AB3CD" value={form.csm_slack_id} onChange={set} />
+          <Field label="CSA Slack ID" name="csa_slack_id" placeholder="e.g. U012AB3CD" value={form.csa_slack_id} onChange={set} />
         </div>
       </div>
 

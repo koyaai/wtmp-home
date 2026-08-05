@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { base44 } from "@/api/base44Client";
 import SlackAnnounceToast from "@/components/clients/SlackAnnounceToast";
+import { buildMentions } from "@/utils/slackMentions";
 
 const MESSAGES = {
   red_flag_added: (name, text) => `🚩 *New Red Flag* — ${name}\n${text}`,
@@ -83,7 +84,11 @@ export function useSlackAnnounce(clientId) {
     if (!fn) return;
     if (type === "insight_added") {
       const { headline, body, itemMessages } = fn(client.name, text);
-      setToast({ mode: "confirm", headline, body, itemMessages, preview: `${headline}\n\n${body}${itemMessages.length ? `\n\n+ ${itemMessages.length} item thread(s)` : ""}` });
+      const tag = buildMentions(client);
+      const suffix = tag ? ` ${tag}` : "";
+      const taggedHeadline = headline + suffix;
+      const taggedItems = itemMessages.map((m) => m + suffix);
+      setToast({ mode: "confirm", headline: taggedHeadline, body, itemMessages: taggedItems, preview: `${taggedHeadline}\n\n${body}${taggedItems.length ? `\n\n+ ${taggedItems.length} item thread(s)` : ""}` });
       return;
     }
     const msg = type === "csm_update" ? fn(client.name, updateType, content)

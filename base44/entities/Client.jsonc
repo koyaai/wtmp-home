@@ -74,6 +74,14 @@
       "type": "string",
       "description": "Assigned CSM email"
     },
+    "csm_slack_id": {
+      "type": "string",
+      "description": "Slack User ID for the assigned CSM (e.g. U012AB3CD) for @mentions"
+    },
+    "csa_slack_id": {
+      "type": "string",
+      "description": "Slack User ID for the assigned CSA (e.g. U012AB3CD) for @mentions"
+    },
     "brightlocal_report_url": {
       "type": "string",
       "description": "BrightLocal location dashboard URL (for Local SEO clients)"

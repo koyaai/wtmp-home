@@ -32,6 +32,11 @@ function ageLabel(days) {
   return ` · ${days} days open`;
 }
 
+function buildMentions(client) {
+  const ids = [client?.csm_slack_id, client?.csa_slack_id].filter(Boolean).map((id) => `<@${id}>`);
+  return ids.length ? ids.join(" ") : "";
+}
+
 function getLatestActivityDate(clientId, insights, updates, meetingNotes, onboardings) {
   let latest = 0;
   for (const records of [insights, updates, meetingNotes, onboardings]) {
@@ -139,11 +144,17 @@ export default async function(req) {
 
       body = body.trim();
 
+      // Append CSM/CSA @mentions to every client-scoped message
+      const mentions = buildMentions(client);
+      const suffix = mentions ? ` ${mentions}` : "";
+      const taggedHeadline = headline + suffix;
+      const taggedBody = body + suffix;
+
       // Send headline first, then full body as a threaded reply
       try {
         const headRes = await base44.functions.invoke("sendSlackMessage", {
           client_id: client.id,
-          text: headline,
+          text: taggedHeadline,
         });
         if (!headRes.data?.ok || !headRes.data?.ts) {
           errors.push({ client: client.name, error: headRes.data?.error || "Headline post failed" });
@@ -151,7 +162,7 @@ export default async function(req) {
           const threadTs = headRes.data.ts;
           const bodyRes = await base44.functions.invoke("sendSlackMessage", {
             client_id: client.id,
-            text: body,
+            text: taggedBody,
             thread_ts: threadTs,
           });
           if (bodyRes.data?.ok) {
