@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { AlertTriangle, CheckSquare, Search, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import TrackerItemRow from "./TrackerItemRow";
+import AddTrackerItemForm from "./AddTrackerItemForm";
 import { useSlackAnnounce } from "@/hooks/useSlackAnnounce.jsx";
 
 const ALLOWED_ROLES = ["admin", "leadership", "team_lead", "csm"];
@@ -71,6 +72,7 @@ export default function ClientTracker({ clientId }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [flagsOpen, setFlagsOpen] = useState(true);
   const [todosOpen, setTodosOpen] = useState(true);
+  const [adding, setAdding] = useState(null); // "red_flags" | "todos" | null
   const { prompt: promptSlack, toastElement: slackToast } = useSlackAnnounce(clientId);
 
   useEffect(() => {
@@ -118,15 +120,16 @@ export default function ClientTracker({ clientId }) {
     }
   };
 
-  const addItem = async (field) => {
+  const addItem = async (field, newItem) => {
     // Add to the most recent insight, or first one found
     const target = insights[0];
     if (!target) return;
     const items = (target[field] || []).map(normalizeItem);
-    items.push({ text: "New item", date: null, resolved: false, team: null, point_person: null, solution: null });
+    items.push(newItem);
     await base44.entities.ClientInsight.update(target.id, { [field]: items });
     loadInsights();
-    promptSlack({ type: field === "red_flags" ? "red_flag_added" : "todo_added", text: "New item" });
+    setAdding(null);
+    promptSlack({ type: field === "red_flags" ? "red_flag_added" : "todo_added", text: newItem.text });
   };
 
   // Flatten all items across insights
@@ -241,10 +244,21 @@ export default function ClientTracker({ clientId }) {
                 />
               </details>
             )}
-            {canEdit && tab === "active" && (
-              <button onClick={() => addItem("red_flags")} className="w-full text-xs text-red-400 hover:text-red-600 border-t border-dashed border-red-200 py-2.5 flex items-center justify-center gap-1">
+            {canEdit && tab === "active" && !adding && (
+              <button onClick={() => setAdding("red_flags")} className="w-full text-xs text-red-400 hover:text-red-600 border-t border-dashed border-red-200 py-2.5 flex items-center justify-center gap-1">
                 <Plus className="w-3 h-3" /> Add Red Flag
               </button>
+            )}
+            {adding === "red_flags" && (
+              <table className="w-full text-sm">
+                <tbody>
+                  <AddTrackerItemForm
+                    type="red_flags"
+                    onSave={(newItem) => addItem("red_flags", newItem)}
+                    onCancel={() => setAdding(null)}
+                  />
+                </tbody>
+              </table>
             )}
           </div>
         )}
@@ -286,10 +300,21 @@ export default function ClientTracker({ clientId }) {
                 />
               </details>
             )}
-            {canEdit && tab === "active" && (
-              <button onClick={() => addItem("todos")} className="w-full text-xs text-blue-400 hover:text-blue-600 border-t border-dashed border-blue-200 py-2.5 flex items-center justify-center gap-1">
+            {canEdit && tab === "active" && !adding && (
+              <button onClick={() => setAdding("todos")} className="w-full text-xs text-blue-400 hover:text-blue-600 border-t border-dashed border-blue-200 py-2.5 flex items-center justify-center gap-1">
                 <Plus className="w-3 h-3" /> Add To-Do
               </button>
+            )}
+            {adding === "todos" && (
+              <table className="w-full text-sm">
+                <tbody>
+                  <AddTrackerItemForm
+                    type="todos"
+                    onSave={(newItem) => addItem("todos", newItem)}
+                    onCancel={() => setAdding(null)}
+                  />
+                </tbody>
+              </table>
             )}
           </div>
         )}

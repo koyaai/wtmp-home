@@ -37,7 +37,7 @@ export function DeadlineBadge({ date }) {
 }
 
 // Multi-select team dropdown
-function TeamMultiSelect({ value, onChange }) {
+export function TeamMultiSelect({ value, onChange }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 
