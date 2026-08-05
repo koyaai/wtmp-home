@@ -11,6 +11,27 @@ function normalizeItem(item) {
   return item;
 }
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+// Days an item has been open on the client. Uses the item's own date if present
+// (flag raised / to-do due date), otherwise falls back to the insight's created date.
+function daysOpen(item, insight) {
+  const ref = item.date
+    ? new Date(item.date).getTime()
+    : insight?.created_date
+      ? new Date(insight.created_date).getTime()
+      : null;
+  if (!ref) return null;
+  return Math.max(0, Math.floor((Date.now() - ref) / DAY_MS));
+}
+
+function ageLabel(days) {
+  if (days === null) return "";
+  if (days === 0) return " · today";
+  if (days === 1) return " · 1 day open";
+  return ` · ${days} days open`;
+}
+
 function getLatestActivityDate(clientId, insights, updates, meetingNotes, onboardings) {
   let latest = 0;
   for (const records of [insights, updates, meetingNotes, onboardings]) {
@@ -57,18 +78,21 @@ export default async function(req) {
       clientInsights.forEach(ins => {
         (ins.red_flags || []).forEach(f => {
           const item = normalizeItem(f);
-          if (!item.resolved) openRedFlags.push(item);
+          if (!item.resolved) openRedFlags.push({ item, days: daysOpen(item, ins) });
         });
       });
+      // Oldest first → highest priority
+      openRedFlags.sort((a, b) => (b.days ?? -1) - (a.days ?? -1));
 
       // Open to-dos
       const openTodos = [];
       clientInsights.forEach(ins => {
         (ins.todos || []).forEach(t => {
           const item = normalizeItem(t);
-          if (!item.resolved) openTodos.push(item);
+          if (!item.resolved) openTodos.push({ item, days: daysOpen(item, ins) });
         });
       });
+      openTodos.sort((a, b) => (b.days ?? -1) - (a.days ?? -1));
 
       // Stale check
       const lastActivity = getLatestActivityDate(client.id, insights, updates, meetingNotes, onboardings);
@@ -91,17 +115,17 @@ export default async function(req) {
       let msg = `📋 *EOD Client Report — ${client.name}*\n${dateStr}\n`;
 
       if (openRedFlags.length > 0) {
-        msg += `\n🚩 *Red Flags (${openRedFlags.length})*\n`;
+        msg += `\n🚩 *Red Flags (${openRedFlags.length})* — sorted by age\n`;
         openRedFlags.forEach((f, i) => {
-          msg += `${i + 1}. ${f.text}${f.solution ? ` _→ ${f.solution}_` : ""}\n`;
+          msg += `${i + 1}. ${f.item.text}${ageLabel(f.days)}${f.item.solution ? ` _→ ${f.item.solution}_` : ""}\n`;
         });
       }
 
       if (openTodos.length > 0) {
-        msg += `\n✅ *Open To-Dos (${openTodos.length})*\n`;
+        msg += `\n✅ *Open To-Dos (${openTodos.length})* — sorted by age\n`;
         openTodos.forEach((t, i) => {
-          const deadline = t.date ? ` _(due ${t.date})_` : "";
-          msg += `${i + 1}. ${t.text}${deadline}\n`;
+          const deadline = t.item.date ? ` _(due ${t.item.date})_` : "";
+          msg += `${i + 1}. ${t.item.text}${ageLabel(t.days)}${deadline}\n`;
         });
       }
 
