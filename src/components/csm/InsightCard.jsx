@@ -115,10 +115,9 @@ export default function InsightCard({ insight, onUpdate }) {
     onUpdate();
   };
 
-  const deleteCount = redFlags.length + todos.length + (insight.requests?.length || 0);
-
   const todos = (insight.todos || []).map(normalizeItem);
   const redFlags = (insight.red_flags || []).map(normalizeItem);
+  const deleteCount = redFlags.length + todos.length + (insight.requests?.length || 0);
 
   return (
     <div className={`bg-white border rounded-xl overflow-hidden transition-all ${insight.status === "archived" ? "opacity-60" : ""}`}>
