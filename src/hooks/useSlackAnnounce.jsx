@@ -37,7 +37,18 @@ const MESSAGES = {
       lines.push(`\n💬 *Client Requests (${data.requests.length})*`);
       data.requests.slice(0, 5).forEach((r, i) => lines.push(`${i + 1}. ${r}`));
     }
-    return { headline, body: lines.join("\n").trim() };
+    // Individual bold messages for each to-do / red flag — posted as top-level
+    // messages so each gets its own thread for team discussion.
+    const itemMessages = [];
+    (data.red_flags || []).forEach((f) => {
+      const t = typeof f === "string" ? f : f.text;
+      if (t) itemMessages.push(`🚩 *Red Flag: ${t}*`);
+    });
+    (data.todos || []).forEach((td) => {
+      const t = typeof td === "string" ? td : td.text;
+      if (t) itemMessages.push(`✅ *To-Do: ${t}*`);
+    });
+    return { headline, body: lines.join("\n").trim(), itemMessages };
   },
   meeting_note: (name, note) => {
     const lines = [`🗒️ *Meeting Note* — ${name}\n*${note.title}*`];
@@ -75,8 +86,8 @@ export function useSlackAnnounce(clientId) {
     const fn = MESSAGES[type];
     if (!fn) return;
     if (type === "insight_added") {
-      const { headline, body } = fn(client.name, text);
-      setToast({ mode: "confirm", headline, body, preview: `${headline}\n\n${body}` });
+      const { headline, body, itemMessages } = fn(client.name, text);
+      setToast({ mode: "confirm", headline, body, itemMessages, preview: `${headline}\n\n${body}${itemMessages.length ? `\n\n+ ${itemMessages.length} item thread(s)` : ""}` });
       return;
     }
     const msg = type === "csm_update" ? fn(client.name, updateType, content)
@@ -90,7 +101,7 @@ export function useSlackAnnounce(clientId) {
     try {
       let res;
       if (toast.headline && toast.body) {
-        // Threaded: headline first, then full body as a reply
+        // Threaded: headline first, then full summary as a reply
         const headRes = await base44.functions.invoke("sendSlackMessage", { client_id: clientId, text: toast.headline });
         if (!headRes.data?.ok || !headRes.data?.ts) {
           setToast({ mode: "error", error: headRes.data?.error || "Headline post failed" });
@@ -98,6 +109,14 @@ export function useSlackAnnounce(clientId) {
           return;
         }
         res = await base44.functions.invoke("sendSlackMessage", { client_id: clientId, text: toast.body, thread_ts: headRes.data.ts });
+        // Post each to-do / red flag as its own top-level bold message so each
+        // gets a dedicated thread for the concerned team's discussion.
+        for (const itemText of (toast.itemMessages || [])) {
+          await new Promise((r) => setTimeout(r, 400)); // light rate-limit stagger
+          try {
+            await base44.functions.invoke("sendSlackMessage", { client_id: clientId, text: itemText });
+          } catch (e) { /* best-effort; continue with remaining items */ }
+        }
       } else {
         res = await base44.functions.invoke("sendSlackMessage", { client_id: clientId, text: toast.text });
       }
