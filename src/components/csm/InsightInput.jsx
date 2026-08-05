@@ -45,6 +45,12 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
       const res = await base44.functions.invoke("extractClientInsight", payload);
       const { summary, todos, requests, red_flags } = res.data;
 
+      // Fold client requests into to-dos so they're tracked and never omitted.
+      const allTodos = [
+        ...(todos || []),
+        ...(requests || []).map(r => `Client request: ${r}`),
+      ];
+
       const storedText = isFile
         ? `[Transcript uploaded from file: ${uploadedFile.name}]`
         : sourceText.length > 20000
@@ -58,7 +64,7 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
         source_type: sourceType,
         meeting_date: meetingDate || undefined,
         summary,
-        todos: (todos || []).map(t => ({ text: t, resolved: false, date: null, team: "", point_person: "" })),
+        todos: allTodos.map(t => ({ text: t, resolved: false, date: null, team: "", point_person: "" })),
         requests,
         red_flags: (red_flags || []).map(f => ({ text: f, resolved: false, date: null, team: "", point_person: "", solution: "" })),
         status: "new"
@@ -66,7 +72,7 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
 
       promptSlack({
         type: "insight_added",
-        text: { source_type: sourceType, meeting_date: meetingDate || null, summary, red_flags, todos, requests }
+        text: { source_type: sourceType, meeting_date: meetingDate || null, summary, red_flags, todos: allTodos }
       });
 
       setSourceText("");
