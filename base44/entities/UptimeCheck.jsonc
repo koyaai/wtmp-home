@@ -1,0 +1,39 @@
+{
+  "name": "UptimeCheck",
+  "type": "object",
+  "properties": {
+    "website_id": {
+      "type": "string",
+      "description": "Reference to Website"
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When the check ran (ISO timestamp)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "up",
+        "down"
+      ]
+    },
+    "response_code": {
+      "type": "number",
+      "description": "HTTP response status code"
+    },
+    "response_time_ms": {
+      "type": "number",
+      "description": "Response time in milliseconds"
+    },
+    "error_message": {
+      "type": "string",
+      "description": "Error detail when the check failed"
+    }
+  },
+  "required": [
+    "website_id",
+    "checked_at",
+    "status"
+  ]
+}

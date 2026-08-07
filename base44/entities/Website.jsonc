@@ -1,0 +1,40 @@
+{
+  "name": "Website",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Site label"
+    },
+    "url": {
+      "type": "string",
+      "description": "Full URL to monitor"
+    },
+    "expected_status_code": {
+      "type": "number",
+      "default": 200,
+      "description": "Expected HTTP status code; any 2xx counts if omitted/null"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "notes": {
+      "type": "string"
+    },
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name for display"
+    }
+  },
+  "required": [
+    "name",
+    "url",
+    "client_id",
+    "client_name"
+  ]
+}

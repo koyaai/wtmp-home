@@ -12,6 +12,7 @@ import ClientScore from "@/components/clients/ClientScore";
 import WillsMeetings from "@/components/clients/WillsMeetings";
 import ClientPostMortem from "@/components/clients/ClientPostMortem";
 import ClientOnboarding from "@/components/clients/ClientOnboarding";
+import ClientUptime from "@/components/uptime/ClientUptime";
 
 
 const programColors = {
@@ -42,7 +43,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
 
   const showFinancials = ["leadership"].includes(userRole);
 
-  const tabs = ["snapshot", "onboarding", "overview", "tracker", "meetings", "updates", "score", "will", ...(["churned", "offboarded"].includes(client.status) ? ["postmortem"] : [])];
+  const tabs = ["snapshot", "onboarding", "overview", "tracker", "uptime", "meetings", "updates", "score", "will", ...(["churned", "offboarded"].includes(client.status) ? ["postmortem"] : [])];
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-5">
@@ -169,6 +170,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
       )}
 
       {activeTab === "tracker" && <ClientTracker clientId={client.id} />}
+      {activeTab === "uptime" && <ClientUptime clientId={client.id} />}
       {activeTab === "meetings" && <MeetingNotes clientId={client.id} canEdit={canEdit} />}
       {activeTab === "updates" && <CSMUpdates clientId={client.id} canEdit={canEdit} />}
       {activeTab === "score" && <ClientScore clientId={client.id} clientName={client.name} />}
