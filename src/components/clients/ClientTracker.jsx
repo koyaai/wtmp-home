@@ -99,7 +99,8 @@ export default function ClientTracker({ clientId }) {
 
   const deleteItem = async (insight, field, index) => {
     const itemText = normalizeItem(insight[field][index]).text;
-    const items = (insight[field] || []).map(normalizeItem).filter((_, i) => i !== index);
+    const items = (insight[field] || []).map(normalizeItem);
+    items[index] = { ...items[index], deleted: true, deleted_at: new Date().toISOString() };
     await base44.entities.ClientInsight.update(insight.id, { [field]: items });
     loadInsights();
     promptSlack({ type: field === "red_flags" ? "red_flag_deleted" : "todo_deleted", text: itemText });
@@ -138,10 +139,14 @@ export default function ClientTracker({ clientId }) {
     const redFlags = [];
     insights.forEach(insight => {
       (insight.todos || []).forEach((item, i) => {
-        todos.push({ ...normalizeItem(item), insightId: insight.id, insightRef: insight, index: i, meeting_date: insight.meeting_date, source_type: insight.source_type });
+        const norm = normalizeItem(item);
+        if (norm.deleted) return;
+        todos.push({ ...norm, insightId: insight.id, insightRef: insight, index: i, meeting_date: insight.meeting_date, source_type: insight.source_type });
       });
       (insight.red_flags || []).forEach((item, i) => {
-        redFlags.push({ ...normalizeItem(item), insightId: insight.id, insightRef: insight, index: i, meeting_date: insight.meeting_date, source_type: insight.source_type });
+        const norm = normalizeItem(item);
+        if (norm.deleted) return;
+        redFlags.push({ ...norm, insightId: insight.id, insightRef: insight, index: i, meeting_date: insight.meeting_date, source_type: insight.source_type });
       });
     });
     return { todos, redFlags };

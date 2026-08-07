@@ -58,6 +58,14 @@
           },
           "slack_link": {
             "type": "string"
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Soft-delete flag \u2014 hidden from active lists, restorable from archive"
+          },
+          "deleted_at": {
+            "type": "string",
+            "description": "ISO timestamp when the item was soft-deleted"
           }
         }
       },
@@ -103,6 +111,14 @@
           },
           "slack_link": {
             "type": "string"
+          },
+          "deleted": {
+            "type": "boolean",
+            "description": "Soft-delete flag \u2014 hidden from active lists, restorable from archive"
+          },
+          "deleted_at": {
+            "type": "string",
+            "description": "ISO timestamp when the item was soft-deleted"
           }
         }
       },

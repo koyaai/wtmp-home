@@ -2,8 +2,9 @@ import { useState } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { CheckSquare, MessageSquare, AlertTriangle, ChevronDown, ChevronUp, Trash2, Archive, Pencil, Check, X, Plus } from "lucide-react";
+import { CheckSquare, MessageSquare, AlertTriangle, ChevronDown, ChevronUp, Trash2, Archive, Pencil, Check, X, Plus, RotateCcw } from "lucide-react";
 import { TEAMS } from "@/components/clients/TrackerItemRow";
+import DeletedItemsModal from "./DeletedItemsModal";
 import { format, isPast, differenceInDays, parseISO } from "date-fns";
 
 const statusColors = {
@@ -82,6 +83,7 @@ function EditableItem({ item, onSave, onDelete, colorScheme, isFlag }) {
 
 export default function InsightCard({ insight, onUpdate }) {
   const [expanded, setExpanded] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
 
   const updateItems = async (field, newItems) => {
     await base44.entities.ClientInsight.update(insight.id, { [field]: newItems });
@@ -95,6 +97,19 @@ export default function InsightCard({ insight, onUpdate }) {
   };
 
   const handleItemDelete = (field, index) => {
+    const items = (insight[field] || []).map(normalizeItem);
+    items[index] = { ...items[index], deleted: true, deleted_at: new Date().toISOString() };
+    updateItems(field, items);
+  };
+
+  const handleItemRestore = (field, index) => {
+    const items = (insight[field] || []).map(normalizeItem);
+    const { deleted, deleted_at, ...rest } = items[index];
+    items[index] = rest;
+    updateItems(field, items);
+  };
+
+  const handleItemPermanentDelete = (field, index) => {
     const items = (insight[field] || []).map(normalizeItem).filter((_, i) => i !== index);
     updateItems(field, items);
   };
@@ -115,8 +130,13 @@ export default function InsightCard({ insight, onUpdate }) {
     onUpdate();
   };
 
-  const todos = (insight.todos || []).map(normalizeItem);
-  const redFlags = (insight.red_flags || []).map(normalizeItem);
+  const allTodos = (insight.todos || []).map(normalizeItem).map((item, index) => ({ ...item, _index: index }));
+  const allRedFlags = (insight.red_flags || []).map(normalizeItem).map((item, index) => ({ ...item, _index: index }));
+  const todos = allTodos.filter(t => !t.deleted);
+  const redFlags = allRedFlags.filter(f => !f.deleted);
+  const deletedTodos = allTodos.filter(t => t.deleted);
+  const deletedRedFlags = allRedFlags.filter(f => f.deleted);
+  const deletedCount = deletedTodos.length + deletedRedFlags.length;
   const deleteCount = redFlags.length + todos.length + (insight.requests?.length || 0);
 
   return (
@@ -166,12 +186,12 @@ export default function InsightCard({ insight, onUpdate }) {
             </div>
             {redFlags.length === 0 ? <p className="text-xs text-slate-400">None</p> : (
               <ul className="space-y-1">
-                {redFlags.map((flag, i) => (
+                {redFlags.map((flag) => (
                   <EditableItem
-                    key={i} item={flag}
+                    key={flag._index} item={flag}
                     colorScheme={{ bg: "bg-red-50 border-red-100", text: "text-red-700" }}
-                    onSave={(newItem) => handleItemSave("red_flags", i, newItem)}
-                    onDelete={() => handleItemDelete("red_flags", i)}
+                    onSave={(newItem) => handleItemSave("red_flags", flag._index, newItem)}
+                    onDelete={() => handleItemDelete("red_flags", flag._index)}
                   />
                 ))}
               </ul>
@@ -190,17 +210,26 @@ export default function InsightCard({ insight, onUpdate }) {
             </div>
             {todos.length === 0 ? <p className="text-xs text-slate-400">None</p> : (
               <ul className="space-y-1">
-                {todos.map((todo, i) => (
+                {todos.map((todo) => (
                   <EditableItem
-                    key={i} item={todo}
+                    key={todo._index} item={todo}
                     colorScheme={{ bg: "bg-blue-50 border-blue-100", text: "text-slate-700" }}
-                    onSave={(newItem) => handleItemSave("todos", i, newItem)}
-                    onDelete={() => handleItemDelete("todos", i)}
+                    onSave={(newItem) => handleItemSave("todos", todo._index, newItem)}
+                    onDelete={() => handleItemDelete("todos", todo._index)}
                   />
                 ))}
               </ul>
             )}
           </div>
+
+          {deletedCount > 0 && (
+            <button
+              onClick={() => setShowDeleted(true)}
+              className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1"
+            >
+              <RotateCcw className="w-3 h-3" /> View deleted items ({deletedCount})
+            </button>
+          )}
 
           {/* Requests */}
           {insight.requests?.length > 0 && (
@@ -255,6 +284,15 @@ export default function InsightCard({ insight, onUpdate }) {
               </AlertDialogContent>
             </AlertDialog>
           </div>
+
+          <DeletedItemsModal
+            open={showDeleted}
+            onClose={() => setShowDeleted(false)}
+            redFlags={deletedRedFlags}
+            todos={deletedTodos}
+            onRestore={handleItemRestore}
+            onPermanentDelete={handleItemPermanentDelete}
+          />
         </div>
       )}
     </div>

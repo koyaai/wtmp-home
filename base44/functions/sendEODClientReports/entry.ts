@@ -83,7 +83,7 @@ export default async function(req) {
       clientInsights.forEach(ins => {
         (ins.red_flags || []).forEach(f => {
           const item = normalizeItem(f);
-          if (!item.resolved) openRedFlags.push({ item, days: daysOpen(item, ins) });
+          if (!item.resolved && !item.deleted) openRedFlags.push({ item, days: daysOpen(item, ins) });
         });
       });
       // Oldest first → highest priority
@@ -94,7 +94,7 @@ export default async function(req) {
       clientInsights.forEach(ins => {
         (ins.todos || []).forEach(t => {
           const item = normalizeItem(t);
-          if (!item.resolved) openTodos.push({ item, days: daysOpen(item, ins) });
+          if (!item.resolved && !item.deleted) openTodos.push({ item, days: daysOpen(item, ins) });
         });
       });
       openTodos.sort((a, b) => (b.days ?? -1) - (a.days ?? -1));
