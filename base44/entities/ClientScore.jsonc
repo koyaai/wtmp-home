@@ -25,11 +25,11 @@
         "D",
         "F"
       ],
-      "description": "Grade for attended set meetings"
+      "description": "Grade for attendance to monthly meetings"
     },
     "attended_meetings_notes": {
       "type": "string",
-      "description": "Context notes for attended meetings grade"
+      "description": "Context notes for attendance grade"
     },
     "responsiveness": {
       "type": "string",
@@ -40,11 +40,26 @@
         "D",
         "F"
       ],
-      "description": "Grade for responsiveness & engagement in client portal"
+      "description": "Grade for responsiveness to requests"
     },
     "responsiveness_notes": {
       "type": "string",
       "description": "Context notes for responsiveness grade"
+    },
+    "client_portal_engagement": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "description": "Grade for client portal engagement"
+    },
+    "client_portal_engagement_notes": {
+      "type": "string",
+      "description": "Context notes for client portal engagement grade"
     },
     "project_posts_submission": {
       "type": "string",
@@ -55,7 +70,7 @@
         "D",
         "F"
       ],
-      "description": "Grade for submission of project posts"
+      "description": "Grade for project post submissions"
     },
     "project_posts_submission_notes": {
       "type": "string",
@@ -75,6 +90,51 @@
     "lead_handling_notes": {
       "type": "string",
       "description": "Context notes for lead handling grade"
+    },
+    "communication_frequency": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "description": "Grade for communication frequency"
+    },
+    "communication_frequency_notes": {
+      "type": "string",
+      "description": "Context notes for communication frequency grade"
+    },
+    "clarity_of_requests": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "description": "Grade for clarity of requests"
+    },
+    "clarity_of_requests_notes": {
+      "type": "string",
+      "description": "Context notes for clarity of requests grade"
+    },
+    "leadboomerang_usage": {
+      "type": "string",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "description": "Grade for Leadboomerang usage"
+    },
+    "leadboomerang_usage_notes": {
+      "type": "string",
+      "description": "Context notes for Leadboomerang usage grade"
     },
     "overall_grade": {
       "type": "string",

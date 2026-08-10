@@ -24,10 +24,14 @@ const gradeTextColor = (g) => ({
 }[g] || "text-slate-400");
 
 const METRICS = [
-  { key: "attended_meetings", label: "Attended Set Meetings", notesKey: "attended_meetings_notes" },
-  { key: "responsiveness", label: "Responsiveness & Engagement in Client Portal", notesKey: "responsiveness_notes" },
-  { key: "project_posts_submission", label: "Submission of Project Posts", notesKey: "project_posts_submission_notes" },
+  { key: "attended_meetings", label: "Attendance to Monthly Meetings", notesKey: "attended_meetings_notes" },
+  { key: "responsiveness", label: "Responsiveness to Requests", notesKey: "responsiveness_notes" },
+  { key: "client_portal_engagement", label: "Client Portal Engagement", notesKey: "client_portal_engagement_notes" },
+  { key: "project_posts_submission", label: "Project Post Submissions", notesKey: "project_posts_submission_notes" },
   { key: "lead_handling", label: "Lead Handling", notesKey: "lead_handling_notes" },
+  { key: "communication_frequency", label: "Communication Frequency", notesKey: "communication_frequency_notes" },
+  { key: "clarity_of_requests", label: "Clarity of Requests", notesKey: "clarity_of_requests_notes" },
+  { key: "leadboomerang_usage", label: "Leadboomerang Usage", notesKey: "leadboomerang_usage_notes" },
 ];
 
 function GradeSelector({ value, onChange }) {
@@ -77,13 +81,14 @@ export default function ClientScore({ clientId, clientName }) {
     const results = await base44.entities.ClientScore.filter({ client_id: clientId, month, year });
     if (results.length > 0) {
       const r = results[0];
-      setScores({ attended_meetings: r.attended_meetings, responsiveness: r.responsiveness, project_posts_submission: r.project_posts_submission, lead_handling: r.lead_handling });
-      setCategoryNotes({
-        attended_meetings_notes: r.attended_meetings_notes || "",
-        responsiveness_notes: r.responsiveness_notes || "",
-        project_posts_submission_notes: r.project_posts_submission_notes || "",
-        lead_handling_notes: r.lead_handling_notes || "",
+      const s = {};
+      const n = {};
+      METRICS.forEach(m => {
+        s[m.key] = r[m.key];
+        n[m.notesKey] = r[m.notesKey] || "";
       });
+      setScores(s);
+      setCategoryNotes(n);
       setNotes(r.notes || "");
       setRoadblocks(r.roadblocks || "");
       setExistingId(r.id);
