@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Sparkles, AlertCircle, Upload, FileText, X } from "lucide-react";
 import { useSlackAnnounce } from "@/hooks/useSlackAnnounce.jsx";
+import InsightReviewModal from "@/components/csm/InsightReviewModal";
 
 export default function InsightInput({ clientId, clientName, onSaved }) {
   const [mode, setMode] = useState("paste"); // "paste" | "file"
@@ -15,6 +16,9 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [extractedData, setExtractedData] = useState(null);
+  const [saving, setSaving] = useState(false);
   const { prompt: promptSlack, toastElement: slackToast } = useSlackAnnounce(clientId);
 
   const handleFileSelect = async (e) => {
@@ -38,24 +42,42 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
     if (!isFile && !sourceText.trim()) return;
     setLoading(true);
     setError(null);
+    setReviewOpen(true);
+    setExtractedData(null);
     try {
       const payload = isFile
         ? { file_url: uploadedFile.url }
         : { source_text: sourceText };
       const res = await base44.functions.invoke("extractClientInsight", payload);
-      const { summary, todos, requests, red_flags } = res.data;
+      setExtractedData(res.data);
+    } catch (err) {
+      setError(err.message || "Something went wrong. Please try again.");
+      setReviewOpen(false);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      // Fold client requests into to-dos so they're tracked and never omitted.
-      const allTodos = [
-        ...(todos || []),
-        ...(requests || []).map(r => `Client request: ${r}`),
-      ];
-
+  const handleConfirmReview = async (reviewed) => {
+    setSaving(true);
+    try {
+      const isFile = mode === "file";
       const storedText = isFile
         ? `[Transcript uploaded from file: ${uploadedFile.name}]`
         : sourceText.length > 20000
           ? sourceText.slice(0, 20000) + `\n\n[Truncated — original was ${sourceText.length.toLocaleString()} characters]`
           : sourceText;
+
+      const todosForEntity = reviewed.todos.map(t => ({
+        text: t.text, resolved: false, date: t.date || null,
+        teams: t.teams || [], team: (t.teams || [])[0] || "",
+        point_person: t.point_person || ""
+      }));
+      const flagsForEntity = reviewed.red_flags.map(f => ({
+        text: f.text, resolved: false, date: f.date || null,
+        teams: f.teams || [], team: (f.teams || [])[0] || "",
+        point_person: f.point_person || "", solution: ""
+      }));
 
       await base44.entities.ClientInsight.create({
         client_id: clientId,
@@ -63,27 +85,45 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
         source_text: storedText,
         source_type: sourceType,
         meeting_date: meetingDate || undefined,
-        summary,
-        todos: allTodos.map(t => ({ text: t, resolved: false, date: null, team: "", point_person: "" })),
-        requests,
-        red_flags: (red_flags || []).map(f => ({ text: f, resolved: false, date: null, team: "", point_person: "", solution: "" })),
+        summary: reviewed.summary,
+        todos: todosForEntity,
+        requests: reviewed.requests,
+        red_flags: flagsForEntity,
         status: "new"
       });
 
-      promptSlack({
-        type: "insight_added",
-        text: { source_type: sourceType, meeting_date: meetingDate || null, summary, red_flags, todos: allTodos }
-      });
+      // Only items the reviewer left toggled ON get posted to Slack.
+      const slackFlags = reviewed.red_flags.filter(f => f.slackOn);
+      const slackTodos = reviewed.todos.filter(t => t.slackOn);
+      if (slackFlags.length || slackTodos.length || reviewed.summary?.trim()) {
+        promptSlack({
+          type: "insight_added",
+          text: {
+            source_type: sourceType,
+            meeting_date: meetingDate || null,
+            summary: reviewed.summary,
+            red_flags: slackFlags,
+            todos: slackTodos
+          }
+        });
+      }
 
+      setReviewOpen(false);
+      setExtractedData(null);
       setSourceText("");
       setUploadedFile(null);
       setMeetingDate("");
       onSaved();
     } catch (err) {
-      setError(err.message || "Something went wrong. Please try again.");
+      setError(err.message || "Failed to save insight.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
+  };
+
+  const handleCancelReview = () => {
+    setReviewOpen(false);
+    setExtractedData(null);
   };
 
   const canSubmit = mode === "file" ? !!uploadedFile : !!sourceText.trim();
@@ -183,6 +223,14 @@ export default function InsightInput({ clientId, clientName, onSaved }) {
         {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</> : <><Sparkles className="w-4 h-4" /> Extract Insights</>}
       </Button>
       {slackToast}
+      <InsightReviewModal
+        open={reviewOpen}
+        loading={loading}
+        extractedData={extractedData}
+        saving={saving}
+        onCancel={handleCancelReview}
+        onConfirm={handleConfirmReview}
+      />
     </div>
   );
 }
