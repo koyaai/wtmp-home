@@ -1,10 +1,12 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Plus, TrendingUp, Users, Calendar, DollarSign, X, Pencil } from "lucide-react";
 import GHLLeads from "@/components/clients/GHLLeads";
 import ClientSelect from "@/components/clients/ClientSelect";
+import LeadFilters from "@/components/leads/LeadFilters";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Cell } from "recharts";
+import { getDateRange, inRange } from "@/utils/leadDateRange";
 
 function MetricCard({ label, value, icon: Icon, color, sub }) {
   return (
@@ -32,6 +34,9 @@ export default function Leads() {
   const [form, setForm] = useState({});
   const [user, setUser] = useState(null);
   const [syncing, setSyncing] = useState(false);
+  const [datePreset, setDatePreset] = useState("this_month");
+
+  const dateRange = useMemo(() => getDateRange(datePreset), [datePreset]);
 
   useEffect(() => {
     base44.entities.Client.list().then(all => {
@@ -54,7 +59,12 @@ export default function Leads() {
     base44.entities.LeadData.filter({ client_id: selectedClientId }, "-report_date", 12).then(setLeadData);
   }, [selectedClientId]);
 
-  const latest = leadData[0];
+  const filteredLeadData = useMemo(
+    () => leadData.filter((d) => inRange(d.report_date, dateRange.start, dateRange.end)),
+    [leadData, dateRange]
+  );
+
+  const latest = filteredLeadData[0];
   const canEdit = ["leadership", "team_lead", "csm"].includes(user?.role);
 
   const openNew = () => { setEditingRecord(null); setForm({}); setShowForm(true); };
@@ -79,7 +89,7 @@ export default function Leads() {
     ? `${Math.round((latest.closed_deals / latest.appointments_showed) * 100)}%`
     : null;
 
-  const chartData = [...leadData].reverse().map(d => ({
+  const chartData = [...filteredLeadData].reverse().map(d => ({
     date: new Date(d.report_date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     leads: d.total_leads,
     closed: d.closed_deals,
@@ -103,9 +113,12 @@ export default function Leads() {
         </div>
       </div>
 
+      {/* Date range filter */}
+      <LeadFilters preset={datePreset} onPresetChange={setDatePreset} rangeLabel={dateRange.label} />
+
       {/* GHL Monthly Data */}
       {selectedClient?.ghl_location_id && (
-        <GHLLeads client={selectedClient} />
+        <GHLLeads client={selectedClient} dateRange={dateRange} />
       )}
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -229,7 +242,7 @@ export default function Leads() {
       )}
 
       {/* Monthly Records Table */}
-      {leadData.length > 0 && (
+      {filteredLeadData.length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
           <div className="px-5 py-3.5 border-b border-slate-100 flex items-center justify-between">
             <h2 className="font-semibold text-slate-800 text-sm">Monthly Records</h2>
@@ -248,7 +261,7 @@ export default function Leads() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {leadData.map(r => (
+                {filteredLeadData.map(r => (
                   <tr key={r.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3 font-medium text-slate-700">
                       {new Date(r.report_date + 'T12:00:00').toLocaleDateString("en-US", { month: "long", year: "numeric" })}
