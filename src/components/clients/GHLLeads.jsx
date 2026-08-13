@@ -242,43 +242,46 @@ export default function GHLLeads({ client, dateRange }) {
       </div>
 
       {/* Tag chips + First-time Calls toggle */}
-      {availableTags.length > 0 && (
-        <div className="bg-white rounded-xl border border-slate-100 px-4 py-3">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Tag className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide mr-1">Tags</span>
-            {availableTags.map(([tag, count]) => {
-              const active = selectedTags.includes(tag);
-              return (
-                <button
-                  key={tag}
-                  onClick={() => toggleTag(tag)}
-                  className={cn(
-                    "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
-                    active
-                      ? "bg-amber-500 text-white border-amber-500"
-                      : "bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-400"
-                  )}
-                >
-                  {tag} <span className={active ? "text-amber-100" : "text-amber-500"}>({count})</span>
-                </button>
-              );
-            })}
-            <button
-              onClick={() => setFirstTimeOnly((v) => !v)}
-              className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors ml-1",
-                firstTimeOnly
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-blue-50 text-blue-700 border-blue-200 hover:border-blue-400"
-              )}
-            >
-              <PhoneCall className="w-3 h-3" />
-              First-time Calls
-            </button>
-          </div>
+      <div className="bg-white rounded-xl border border-slate-100 px-4 py-3">
+        <div className="flex items-center gap-2 flex-wrap">
+          {availableTags.length > 0 && (
+            <>
+              <Tag className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide mr-1">Tags</span>
+              {availableTags.map(([tag, count]) => {
+                const active = selectedTags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    onClick={() => toggleTag(tag)}
+                    className={cn(
+                      "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+                      active
+                        ? "bg-amber-500 text-white border-amber-500"
+                        : "bg-amber-50 text-amber-700 border-amber-200 hover:border-amber-400"
+                    )}
+                  >
+                    {tag} <span className={active ? "text-amber-100" : "text-amber-500"}>({count})</span>
+                  </button>
+                );
+              })}
+            </>
+          )}
+          <button
+            onClick={() => setFirstTimeOnly((v) => !v)}
+            className={cn(
+              "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors",
+              availableTags.length > 0 && "ml-1",
+              firstTimeOnly
+                ? "bg-blue-600 text-white border-blue-600"
+                : "bg-blue-50 text-blue-700 border-blue-200 hover:border-blue-400"
+            )}
+          >
+            <PhoneCall className="w-3 h-3" />
+            First-time Calls
+          </button>
         </div>
-      )}
+      </div>
 
       {/* Active-filter summary cards */}
       {(firstTimeOnly || selectedTags.length > 0) && (
