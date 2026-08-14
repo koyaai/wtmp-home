@@ -1,40 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { normalizeItem, daysOpen, ageLabel, buildMentions } from "../../shared/clientReportUtils.ts";
 
 const STALE_THRESHOLDS = { Outshine: 2, Rocketfuel: 2, Growth: 5, default: 5 };
 
 function getStaleThreshold(program) {
   return STALE_THRESHOLDS[program] ?? STALE_THRESHOLDS.default;
-}
-
-function normalizeItem(item) {
-  if (typeof item === "string") return { text: item, date: null, resolved: false };
-  return item;
-}
-
-const DAY_MS = 24 * 60 * 60 * 1000;
-
-// Days an item has been open on the client. Uses the item's own date if present
-// (flag raised / to-do due date), otherwise falls back to the insight's created date.
-function daysOpen(item, insight) {
-  const ref = item.date
-    ? new Date(item.date).getTime()
-    : insight?.created_date
-      ? new Date(insight.created_date).getTime()
-      : null;
-  if (!ref) return null;
-  return Math.max(0, Math.floor((Date.now() - ref) / DAY_MS));
-}
-
-function ageLabel(days) {
-  if (days === null) return "";
-  if (days === 0) return " · today";
-  if (days === 1) return " · 1 day open";
-  return ` · ${days} days open`;
-}
-
-function buildMentions(client) {
-  const ids = [client?.csm_slack_id, client?.csa_slack_id].filter(Boolean).map((id) => `<@${id}>`);
-  return ids.length ? ids.join(" ") : "";
 }
 
 function getLatestActivityDate(clientId, insights, updates, meetingNotes, onboardings) {
