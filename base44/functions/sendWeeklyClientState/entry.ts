@@ -3,17 +3,6 @@ import { normalizeItem, daysOpen, buildMentions, startOfDay, fmtNum, fmtMoney } 
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-// Aggregate LeadData records within a window
-function aggregateLeads(records, fromTime) {
-  const filtered = records.filter(r => r.report_date && new Date(r.report_date).getTime() >= fromTime);
-  return filtered.reduce((acc, r) => {
-    acc.new_leads += r.new_leads || 0;
-    acc.appointments_booked += r.appointments_booked || 0;
-    acc.closed_deals += r.closed_deals || 0;
-    return acc;
-  }, { new_leads: 0, appointments_booked: 0, closed_deals: 0 });
-}
-
 // Aggregate PPCData records within a window
 function aggregatePPC(records, fromTime) {
   const filtered = records.filter(r => r.report_date && new Date(r.report_date).getTime() >= fromTime);
@@ -79,12 +68,31 @@ export default async function(req) {
       });
       openTodos.sort((a, b) => (b.days ?? -1) - (a.days ?? -1));
 
-      // LeadData — only if client has GHL location
+      // LeadData — read synced GHL records: weekly snapshot (last 7 days) + monthly (MTD)
       let leads7 = null, leadsMTD = null;
       if (client.ghl_location_id) {
         const clientLeads = leadData.filter(r => r.client_id === client.id);
-        leads7 = aggregateLeads(clientLeads, sevenDaysAgo);
-        leadsMTD = aggregateLeads(clientLeads, monthStart);
+        // Weekly record: most recent record with report_date in the last 7 days
+        const weeklyRec = clientLeads
+          .filter(r => r.report_date && new Date(r.report_date + 'T12:00:00').getTime() >= sevenDaysAgo)
+          .sort((a, b) => new Date(b.report_date) - new Date(a.report_date))[0];
+        if (weeklyRec) {
+          leads7 = {
+            new_leads: weeklyRec.new_leads || 0,
+            closed_deals: weeklyRec.closed_deals || 0,
+            revenue: weeklyRec.revenue_generated || 0,
+          };
+        }
+        // Monthly record: report_date = 1st of current month
+        const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+        const monthRec = clientLeads.find(r => r.report_date === monthKey);
+        if (monthRec) {
+          leadsMTD = {
+            new_leads: monthRec.new_leads || 0,
+            closed_deals: monthRec.closed_deals || 0,
+            revenue: monthRec.revenue_generated || 0,
+          };
+        }
       }
 
       // PPCData — only if client has google_ads_account_id or any PPC record
@@ -97,7 +105,7 @@ export default async function(req) {
       }
 
       const hasOpenItems = openRedFlags.length > 0 || openTodos.length > 0;
-      const hasLeads = leads7 && (leads7.new_leads || leads7.appointments_booked || leads7.closed_deals || leadsMTD.new_leads || leadsMTD.appointments_booked || leadsMTD.closed_deals);
+      const hasLeads = (leads7 && (leads7.new_leads || leads7.closed_deals)) || (leadsMTD && (leadsMTD.new_leads || leadsMTD.closed_deals));
       const hasPPCData = ppc7 && (ppc7.spend || ppc7.clicks || ppcMTD.spend || ppcMTD.clicks);
 
       // Skip if nothing to report
@@ -134,9 +142,13 @@ export default async function(req) {
       }
 
       if (hasLeads) {
-        body += `\n📈 *Leads*\n`;
-        body += `*Last 7 Days:* ${fmtNum(leads7.new_leads)} new · ${fmtNum(leads7.appointments_booked)} booked · ${fmtNum(leads7.closed_deals)} closed\n`;
-        body += `*Month to Date:* ${fmtNum(leadsMTD.new_leads)} new · ${fmtNum(leadsMTD.appointments_booked)} booked · ${fmtNum(leadsMTD.closed_deals)} closed\n`;
+        body += `\n📈 *Leads (GHL)*\n`;
+        if (leads7) {
+          body += `*Last 7 Days:* ${fmtNum(leads7.new_leads)} new · ${fmtNum(leads7.closed_deals)} closed${leads7.revenue ? ` · ${fmtMoney(leads7.revenue)} rev` : ""}\n`;
+        }
+        if (leadsMTD) {
+          body += `*Month to Date:* ${fmtNum(leadsMTD.new_leads)} new · ${fmtNum(leadsMTD.closed_deals)} closed${leadsMTD.revenue ? ` · ${fmtMoney(leadsMTD.revenue)} rev` : ""}\n`;
+        }
       }
 
       if (hasPPCData) {

@@ -1,16 +1,25 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 /**
- * GHL Opportunity → LeadData field mapping (monthly rollup):
+ * GHL Opportunity → LeadData field mapping:
  *
- * opportunities created this month               → total_leads + new_leads
- * opportunities created this month with status "won" → closed_deals
- * sum of monetaryValue for those won opps          → revenue_generated
- * source breakdown JSON                          → lead_sources
+ * MONTHLY mode (default):
+ *   opportunities created this month          → total_leads + new_leads
+ *   opportunities created this month, "won"   → closed_deals
+ *   sum of monetaryValue for won opps          → revenue_generated
+ *   source breakdown JSON                      → lead_sources
+ *
+ * WEEKLY mode (mode: "weekly"):
+ *   opportunities created in the last 7 days   → total_leads + new_leads
+ *   those "won"                                → closed_deals
+ *   sum of monetaryValue for those won          → revenue_generated
+ *   report_date = today (the sync date)
  *
  * NOT mappable from GHL (must be entered manually):
  *   qualified_leads, appointments_booked, appointments_showed
  */
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 async function fetchOpportunities(locationId, apiKey) {
   const headers = {
@@ -50,17 +59,13 @@ Deno.serve(async (req) => {
 
     const db = base44.asServiceRole;
 
-    // Parse body FIRST so we can use all params
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
+    const mode = body.mode || "monthly"; // "monthly" (default) or "weekly"
 
     const now = new Date();
     const clientIdFilter = body.client_id || null;
     const targetYear = body.year ? Number(body.year) : now.getFullYear();
     const targetMonth = body.month !== undefined ? Number(body.month) : now.getMonth(); // 0-indexed
-    const monthStart = new Date(targetYear, targetMonth, 1);
-    const monthEnd = new Date(targetYear, targetMonth + 1, 1);
-    // Always use first day of the month as the canonical report_date key
-    const reportDate = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-01`;
 
     // Get all clients with GHL credentials (or just one if client_id is passed)
     const allClients = await db.entities.Client.list();
@@ -72,52 +77,53 @@ Deno.serve(async (req) => {
       return Response.json({ message: 'No clients with GHL credentials found.' });
     }
 
+    // Window boundaries
+    let monthStart, monthEnd, reportDate, windowStart;
+    if (mode === "weekly") {
+      // Last 7 days from now
+      windowStart = new Date(now.getTime() - 7 * DAY_MS);
+      reportDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    } else {
+      monthStart = new Date(targetYear, targetMonth, 1);
+      monthEnd = new Date(targetYear, targetMonth + 1, 1);
+      reportDate = `${targetYear}-${String(targetMonth + 1).padStart(2, '0')}-01`;
+    }
+
     const results = [];
 
     for (const client of ghlClients) {
       try {
         const opps = await fetchOpportunities(client.ghl_location_id, client.ghl_api_key);
 
-        // Filter to target month only (between monthStart and monthEnd)
-        const thisMonth = opps.filter(o => {
+        // Filter to the target window
+        const inWindow = opps.filter(o => {
           const d = new Date(o.createdAt || o.dateAdded || 0);
-          return d >= monthStart && d < monthEnd;
+          return mode === "weekly" ? d >= windowStart : (d >= monthStart && d < monthEnd);
         });
 
-        // total_leads = new leads created this month (not all-time pipeline count)
-        const totalLeads = thisMonth.length;
-        const newLeads = thisMonth.length;
+        const totalLeads = inWindow.length;
+        const newLeads = inWindow.length;
+        const wonInWindow = inWindow.filter(o => o.status === 'won');
+        const closedDeals = wonInWindow.length;
+        const revenueGenerated = wonInWindow.reduce((sum, o) => sum + (o.monetaryValue || 0), 0);
 
-        // Won deals = opportunities created this month that are currently "won"
-        // (matches the Lead Tracker's ghlLeads function logic)
-        const wonThisMonth = thisMonth.filter(o => o.status === 'won');
-        const closedDeals = wonThisMonth.length;
-        const revenueGenerated = wonThisMonth.reduce((sum, o) => sum + (o.monetaryValue || 0), 0);
-
-        // Source breakdown (this month only)
-        const sourceCounts = {};
-        const tagCounts = {};
-        const sessionSourceCounts = {};
-        for (const o of thisMonth) {
-          if (o.source) sourceCounts[o.source] = (sourceCounts[o.source] || 0) + 1;
-          const tags = (o.contact?.tags || o.tags || []).map(t => (typeof t === 'string' ? t : t?.name || '')).map(t => t.trim()).filter(Boolean);
-          for (const tag of tags) {
-            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+        // Source / tag / session breakdown (only populated for monthly mode to keep weekly light)
+        let leadSources, leadTags, leadSessionSources;
+        if (mode !== "weekly") {
+          const sourceCounts = {};
+          const tagCounts = {};
+          const sessionSourceCounts = {};
+          for (const o of inWindow) {
+            if (o.source) sourceCounts[o.source] = (sourceCounts[o.source] || 0) + 1;
+            const tags = (o.contact?.tags || o.tags || []).map(t => (typeof t === 'string' ? t : t?.name || '')).map(t => t.trim()).filter(Boolean);
+            for (const tag of tags) tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+            const ss = o.sessionSource || o.attributionSource || null;
+            if (ss) sessionSourceCounts[ss] = (sessionSourceCounts[ss] || 0) + 1;
           }
-          const ss = o.sessionSource || o.attributionSource || null;
-          if (ss) sessionSourceCounts[ss] = (sessionSourceCounts[ss] || 0) + 1;
+          leadSources = JSON.stringify(sourceCounts);
+          leadTags = JSON.stringify(tagCounts);
+          leadSessionSources = JSON.stringify(sessionSourceCounts);
         }
-        const leadSources = JSON.stringify(sourceCounts);
-        const leadTags = JSON.stringify(tagCounts);
-        const leadSessionSources = JSON.stringify(sessionSourceCounts);
-
-        // Find any existing LeadData record for this client in this calendar month
-        // Use T12:00:00 to avoid UTC midnight timezone shifts
-        const allClientRecords = await db.entities.LeadData.filter({ client_id: client.id });
-        const existing = allClientRecords.filter(r => {
-          const d = new Date(r.report_date + 'T12:00:00');
-          return d.getFullYear() === targetYear && d.getMonth() === targetMonth;
-        });
 
         const payload = {
           client_id: client.id,
@@ -126,25 +132,33 @@ Deno.serve(async (req) => {
           new_leads: newLeads,
           closed_deals: closedDeals,
           revenue_generated: revenueGenerated > 0 ? revenueGenerated : undefined,
-          lead_sources: leadSources,
-          lead_tags: leadTags,
-          lead_session_sources: leadSessionSources,
-          notes: `Auto-synced from GHL on ${new Date().toISOString().split('T')[0]}`,
+          ...(mode !== "weekly" ? {
+            lead_sources: leadSources,
+            lead_tags: leadTags,
+            lead_session_sources: leadSessionSources,
+          } : {}),
+          notes: mode === "weekly"
+            ? `Weekly GHL sync ${new Date().toISOString().split('T')[0]}`
+            : `Auto-synced from GHL on ${new Date().toISOString().split('T')[0]}`,
         };
+
+        // Find any existing LeadData record for this client on this exact report_date
+        const allClientRecords = await db.entities.LeadData.filter({ client_id: client.id });
+        const existing = allClientRecords.filter(r => r.report_date === reportDate);
 
         if (existing && existing.length > 0) {
           await db.entities.LeadData.update(existing[0].id, payload);
-          results.push({ client: client.name, action: 'updated', record_id: existing[0].id });
+          results.push({ client: client.name, mode, action: 'updated', record_id: existing[0].id });
         } else {
           const created = await db.entities.LeadData.create(payload);
-          results.push({ client: client.name, action: 'created', record_id: created.id });
+          results.push({ client: client.name, mode, action: 'created', record_id: created.id });
         }
       } catch (err) {
-        results.push({ client: client.name, action: 'error', error: err.message });
+        results.push({ client: client.name, mode, action: 'error', error: err.message });
       }
     }
 
-    return Response.json({ synced: results.length, results });
+    return Response.json({ mode, synced: results.length, results });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 200 });
   }
