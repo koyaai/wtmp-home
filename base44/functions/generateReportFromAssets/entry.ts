@@ -5,7 +5,7 @@ Deno.serve(async (req) => {
   const user = await base44.auth.me();
   if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { client_id, month, year, date_range, brightlocal_data: passedBrightlocalData } = await req.json();
+  const { client_id, month, year, date_range, brightlocal_data: passedBrightlocalData, prior_month_data } = await req.json();
   if (!client_id) return Response.json({ error: 'client_id is required' }, { status: 400 });
 
   const clients = await base44.asServiceRole.entities.Client.filter({ id: client_id });
@@ -185,6 +185,18 @@ Generate a client_scorecard block with a 2-3 sentence grade explanation and 2-4 
   const isLocalSEO = client.services?.includes('Local SEO') && !client.services?.includes('SEO');
   const retainerFee = client.retainer_fee || null;
 
+  const priorSection = prior_month_data ? `
+PREVIOUS MONTH REPORT CONTEXT (for month-over-month comparison):
+- Leads: ${prior_month_data.leads?.total_leads || 'N/A'}
+- Organic Clicks: ${prior_month_data.seo?.organic_clicks || 'N/A'}
+- Sessions: ${prior_month_data.seo?.ga4_metrics?.sessions || prior_month_data.seo?.organic_sessions || 'N/A'}
+- PPC Spend: ${prior_month_data.ppc?.total_spend || 'N/A'}
+- PPC Clicks: ${prior_month_data.ppc?.total_clicks || 'N/A'}
+- GBP Impressions: ${prior_month_data.seo?.gbp_metrics?.impressions || 'N/A'}
+- Avg Map Rank: ${prior_month_data.seo?.gbp_metrics?.avg_map_rank || 'N/A'}
+
+IMPORTANT: Use this prior-month data to write specific, data-driven narrative with concrete month-over-month comparisons. Reference actual numbers, e.g. "Leads grew 18% vs. last month (42 -> 50)". The executive_summary, wins, and combined_insights should cite real MoM changes, not generic statements.` : "";
+
   const prompt = `You are a senior digital marketing analyst at a window treatment marketing agency.
 
 Generate a professional monthly performance report for "${client.name}" covering ${month} ${year}.
@@ -200,6 +212,7 @@ CLIENT CONTEXT:
 - Website: ${client.website || 'Not specified'}
 - SEO Type: ${isLocalSEO ? 'Local SEO (GBP-focused)' : 'Full SEO'}
 
+${priorSection}
 STRICT RULES:
 1. ONLY use data explicitly provided above for ${month} ${year}. Do NOT invent, estimate, or fabricate any numbers.
 2. For the "leads" block: use the GHL data above verbatim. "total_leads" = "New Leads This Month" figure.

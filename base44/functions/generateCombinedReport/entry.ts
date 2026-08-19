@@ -14,6 +14,7 @@ Deno.serve(async (req) => {
     date_range,
     client_context,
     client_score,
+    prior_month_data,
   } = await req.json();
 
   const scoreSection = client_score ? `
@@ -28,6 +29,20 @@ CLIENT SCORECARD (CSM/CSA Evaluation for this period):
 - Roadblocks: ${client_score.roadblocks || "None"}
 
 Based on this scorecard, generate a client_scorecard block in the JSON with a friendly, professional 2-3 sentence explanation of why the client received this grade, and 2-4 specific, actionable improvement tips written directly to the client (use "you/your" tone). Be honest but encouraging.` : "";
+
+  const priorSection = prior_month_data ? `
+PREVIOUS MONTH REPORT CONTEXT (for month-over-month comparison):
+The previous month's report contained these key metrics:
+- Leads: ${prior_month_data.leads?.total_leads || 'N/A'}
+- Organic Clicks: ${prior_month_data.seo?.organic_clicks || 'N/A'}
+- Organic Sessions: ${prior_month_data.seo?.organic_sessions || prior_month_data.seo?.ga4_metrics?.sessions || 'N/A'}
+- PPC Spend: ${prior_month_data.ppc?.total_spend || 'N/A'}
+- PPC Clicks: ${prior_month_data.ppc?.total_clicks || 'N/A'}
+- GBP Impressions: ${prior_month_data.seo?.gbp_metrics?.impressions || 'N/A'}
+- Avg Map Rank: ${prior_month_data.seo?.gbp_metrics?.avg_map_rank || 'N/A'}
+- Executive Summary (prior): ${prior_month_data.executive_summary || 'N/A'}
+
+IMPORTANT: Use this prior-month data to write specific, data-driven narrative. Reference actual numbers and calculate month-over-month changes. For example: "Leads grew 18% vs. last month (42 -> 50)" or "Organic clicks declined from 1,200 to 980 (-18%)". The executive_summary, wins, and combined_insights should all reference concrete MoM changes when the data supports it. Do NOT use generic bullet points — every win and insight should cite the actual numbers and the direction of change.` : "";
 
   let prompt;
   const file_urls = [];
@@ -59,6 +74,7 @@ ${blSection}
 ${ppc_file_url ? `A PPC/Google Ads report PDF has also been provided as an attached file.` : `No PPC data was provided for this period.`}
 ${scoreSection}
 
+${priorSection}
 Generate a comprehensive combined marketing performance report focused on Local SEO (GBP) performance.`;
   } else {
     // Regular SEO mode: SEO PDF (or auto data) + PPC PDF
@@ -79,6 +95,7 @@ ${seo_file_url ? `1. An SEO performance report (first file)` : `1. No SEO PDF pr
 ${ppc_file_url ? `2. A PPC/Google Ads performance report (${seo_file_url ? "second" : "first"} file)` : `2. No PPC data provided.`}
 ${brightlocalSection}
 ${scoreSection}
+${priorSection}
 Analyze all provided data and generate a comprehensive combined marketing performance report in JSON format.`;
   }
 

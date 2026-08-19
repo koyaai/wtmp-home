@@ -6,6 +6,7 @@ import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, Arr
 import ScheduledReports from "@/components/reporting/ScheduledReports";
 import YTDSummary from "@/components/reporting/YTDSummary";
 import ClientSelect from "@/components/clients/ClientSelect";
+import { getPriorMonthYear } from "@/utils/reportComparison";
 import { toast } from "sonner";
 
 const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -401,6 +402,13 @@ export default function Reporting() {
     return results[0] || null;
   };
 
+  const getPriorMonthReportData = async (clientId, m, y) => {
+    const prior = getPriorMonthYear(m, y);
+    if (!prior) return null;
+    const results = await base44.entities.MonthlyReport.filter({ client_id: clientId, month: prior.month, year: prior.year });
+    return results[0]?.report_data || null;
+  };
+
   const handleStartNew = () => {
     setReport(null);
     setSavedReportId(null);
@@ -441,6 +449,8 @@ export default function Reporting() {
     const scoreResults = await base44.entities.ClientScore.filter({ client_id: selectedClient.id, month, year });
     const clientScore = scoreResults[0] || null;
 
+    const priorMonthData = await getPriorMonthReportData(selectedClient.id, month, year);
+
     let seoFileUrl = null;
     let ppcFileUrl = null;
     if (seoFile) {
@@ -466,6 +476,7 @@ export default function Reporting() {
         csm_assigned: clientData.csm_assigned,
       },
       client_score: clientScore,
+      prior_month_data: priorMonthData,
     });
 
     const reportData = res.data;
@@ -502,12 +513,14 @@ export default function Reporting() {
     if (!selectedClient) return;
     setUploading(true);
     setReport(null);
+    const priorMonthData = await getPriorMonthReportData(selectedClient.id, month, year);
     const res = await base44.functions.invoke('generateReportFromAssets', {
       client_id: selectedClient.id,
       month,
       year: Number(year),
       date_range: dateRange || `${month} ${year}`,
       brightlocal_data: brightlocalData || null,
+      prior_month_data: priorMonthData,
     });
     if (res.data?.error) {
       toast.error(res.data.error);
