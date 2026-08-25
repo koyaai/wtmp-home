@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Users, Eye, MousePointer, Clock } from "lucide-react";
+import { RefreshCw, Users, Eye, MousePointer, Clock, Activity } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
 
 function MetricCard({ label, value, icon: Icon, color }) {
@@ -98,8 +98,9 @@ export default function GADashboard({ client }) {
       </div>
 
       {/* Metric Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <MetricCard label="Sessions" value={latest?.sessions?.toLocaleString()} icon={MousePointer} color="bg-blue-500" />
+        <MetricCard label="Engaged Sessions" value={latest?.engaged_sessions?.toLocaleString()} icon={Activity} color="bg-cyan-500" />
         <MetricCard label="Users" value={latest?.users?.toLocaleString()} icon={Users} color="bg-violet-500" />
         <MetricCard label="Pageviews" value={latest?.pageviews?.toLocaleString()} icon={Eye} color="bg-emerald-500" />
         <MetricCard label="Avg. Session" value={fmtDuration(latest?.avg_session_duration)} icon={Clock} color="bg-amber-500" />
@@ -184,6 +185,7 @@ export default function GADashboard({ client }) {
                 <tr className="bg-slate-50 text-xs text-slate-500 font-semibold">
                   <th className="px-4 py-3 text-left">Period</th>
                   <th className="px-4 py-3 text-right">Sessions</th>
+                  <th className="px-4 py-3 text-right">Engaged</th>
                   <th className="px-4 py-3 text-right">Users</th>
                   <th className="px-4 py-3 text-right">Pageviews</th>
                   <th className="px-4 py-3 text-right">Bounce Rate</th>
@@ -195,6 +197,7 @@ export default function GADashboard({ client }) {
                   <tr key={d.id} className="hover:bg-slate-50">
                     <td className="px-4 py-3 text-slate-600">{d.period_start} – {d.period_end}</td>
                     <td className="px-4 py-3 text-right font-medium text-slate-800">{d.sessions?.toLocaleString() || "—"}</td>
+                    <td className="px-4 py-3 text-right text-slate-600">{d.engaged_sessions?.toLocaleString() || "—"}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{d.users?.toLocaleString() || "—"}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{d.pageviews?.toLocaleString() || "—"}</td>
                     <td className="px-4 py-3 text-right text-slate-600">{d.bounce_rate != null ? `${d.bounce_rate}%` : "—"}</td>

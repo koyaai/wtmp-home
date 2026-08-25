@@ -20,6 +20,10 @@
     "sessions": {
       "type": "number"
     },
+    "engaged_sessions": {
+      "type": "number",
+      "description": "GA4 engaged sessions"
+    },
     "users": {
       "type": "number"
     },
