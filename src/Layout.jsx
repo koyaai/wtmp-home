@@ -45,6 +45,7 @@ const navItems = [
       { label: "GBP Profiles", icon: MapPin, page: "GBPProfiles", roles: [...ADMIN_LIKE, "seo_specialist"] },
       { label: "GBP Calendar", icon: Sparkles, page: "GenerateGBPCalendar", roles: [...ADMIN_LIKE, "seo_specialist"] },
       { label: "GBP Connect", icon: Link2, page: "GBPConnect", roles: [...ADMIN_LIKE, "seo_specialist"] },
+      { label: "GA Dashboard", icon: BarChart2, page: "GADashboardOverview", roles: [...ADMIN_LIKE, "seo_specialist"] },
     ]
   },
   { label: "PPC", icon: MousePointerClick, page: "PPC", roles: [...ADMIN_LIKE, "ppc_specialist"] },

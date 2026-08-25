@@ -18,6 +18,7 @@ import ClientMemory from '@/pages/ClientMemory';
 import PostMortemArchive from '@/pages/PostMortemArchive';
 import UptimeMonitor from '@/pages/UptimeMonitor';
 import WebsiteDetail from '@/pages/WebsiteDetail';
+import GADashboardOverview from '@/pages/GADashboardOverview';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -83,6 +84,7 @@ const AuthenticatedApp = () => {
       <Route path="/ClientMemory" element={<LayoutWrapper currentPageName="ClientMemory"><ClientMemory /></LayoutWrapper>} />
       <Route path="/PostMortemArchive" element={<LayoutWrapper currentPageName="PostMortemArchive"><PostMortemArchive /></LayoutWrapper>} />
       <Route path="/UptimeMonitor" element={<LayoutWrapper currentPageName="UptimeMonitor"><UptimeMonitor /></LayoutWrapper>} />
+      <Route path="/GADashboardOverview" element={<LayoutWrapper currentPageName="GADashboardOverview"><GADashboardOverview /></LayoutWrapper>} />
       <Route path="/WebsiteDetail/:id" element={<LayoutWrapper currentPageName="UptimeMonitor"><WebsiteDetail /></LayoutWrapper>} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
