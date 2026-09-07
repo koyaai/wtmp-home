@@ -6,16 +6,19 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const { client_id, property_id, sync_months = 1 } = await req.json();
+    const { client_id, property_id, sync_months = 1, backfill = false } = await req.json();
     if (!client_id || !property_id) {
       return Response.json({ error: 'client_id and property_id are required' }, { status: 400 });
     }
 
     const { accessToken } = await base44.asServiceRole.connectors.getConnection('google_analytics');
 
-    // Build date ranges — one per month going back sync_months
+    // Build date ranges — one per month going back sync_months.
+    // In backfill mode, start from the previous month (skip the current/partial month)
+    // and only fill months that don't already have a record.
+    const startOffset = backfill ? 1 : 0;
     const ranges = [];
-    for (let i = 0; i < sync_months; i++) {
+    for (let i = startOffset; i < sync_months + startOffset; i++) {
       const end = new Date();
       end.setDate(1);
       end.setMonth(end.getMonth() - i);
@@ -30,8 +33,21 @@ Deno.serve(async (req) => {
     }
 
     const results = [];
+    const allGaRecords = await base44.asServiceRole.entities.GAData.filter({ client_id });
 
     for (const range of ranges) {
+      // In backfill mode, skip months that already have a record (deemed complete)
+      const targetYearGa = new Date(range.start + 'T12:00:00').getFullYear();
+      const targetMonthGa = new Date(range.start + 'T12:00:00').getMonth();
+      const existingGa = allGaRecords.find(r => {
+        const d = new Date(r.report_date + 'T12:00:00');
+        return d.getFullYear() === targetYearGa && d.getMonth() === targetMonthGa;
+      });
+      if (backfill && existingGa) {
+        results.push(existingGa);
+        continue;
+      }
+
       // Main metrics
       const metricsRes = await fetch(
         `https://analyticsdata.googleapis.com/v1beta/properties/${property_id}:runReport`,
@@ -139,14 +155,6 @@ Deno.serve(async (req) => {
         traffic_sources: trafficSources,
         notes: `Auto-synced from GA4. Period: ${range.start} to ${range.end}`,
       };
-
-      const allGaRecords = await base44.asServiceRole.entities.GAData.filter({ client_id });
-      const targetYearGa = new Date(range.start + 'T12:00:00').getFullYear();
-      const targetMonthGa = new Date(range.start + 'T12:00:00').getMonth();
-      const existingGa = allGaRecords.find(r => {
-        const d = new Date(r.report_date + 'T12:00:00');
-        return d.getFullYear() === targetYearGa && d.getMonth() === targetMonthGa;
-      });
 
       let record;
       if (existingGa) {

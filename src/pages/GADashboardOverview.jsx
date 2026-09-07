@@ -27,8 +27,7 @@ export default function GADashboardOverview() {
   const [selectedMonth, setSelectedMonth] = useState("");
   const [selectedSource, setSelectedSource] = useState("All Sources");
   const [clientSearch, setClientSearch] = useState("");
-  const [syncing, setSyncing] = useState(false);
-  const [syncProgress, setSyncProgress] = useState(null);
+  const [syncing, setSyncing] = useState(null);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -119,27 +118,27 @@ export default function GADashboardOverview() {
     return t;
   }, [rows]);
 
-  const handleSyncAll = async () => {
+  const runSync = async ({ sync_months, backfill, label }) => {
     const withGA = clients.filter(c => c.ga_property_id);
     if (withGA.length === 0) return;
-    setSyncing(true);
+    setSyncing({ label, done: 0, total: withGA.length, name: "" });
     let done = 0;
     for (const c of withGA) {
-      setSyncProgress({ done, total: withGA.length, name: c.name });
+      setSyncing({ label, done, total: withGA.length, name: c.name });
       try {
         await base44.functions.invoke("syncGA", {
           client_id: c.id,
           property_id: c.ga_property_id,
-          sync_months: 1,
+          sync_months,
+          backfill,
         });
       } catch {}
       done++;
     }
-    setSyncProgress({ done, total: withGA.length, name: "" });
+    setSyncing({ label, done, total: withGA.length, name: "" });
     const g = await base44.entities.GAData.list("-report_date", 500);
     setGaRecords(g);
-    setSyncing(false);
-    setSyncProgress(null);
+    setSyncing(null);
   };
 
   const statusDot = (status) => {
@@ -167,16 +166,32 @@ export default function GADashboardOverview() {
           </p>
         </div>
         {canEdit && (
-          <Button size="sm" variant="outline" onClick={handleSyncAll} disabled={syncing}>
-            <RefreshCw className={`w-3.5 h-3.5 mr-1 ${syncing ? "animate-spin" : ""}`} />
-            {syncing ? `Syncing ${syncProgress?.done}/${syncProgress?.total}...` : "Sync All (Current Month)"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => runSync({ sync_months: 1, backfill: false, label: "Current month" })}
+              disabled={!!syncing}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 mr-1 ${syncing?.label === "Current month" ? "animate-spin" : ""}`} />
+              Sync All (Current Month)
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => runSync({ sync_months: 12, backfill: true, label: "Backfill" })}
+              disabled={!!syncing}
+            >
+              <RefreshCw className={`w-3.5 h-3.5 mr-1 ${syncing?.label === "Backfill" ? "animate-spin" : ""}`} />
+              Backfill Previous Months
+            </Button>
+          </div>
         )}
       </div>
 
-      {syncing && syncProgress && (
+      {syncing && (
         <div className="text-xs text-slate-500">
-          Syncing <span className="font-medium text-slate-700">{syncProgress.name}</span> ({syncProgress.done}/{syncProgress.total})
+          {syncing.label}: <span className="font-medium text-slate-700">{syncing.name || "…"}</span> ({syncing.done}/{syncing.total})
         </div>
       )}
 
