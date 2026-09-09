@@ -27,7 +27,8 @@ import {
   BookOpen,
   FileText,
   Activity,
-  Archive
+  Archive,
+  HeartPulse
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +66,7 @@ const navItems = [
   { label: "Reporting", icon: BarChart2, page: "Reporting", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist", "lead_boomerang"] },
   { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: [...CSM_ROLES, "lead_boomerang"] },
   { label: "Uptime Monitor", icon: Activity, page: "UptimeMonitor", roles: [...CSM_ROLES] },
+  { label: "GHL Monitor", icon: HeartPulse, page: "GHLSubaccountMonitor", roles: [...CSM_ROLES] },
   { label: "Will's Corner", icon: Crown, page: "WillsCorner", roles: ["admin", "leadership"] },
   { label: "Client Memory", icon: BookOpen, page: "ClientMemory", roles: [...CSM_ROLES, "seo_specialist"] },
   { label: "Post-Mortem Archive", icon: Archive, page: "PostMortemArchive", roles: [...ADMIN_LIKE, "csm"] },
