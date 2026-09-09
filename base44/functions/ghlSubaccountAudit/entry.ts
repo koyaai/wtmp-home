@@ -9,8 +9,15 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
  * snapshot against global/per-client thresholds, and creates contextual
  * GHLAlert records for any breach.
  *
- * Metrics are best-effort against available GHL endpoints; any metric that
- * cannot be retrieved is stored as null / "unavailable" and is NOT alerted on.
+ * Endpoints verified against the live GHL API (services.leadconnectorhq.com):
+ *  - Forms submissions: GET /forms/submissions?locationId&startAt=YYYY-MM-DD&endAt=YYYY-MM-DD  (meta.total)
+ *  - Missed calls:       POST /contacts/search { locationId, pageLimit, page, filters:[{field:'tags',operator:'eq',value:tag}] }
+ *  - Unread convos:      GET /conversations/search?locationId&limit=100&page=N  (sum unreadCount, pagination capped)
+ *  - Calendar appts:     GET /calendars/appointments?locationId&startTime=<unix>&endTime=<unix>  (requires calendars.readonly scope)
+ *  - Workflows list:     GET /workflows/?locationId  (no execution-error field exposed by GHL → unavailable)
+ *  - Integration probes: forms / workflows / calendars / conversations  (calendars 401 = missing scope)
+ *
+ * Any metric that cannot be retrieved is stored as null / "unavailable" and is NOT alerted on.
  */
 
 const BASE = 'https://services.leadconnectorhq.com';
@@ -20,6 +27,7 @@ const GLOBAL_DEFAULTS = {
   missed_calls: 10,
   unread_conversations: 10,
   cancelled_resched_pct: 30, // percent of total appointments
+  missed_call_tag: 'missed-call',
 };
 
 const MONTH_NAMES = [
@@ -48,6 +56,10 @@ async function ghlPost(apiKey, path, body) {
   });
 }
 
+function ymd(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 function safeParse(str) {
   if (!str) return [];
   try { return JSON.parse(str); } catch { return []; }
@@ -56,35 +68,22 @@ function safeParse(str) {
 // ---------- Per-metric fetchers (each best-effort, returns null on failure) ----------
 
 async function fetchFormSubmissions(apiKey, locationId, start, end) {
-  const formsRes = await ghlGet(apiKey, `/forms?locationId=${locationId}`);
-  if (!formsRes.ok) return null;
-  const formsData = await formsRes.json();
-  const forms = formsData.forms || [];
-  let total = 0;
-  const startTs = Math.floor(start.getTime() / 1000);
-  const endTs = Math.floor(end.getTime() / 1000);
-  for (const f of forms.slice(0, 25)) {
-    const id = f.id || f._id || f.formId;
-    if (!id) continue;
-    try {
-      const sRes = await ghlGet(
-        apiKey,
-        `/forms/${id}/submissions?limit=100&startAt=${startTs}&endAt=${endTs}`,
-      );
-      if (!sRes.ok) continue;
-      const sData = await sRes.json();
-      total += (sData.submissions || sData || []).length;
-    } catch {}
-  }
-  return total;
+  const res = await ghlGet(
+    apiKey,
+    `/forms/submissions?locationId=${locationId}&page=1&limit=100&startAt=${ymd(start)}&endAt=${ymd(end)}`,
+  );
+  if (!res.ok) return null;
+  const data = await res.json();
+  return data.meta?.total != null ? data.meta.total : (data.submissions || []).length;
 }
 
 async function fetchCalendarEvents(apiKey, locationId, start, end) {
+  // Requires calendars.readonly scope on the location API key (401 otherwise).
   const startTs = Math.floor(start.getTime() / 1000);
   const endTs = Math.floor(end.getTime() / 1000);
   const res = await ghlGet(
     apiKey,
-    `/calendars/events/appointments?locationId=${locationId}&startTime=${startTs}&endTime=${endTs}`,
+    `/calendars/appointments?locationId=${locationId}&startTime=${startTs}&endTime=${endTs}`,
   );
   if (!res.ok) return null;
   const data = await res.json();
@@ -101,92 +100,62 @@ async function fetchCalendarEvents(apiKey, locationId, start, end) {
 }
 
 async function fetchUnreadConversations(apiKey, locationId) {
-  const res = await ghlGet(
-    apiKey,
-    `/conversations/search?locationId=${locationId}&status=unread&limit=100`,
-  );
-  if (!res.ok) return null;
-  const data = await res.json();
-  return data.total != null ? data.total : (data.conversations || []).length;
-}
-
-async function fetchWorkflowErrors(apiKey, locationId) {
-  const res = await ghlGet(apiKey, `/workflows?locationId=${locationId}`);
-  if (!res.ok) return null;
-  const data = await res.json();
-  const wfs = data.workflows || data || [];
-  let errCount = 0;
-  const names = [];
-  for (const w of wfs) {
-    const hasErr =
-      (w.errors && w.errors.length > 0) ||
-      w.errorCount > 0 ||
-      w.status === 'error' ||
-      w.health === 'error';
-    if (hasErr) {
-      errCount++;
-      names.push(w.name || w.id);
+  let unread = 0;
+  let total = null;
+  const seen = new Set();
+  let firstId = null;
+  for (let page = 1; page <= 5; page++) {
+    const res = await ghlGet(apiKey, `/conversations/search?locationId=${locationId}&limit=100&page=${page}`);
+    if (!res.ok) return null;
+    const data = await res.json();
+    const convs = data.conversations || [];
+    if (convs.length === 0) break;
+    if (firstId === null) firstId = convs[0].id;
+    else if (convs[0].id === firstId) break; // pagination param ignored — stop to avoid double counting
+    if (data.meta?.total != null) total = data.meta.total;
+    let added = 0;
+    for (const c of convs) {
+      if (seen.has(c.id)) continue;
+      seen.add(c.id);
+      added++;
+      if ((c.unreadCount || 0) > 0) unread++;
     }
+    if (added === 0) break;
+    if (convs.length < 100) break;
   }
-  return { count: errCount, names };
+  return { unread, capped: total != null && total > seen.size };
 }
 
-async function fetchMissedCalls(apiKey, locationId, start, end) {
-  let all = [];
-  let page = 0;
-  let hasMore = true;
-  while (hasMore && page < 5) {
+async function fetchMissedCalls(apiKey, locationId, start, end, tag) {
+  let count = 0;
+  let hasMore = false;
+  for (let page = 0; page < 10; page++) {
     const body = {
       locationId,
-      filters: [{ id: 'tags', operator: 'exists', value: 'missed-call' }],
-      limit: 100,
-      skip: page * 100,
+      pageLimit: 100,
+      page,
+      filters: [{ field: 'tags', operator: 'eq', value: tag }],
     };
     const res = await ghlPost(apiKey, '/contacts/search', body);
     if (!res.ok) return null;
     const data = await res.json();
     const contacts = data.contacts || [];
-    all = all.concat(contacts);
-    hasMore = contacts.length === 100;
-    page++;
+    for (const c of contacts) {
+      const d = new Date(c.dateAdded || c.createdAt || c.dateCreated || 0);
+      if (d >= start && d < end) count++;
+    }
+    if (contacts.length < 100) { hasMore = false; break; }
+    hasMore = true;
   }
-  const tagged = all.filter((c) =>
-    (c.tags || []).some((t) => (typeof t === 'string' ? t : t?.name || '') === 'missed-call'),
-  );
-  const inWin = tagged.filter((c) => {
-    const d = new Date(c.dateAdded || c.dateCreated || c.createdAt || 0);
-    return d >= start && d < end;
-  });
-  return inWin.length;
-}
-
-async function fetchDeliverability(apiKey, locationId, start, end, type) {
-  const startTs = Math.floor(start.getTime() / 1000);
-  const endTs = Math.floor(end.getTime() / 1000);
-  const path =
-    type === 'email'
-      ? `/emails?locationId=${locationId}&startTime=${startTs}&endTime=${endTs}&limit=100`
-      : `/sms/messages?locationId=${locationId}&startTime=${startTs}&endTime=${endTs}&limit=100`;
-  const res = await ghlGet(apiKey, path);
-  if (!res.ok) return null;
-  const data = await res.json();
-  const recs = data.emails || data.messages || data.sms || data || [];
-  if (!Array.isArray(recs) || recs.length === 0) return null;
-  const failed = recs.filter((r) =>
-    /fail|bounce|error|undeliver/i.test(String(r.status || r.deliveryStatus || '')),
-  ).length;
-  const rate = failed / recs.length;
-  if (rate > 0.2) return 'failed';
-  if (rate > 0.05) return 'warning';
-  return 'good';
+  return { count, capped: hasMore };
 }
 
 async function fetchIntegrationHealth(apiKey, locationId) {
   const probes = [
-    { name: 'Calendar', path: `/calendars?locationId=${locationId}` },
-    { name: 'Payment Providers', path: `/payments/providers?locationId=${locationId}` },
-    { name: 'Phone Numbers', path: `/locations/${locationId}/numbers` },
-    { name: 'Custom Fields', path: `/custom-fields?locationId=${locationId}` },
+    { name: 'Forms', path: `/forms/?locationId=${locationId}` },
+    { name: 'Workflows', path: `/workflows/?locationId=${locationId}` },
+    { name: 'Calendars', path: `/calendars/?locationId=${locationId}` },
+    { name: 'Conversations', path: `/conversations/search?locationId=${locationId}&limit=1` },
   ];
   const issues = [];
   let anyOk = false;
@@ -199,13 +168,12 @@ async function fetchIntegrationHealth(apiKey, locationId) {
       continue;
     }
     if (res.status === 401 || res.status === 403) {
-      issues.push({ integration: p.name, status: 'auth_failure', error: `HTTP ${res.status}` });
+      issues.push({ integration: p.name, status: 'auth_failure', error: `HTTP ${res.status} (missing scope)` });
     } else if (res.status >= 500) {
       issues.push({ integration: p.name, status: 'error', error: `HTTP ${res.status}` });
     } else if (res.ok) {
       anyOk = true;
     }
-    // 404 / 4xx other than auth = integration not present, not an error
   }
   const status = issues.length > 0 ? 'issue' : anyOk ? 'healthy' : 'unavailable';
   return { status, issues };
@@ -216,6 +184,8 @@ async function fetchIntegrationHealth(apiKey, locationId) {
 async function auditClient(client, monthStart, monthEnd) {
   const apiKey = client.ghl_api_key;
   const locationId = client.ghl_location_id;
+  const missedCallTag = client.ghl_missed_call_tag || GLOBAL_DEFAULTS.missed_call_tag;
+
   const report = {
     form_submissions: null,
     cal_new: 0,
@@ -223,10 +193,10 @@ async function auditClient(client, monthStart, monthEnd) {
     cal_cancelled: 0,
     cal_rescheduled: 0,
     unread_conversations: null,
-    workflows_with_errors: null,
+    workflows_with_errors: null, // GHL API does not expose workflow execution errors
     workflow_error_names: null,
     calls_missed: null,
-    email_deliverability: 'unavailable',
+    email_deliverability: 'unavailable', // no GHL endpoint for deliverability status
     sms_deliverability: 'unavailable',
     integration_status: 'unavailable',
     integration_issues: null,
@@ -245,25 +215,12 @@ async function auditClient(client, monthStart, monthEnd) {
     }
   } catch {}
   try {
-    report.unread_conversations = await fetchUnreadConversations(apiKey, locationId);
+    const uc = await fetchUnreadConversations(apiKey, locationId);
+    if (uc) report.unread_conversations = uc.unread;
   } catch {}
   try {
-    const wf = await fetchWorkflowErrors(apiKey, locationId);
-    if (wf) {
-      report.workflows_with_errors = wf.count;
-      if (wf.count > 0) report.workflow_error_names = JSON.stringify(wf.names);
-    }
-  } catch {}
-  try {
-    report.calls_missed = await fetchMissedCalls(apiKey, locationId, monthStart, monthEnd);
-  } catch {}
-  try {
-    const ed = await fetchDeliverability(apiKey, locationId, monthStart, monthEnd, 'email');
-    if (ed) report.email_deliverability = ed;
-  } catch {}
-  try {
-    const sd = await fetchDeliverability(apiKey, locationId, monthStart, monthEnd, 'sms');
-    if (sd) report.sms_deliverability = sd;
+    const mc = await fetchMissedCalls(apiKey, locationId, monthStart, monthEnd, missedCallTag);
+    if (mc) report.calls_missed = mc.count;
   } catch {}
   try {
     const ih = await fetchIntegrationHealth(apiKey, locationId);
@@ -291,7 +248,6 @@ function buildAlerts(client, report, prior, thresholds, monthKey, monthName, yea
       resolved: false,
     });
 
-  // Missed calls
   if (report.calls_missed != null) {
     const mc = report.calls_missed;
     const prev = prior?.calls_missed ?? null;
@@ -311,7 +267,6 @@ function buildAlerts(client, report, prior, thresholds, monthKey, monthName, yea
     }
   }
 
-  // Unread conversations
   if (report.unread_conversations != null) {
     const u = report.unread_conversations;
     if (u >= thresholds.unread_conversations) {
@@ -322,7 +277,6 @@ function buildAlerts(client, report, prior, thresholds, monthKey, monthName, yea
     }
   }
 
-  // Workflow errors
   if (report.workflows_with_errors != null && report.workflows_with_errors > 0) {
     const names = safeParse(report.workflow_error_names);
     push(
@@ -332,23 +286,13 @@ function buildAlerts(client, report, prior, thresholds, monthKey, monthName, yea
     );
   }
 
-  // Email / SMS deliverability
   if (report.email_deliverability === 'warning' || report.email_deliverability === 'failed') {
-    push(
-      'email_deliverability',
-      report.email_deliverability === 'failed' ? 'critical' : 'warning',
-      `Email deliverability status is ${report.email_deliverability}.`,
-    );
+    push('email_deliverability', report.email_deliverability === 'failed' ? 'critical' : 'warning', `Email deliverability status is ${report.email_deliverability}.`);
   }
   if (report.sms_deliverability === 'warning' || report.sms_deliverability === 'failed') {
-    push(
-      'sms_deliverability',
-      report.sms_deliverability === 'failed' ? 'critical' : 'warning',
-      `SMS deliverability status is ${report.sms_deliverability}.`,
-    );
+    push('sms_deliverability', report.sms_deliverability === 'failed' ? 'critical' : 'warning', `SMS deliverability status is ${report.sms_deliverability}.`);
   }
 
-  // Cancelled + rescheduled share spike
   const totalAppts =
     (report.cal_new || 0) + (report.cal_confirmed || 0) + (report.cal_cancelled || 0) + (report.cal_rescheduled || 0);
   if (totalAppts > 0) {
@@ -360,10 +304,7 @@ function buildAlerts(client, report, prior, thresholds, monthKey, monthName, yea
     const prevCr = prior ? (prior.cal_cancelled || 0) + (prior.cal_rescheduled || 0) : 0;
     const prevPct = prevTotal > 0 ? (prevCr / prevTotal) * 100 : null;
     if (pct >= thresholds.cancelled_resched_pct && (prevPct == null || pct > prevPct + 10)) {
-      const delta =
-        prevPct != null
-          ? ` vs ${prevPct.toFixed(0)}% prior month (+${(pct - prevPct).toFixed(0)}pp)`
-          : '';
+      const delta = prevPct != null ? ` vs ${prevPct.toFixed(0)}% prior month (+${(pct - prevPct).toFixed(0)}pp)` : '';
       push(
         'cancelled_rescheduled',
         'warning',
@@ -372,7 +313,6 @@ function buildAlerts(client, report, prior, thresholds, monthKey, monthName, yea
     }
   }
 
-  // Integration issues
   if (report.integration_status === 'issue') {
     const issues = safeParse(report.integration_issues);
     for (const it of issues) {
@@ -399,7 +339,6 @@ Deno.serve(async (req) => {
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const clientIdFilter = body.client_id || null;
 
-    // Default to prior month
     const now = new Date();
     const defaultPrior = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const targetYear = body.year != null ? Number(body.year) : defaultPrior.getFullYear();
@@ -431,7 +370,6 @@ Deno.serve(async (req) => {
       try {
         const report = await auditClient(client, monthStart, monthEnd);
 
-        // Upsert GHLMonthlyReport by client + month_key
         const existing = await db.entities.GHLMonthlyReport.filter({ client_id: client.id });
         const match = existing.find((r) => r.month_key === monthKey);
         const prior = existing.find((r) => r.month_key === prevKey);
@@ -453,7 +391,6 @@ Deno.serve(async (req) => {
           recordId = created.id;
         }
 
-        // Thresholds (per-client overrides fall back to global defaults)
         const thresholds = {
           missed_calls:
             client.ghl_threshold_missed_calls != null ? client.ghl_threshold_missed_calls : GLOBAL_DEFAULTS.missed_calls,
@@ -469,7 +406,6 @@ Deno.serve(async (req) => {
 
         const alerts = buildAlerts(client, report, prior, thresholds, monthKey, monthName, targetYear);
 
-        // Replace only unresolved alerts for this client + month (preserve resolved ones)
         const oldAlerts = await db.entities.GHLAlert.filter({ client_id: client.id });
         const stale = oldAlerts.filter((a) => a.month_key === monthKey && !a.resolved);
         for (const a of stale) await db.entities.GHLAlert.delete(a.id);

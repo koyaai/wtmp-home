@@ -18,6 +18,7 @@ export default function GHLAuditSettingsModal({ client, open, onClose, onSaved }
   const [missed, setMissed] = useState("");
   const [unread, setUnread] = useState("");
   const [crPct, setCrPct] = useState("");
+  const [missedTag, setMissedTag] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -26,6 +27,7 @@ export default function GHLAuditSettingsModal({ client, open, onClose, onSaved }
       setMissed(client.ghl_threshold_missed_calls != null ? String(client.ghl_threshold_missed_calls) : "");
       setUnread(client.ghl_threshold_unread_conversations != null ? String(client.ghl_threshold_unread_conversations) : "");
       setCrPct(client.ghl_threshold_cancelled_resched_pct != null ? String(client.ghl_threshold_cancelled_resched_pct) : "");
+      setMissedTag(client.ghl_missed_call_tag || "");
     }
   }, [client]);
 
@@ -37,6 +39,7 @@ export default function GHLAuditSettingsModal({ client, open, onClose, onSaved }
         ghl_threshold_missed_calls: missed === "" ? null : Number(missed),
         ghl_threshold_unread_conversations: unread === "" ? null : Number(unread),
         ghl_threshold_cancelled_resched_pct: crPct === "" ? null : Number(crPct),
+        ghl_missed_call_tag: missedTag || null,
       };
       await base44.entities.Client.update(client.id, payload);
       onSaved();
@@ -74,6 +77,10 @@ export default function GHLAuditSettingsModal({ client, open, onClose, onSaved }
           <div>
             <Label>Cancelled/Rescheduled share % ({DEFAULT_THRESHOLDS.cancelled_resched_pct})</Label>
             <Input type="number" value={crPct} onChange={(e) => setCrPct(e.target.value)} placeholder={String(DEFAULT_THRESHOLDS.cancelled_resched_pct)} />
+          </div>
+          <div>
+            <Label>Missed-call tag (default "{DEFAULT_THRESHOLDS.missed_call_tag}")</Label>
+            <Input value={missedTag} onChange={(e) => setMissedTag(e.target.value)} placeholder={DEFAULT_THRESHOLDS.missed_call_tag} />
           </div>
         </div>
 

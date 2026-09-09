@@ -118,6 +118,10 @@
       "type": "number",
       "description": "Per-subaccount override for cancelled+rescheduled appointment share % threshold (global default 30)"
     },
+    "ghl_missed_call_tag": {
+      "type": "string",
+      "description": "GHL contact tag used to count missed calls (default 'missed-call')"
+    },
     "google_ads_account_id": {
       "type": "string"
     },
