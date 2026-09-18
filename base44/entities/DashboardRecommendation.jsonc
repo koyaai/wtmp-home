@@ -1,0 +1,166 @@
+{
+  "name": "DashboardRecommendation",
+  "properties": {
+    "body": {
+      "description": "Card body, one or two sentences",
+      "type": "string"
+    },
+    "client_id": {
+      "description": "Reference to Client",
+      "type": "string"
+    },
+    "client_name": {
+      "description": "Client name for display",
+      "type": "string"
+    },
+    "generated_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "generated_cycle": {
+      "description": "YYYY-MM-DD of the generation run, so a cycle can be superseded as a set",
+      "type": "string"
+    },
+    "review_note": {
+      "description": "INTERNAL ONLY. Why it was rejected or edited.",
+      "type": "string"
+    },
+    "reviewed_at": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "reviewed_by": {
+      "description": "Email of the CSM who approved or rejected",
+      "type": "string"
+    },
+    "source_context": {
+      "description": "INTERNAL ONLY. What the draft was based on, so the reviewing CSM can judge it. Never exported.",
+      "type": "string"
+    },
+    "status": {
+      "default": "draft",
+      "description": "Only 'approved' is ever exported to the client dashboard.",
+      "enum": [
+        "draft",
+        "approved",
+        "rejected",
+        "superseded"
+      ],
+      "type": "string"
+    },
+    "tagClass": {
+      "default": "act",
+      "description": "Maps to the dashboard card style. Constrained to the four the front-end knows.",
+      "enum": [
+        "win",
+        "growth",
+        "rev",
+        "act"
+      ],
+      "type": "string"
+    },
+    "tagLabel": {
+      "description": "Badge text, e.g. 'Growth Opportunity'",
+      "type": "string"
+    },
+    "title": {
+      "description": "Card headline",
+      "type": "string"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "title",
+    "body"
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "leadership"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "team_lead"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "csm"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "leadership"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "leadership"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "team_lead"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "csm"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "leadership"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "team_lead"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "csm"
+          }
+        }
+      ]
+    }
+  },
+  "type": "object"
+}

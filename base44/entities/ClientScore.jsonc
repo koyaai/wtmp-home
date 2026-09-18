@@ -1,163 +1,166 @@
 {
   "name": "ClientScore",
-  "type": "object",
   "properties": {
+    "attended_meetings": {
+      "description": "Grade for attendance to monthly meetings",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "type": "string"
+    },
+    "attended_meetings_notes": {
+      "description": "Context notes for attendance grade",
+      "type": "string"
+    },
+    "author": {
+      "description": "Who filled this out",
+      "type": "string"
+    },
+    "clarity_of_requests": {
+      "description": "Grade for clarity of requests",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "type": "string"
+    },
+    "clarity_of_requests_notes": {
+      "description": "Context notes for clarity of requests grade",
+      "type": "string"
+    },
     "client_id": {
-      "type": "string",
-      "description": "Reference to Client"
+      "description": "Reference to Client",
+      "type": "string"
     },
     "client_name": {
       "type": "string"
     },
+    "client_portal_engagement": {
+      "description": "Grade for client portal engagement",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "type": "string"
+    },
+    "client_portal_engagement_notes": {
+      "description": "Context notes for client portal engagement grade",
+      "type": "string"
+    },
+    "communication_frequency": {
+      "description": "Grade for communication frequency",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "type": "string"
+    },
+    "communication_frequency_notes": {
+      "description": "Context notes for communication frequency grade",
+      "type": "string"
+    },
+    "lead_handling": {
+      "description": "Grade for lead handling",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "type": "string"
+    },
+    "lead_handling_notes": {
+      "description": "Context notes for lead handling grade",
+      "type": "string"
+    },
+    "leadboomerang_usage": {
+      "description": "Grade for Leadboomerang usage",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "type": "string"
+    },
+    "leadboomerang_usage_notes": {
+      "description": "Context notes for Leadboomerang usage grade",
+      "type": "string"
+    },
     "month": {
-      "type": "string",
-      "description": "e.g. January"
+      "description": "e.g. January",
+      "type": "string"
+    },
+    "month_key": {
+      "description": "YYYY-MM, derived from month + year (e.g. 2026-08). The stable key for one client's month: join and de-duplicate on client_id + month_key rather than on the display month name. NOT unique yet \u2014 duplicate records exist for the same client and month (see SCORECARD-INTEGRATION.md, B3) and must be merged before a uniqueness constraint can be added. Backfilled across all 86 existing records 2026-09-18.",
+      "type": "string"
+    },
+    "notes": {
+      "description": "CSM/CSA notes",
+      "type": "string"
+    },
+    "overall_grade": {
+      "description": "Overall client grade",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "type": "string"
+    },
+    "project_posts_submission": {
+      "description": "Grade for project post submissions",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "type": "string"
+    },
+    "project_posts_submission_notes": {
+      "description": "Context notes for project posts grade",
+      "type": "string"
+    },
+    "responsiveness": {
+      "description": "Grade for responsiveness to requests",
+      "enum": [
+        "A",
+        "B",
+        "C",
+        "D",
+        "F"
+      ],
+      "type": "string"
+    },
+    "responsiveness_notes": {
+      "description": "Context notes for responsiveness grade",
+      "type": "string"
+    },
+    "roadblocks": {
+      "description": "Existing roadblocks",
+      "type": "string"
     },
     "year": {
       "type": "number"
-    },
-    "attended_meetings": {
-      "type": "string",
-      "enum": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "F"
-      ],
-      "description": "Grade for attendance to monthly meetings"
-    },
-    "attended_meetings_notes": {
-      "type": "string",
-      "description": "Context notes for attendance grade"
-    },
-    "responsiveness": {
-      "type": "string",
-      "enum": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "F"
-      ],
-      "description": "Grade for responsiveness to requests"
-    },
-    "responsiveness_notes": {
-      "type": "string",
-      "description": "Context notes for responsiveness grade"
-    },
-    "client_portal_engagement": {
-      "type": "string",
-      "enum": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "F"
-      ],
-      "description": "Grade for client portal engagement"
-    },
-    "client_portal_engagement_notes": {
-      "type": "string",
-      "description": "Context notes for client portal engagement grade"
-    },
-    "project_posts_submission": {
-      "type": "string",
-      "enum": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "F"
-      ],
-      "description": "Grade for project post submissions"
-    },
-    "project_posts_submission_notes": {
-      "type": "string",
-      "description": "Context notes for project posts grade"
-    },
-    "lead_handling": {
-      "type": "string",
-      "enum": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "F"
-      ],
-      "description": "Grade for lead handling"
-    },
-    "lead_handling_notes": {
-      "type": "string",
-      "description": "Context notes for lead handling grade"
-    },
-    "communication_frequency": {
-      "type": "string",
-      "enum": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "F"
-      ],
-      "description": "Grade for communication frequency"
-    },
-    "communication_frequency_notes": {
-      "type": "string",
-      "description": "Context notes for communication frequency grade"
-    },
-    "clarity_of_requests": {
-      "type": "string",
-      "enum": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "F"
-      ],
-      "description": "Grade for clarity of requests"
-    },
-    "clarity_of_requests_notes": {
-      "type": "string",
-      "description": "Context notes for clarity of requests grade"
-    },
-    "leadboomerang_usage": {
-      "type": "string",
-      "enum": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "F"
-      ],
-      "description": "Grade for Leadboomerang usage"
-    },
-    "leadboomerang_usage_notes": {
-      "type": "string",
-      "description": "Context notes for Leadboomerang usage grade"
-    },
-    "overall_grade": {
-      "type": "string",
-      "enum": [
-        "A",
-        "B",
-        "C",
-        "D",
-        "F"
-      ],
-      "description": "Overall client grade"
-    },
-    "notes": {
-      "type": "string",
-      "description": "CSM/CSA notes"
-    },
-    "roadblocks": {
-      "type": "string",
-      "description": "Existing roadblocks"
-    },
-    "author": {
-      "type": "string",
-      "description": "Who filled this out"
     }
   },
   "required": [
@@ -165,5 +168,6 @@
     "client_name",
     "month",
     "year"
-  ]
+  ],
+  "type": "object"
 }
