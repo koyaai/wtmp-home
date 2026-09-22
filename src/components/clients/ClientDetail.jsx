@@ -13,6 +13,7 @@ import WillsMeetings from "@/components/clients/WillsMeetings";
 import ClientPostMortem from "@/components/clients/ClientPostMortem";
 import ClientOnboarding from "@/components/clients/ClientOnboarding";
 import ClientUptime from "@/components/uptime/ClientUptime";
+import ClientContacts from "@/components/clients/ClientContacts";
 
 
 const programColors = {
@@ -43,7 +44,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
 
   const showFinancials = ["leadership"].includes(userRole);
 
-  const tabs = ["snapshot", "onboarding", "overview", "tracker", "uptime", "meetings", "updates", "score", "will", ...(["churned", "offboarded"].includes(client.status) ? ["postmortem"] : [])];
+  const tabs = ["snapshot", "onboarding", "overview", "contacts", "tracker", "uptime", "meetings", "updates", "score", "will", ...(["churned", "offboarded"].includes(client.status) ? ["postmortem"] : [])];
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-5">
@@ -130,7 +131,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
         {tabs.map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`flex-1 text-sm py-2 rounded-lg font-medium capitalize transition-colors ${activeTab === tab ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-            {tab === "updates" ? "CSM Updates" : tab === "tracker" ? "Tracker" : tab === "snapshot" ? "Dashboard" : tab === "score" ? "Client Score" : tab === "will" ? "Will's Meetings" : tab === "postmortem" ? "Post-Mortem" : tab === "onboarding" ? "Onboarding" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === "updates" ? "CSM Updates" : tab === "tracker" ? "Tracker" : tab === "snapshot" ? "Dashboard" : tab === "score" ? "Client Score" : tab === "will" ? "Will's Meetings" : tab === "postmortem" ? "Post-Mortem" : tab === "onboarding" ? "Onboarding" : tab === "contacts" ? "Contacts" : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
@@ -138,6 +139,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
       {/* Tab Content */}
       {activeTab === "snapshot" && <ClientSnapshot clientId={client.id} />}
       {activeTab === "onboarding" && <ClientOnboarding client={client} />}
+      {activeTab === "contacts" && <ClientContacts client={client} canEdit={canEdit} />}
 
       {activeTab === "overview" && (
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">

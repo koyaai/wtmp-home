@@ -1,0 +1,236 @@
+{
+  "name": "ClientContact",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name for display"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "Contact full name"
+    },
+    "preferred_name": {
+      "type": "string",
+      "description": "Preferred name / nickname"
+    },
+    "email": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "questionnaire": {
+      "type": "object",
+      "description": "Raw questionnaire answers keyed by section",
+      "properties": {
+        "client_snapshot": {
+          "type": "object"
+        },
+        "communication_profile": {
+          "type": "object"
+        },
+        "working_relationship": {
+          "type": "object"
+        },
+        "personality_insights": {
+          "type": "object"
+        },
+        "csm_notes": {
+          "type": "object"
+        }
+      }
+    },
+    "ai_sheet": {
+      "type": "object",
+      "description": "AI-structured Quick Client Prep sheet",
+      "properties": {
+        "three_words": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "energy_type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "how_to_approach": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "do_appreciate": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "frustrates_them": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "avoid": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "pinned_things_to_know": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "recent_wins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "life_updates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "personality_summary": {
+          "type": "string"
+        }
+      }
+    },
+    "timeline_notes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "note": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "created_by_name": {
+      "type": "string",
+      "description": "Author display name"
+    }
+  },
+  "required": [
+    "client_id",
+    "full_name"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "leadership"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "team_lead"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "csm"
+          }
+        }
+      ]
+    },
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "leadership"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "team_lead"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "csm"
+          }
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "leadership"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "team_lead"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "csm"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "leadership"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "team_lead"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "csm"
+          }
+        }
+      ]
+    }
+  }
+}
