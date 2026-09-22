@@ -40,6 +40,16 @@ function fullMonthLabel(key) {
   return new Date(`${y}-${m}-01T12:00:00`).toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
+function periodLabel(d) {
+  if (!d) return "";
+  const pt = d.period_type || "month";
+  if (pt === "week") {
+    const s = new Date((d.period_start || d.report_date) + "T12:00:00");
+    return s.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+  return fullMonthLabel(monthKey(d));
+}
+
 function pctChange(curr, prev) {
   if (curr == null || prev == null || prev === 0) return null;
   return ((curr - prev) / prev) * 100;
@@ -109,7 +119,12 @@ export default function ClientGADashboard() {
 
   // GA records sorted ascending by period, filtered to range
   const gaAsc = useMemo(() => [...gaRecords].sort((a, b) => (monthKey(a)).localeCompare(monthKey(b))), [gaRecords]);
-  const gaInRange = useMemo(() => gaAsc.slice(-rangeMonths), [gaAsc, rangeMonths]);
+  const gaInRange = useMemo(() => {
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - rangeMonths);
+    const cutoffStr = cutoff.toISOString().split('T')[0];
+    return gaAsc.filter(d => (d.period_end || d.period_start || d.report_date) >= cutoffStr);
+  }, [gaAsc, rangeMonths]);
   const seoAsc = useMemo(() => [...seoRecords].sort((a, b) => (a.report_date || "").localeCompare(b.report_date || "")), [seoRecords]);
   const seoInRange = useMemo(() => seoAsc.slice(-rangeMonths), [seoAsc, rangeMonths]);
 
@@ -133,7 +148,7 @@ export default function ClientGADashboard() {
 
   // Chart data for GA
   const gaChartData = useMemo(() => gaInRange.map(d => ({
-    month: monthLabel(monthKey(d)),
+    month: periodLabel(d),
     new_users: d.new_users ?? 0,
     sessions: d.sessions ?? 0,
     engaged: d.engaged_sessions ?? 0,
@@ -386,7 +401,7 @@ export default function ClientGADashboard() {
                       <tbody className="divide-y divide-violet-50">
                         {gaInRange.map(d => (
                           <tr key={d.id} className="hover:bg-violet-50/40">
-                            <td className="px-5 py-4 font-semibold text-[#29234e]">{fullMonthLabel(monthKey(d))}</td>
+                            <td className="px-5 py-4 font-semibold text-[#29234e]">{periodLabel(d)}</td>
                             <td className="px-5 py-4 text-right text-slate-600">{d.new_users?.toLocaleString() ?? "—"}</td>
                             <td className="px-5 py-4 text-right text-slate-600">{d.sessions?.toLocaleString() ?? "—"}</td>
                             <td className="px-5 py-4 text-right text-slate-600">{d.engaged_sessions?.toLocaleString() ?? "—"}</td>
@@ -430,7 +445,7 @@ export default function ClientGADashboard() {
               <>
                 <div className="p-6 border border-violet-100 rounded-3xl bg-white/75 shadow-[0_18px_55px_rgba(50,35,110,0.09)]">
                   <h3 className="text-lg font-bold text-[#29234e] mb-1">Traffic sources</h3>
-                  <p className="text-sm text-slate-500 mb-5">Sessions by source for {fullMonthLabel(monthKey(gaInRange[gaInRange.length - 1] || {}))}</p>
+                  <p className="text-sm text-slate-500 mb-5">Sessions by source for {periodLabel(gaInRange[gaInRange.length - 1] || {})}</p>
                   <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={trafficSources} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} />

@@ -17,6 +17,15 @@
       "type": "string",
       "format": "date"
     },
+    "period_type": {
+      "type": "string",
+      "enum": [
+        "month",
+        "week"
+      ],
+      "default": "month",
+      "description": "Granularity of the synced period (month or week)"
+    },
     "sessions": {
       "type": "number"
     },
