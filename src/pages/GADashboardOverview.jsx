@@ -30,7 +30,11 @@ const PRESETS = [
     const d2 = new Date(s); d2.setDate(d2.getDate() - 1);
     return { start: d1.toISOString().split('T')[0], end: d2.toISOString().split('T')[0] };
   }},
-  { label: "Last 2 Weeks", gran: "week", get: () => ({ start: daysAgoStr(13), end: todayStr() }) },
+  { label: "Last 2 Weeks", gran: "week", get: () => {
+    const s = startOfWeekStr();
+    const d1 = new Date(s); d1.setDate(d1.getDate() - 7);
+    return { start: d1.toISOString().split('T')[0], end: todayStr() };
+  }},
   { label: "This Month", gran: "month", get: () => ({ start: new Date().toISOString().slice(0, 8) + "01", end: todayStr() }) },
   { label: "Last Month", gran: "month", get: () => {
     const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1);

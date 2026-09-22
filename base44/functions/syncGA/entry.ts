@@ -21,15 +21,20 @@ Deno.serve(async (req) => {
     const ranges = [];
 
     if (granularity === 'week') {
+      // Calendar weeks Monday→Sunday, aligned to the This/Last Week presets.
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      const dow = now.getDay() || 7; // 1=Mon..7=Sun
+      const thisMonday = new Date(now);
+      thisMonday.setDate(now.getDate() - (dow - 1));
       for (let i = startOffset; i < sync_months + startOffset; i++) {
-        const end = new Date();
-        end.setHours(0, 0, 0, 0);
-        end.setDate(end.getDate() - i * 7);
-        const start = new Date(end);
-        start.setDate(start.getDate() - 6);
+        const monday = new Date(thisMonday);
+        monday.setDate(thisMonday.getDate() - i * 7);
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
         ranges.push({
-          start: start.toISOString().split('T')[0],
-          end: end.toISOString().split('T')[0],
+          start: monday.toISOString().split('T')[0],
+          end: sunday.toISOString().split('T')[0],
         });
       }
     } else {
@@ -48,7 +53,13 @@ Deno.serve(async (req) => {
     }
 
     const results = [];
-    const allGaRecords = await base44.asServiceRole.entities.GAData.filter({ client_id });
+    let allGaRecords = await base44.asServiceRole.entities.GAData.filter({ client_id });
+    // Weekly records are calendar-aligned (Mon–Sun). Clear stale weekly records for
+    // this client so previously misaligned/rolling ones don't double-count on re-sync.
+    if (granularity === 'week') {
+      await base44.asServiceRole.entities.GAData.deleteMany({ client_id, period_type: 'week' });
+      allGaRecords = [];
+    }
 
     for (const range of ranges) {
       // Match by period_type + exact period_start (treat undefined period_type as 'month')
