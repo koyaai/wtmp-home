@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Search, Activity, Users, MousePointer, Clock, AlertCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 function fmtDuration(secs) {
   if (secs == null) return "—";
@@ -247,7 +248,9 @@ export default function GADashboardOverview() {
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {statusDot(status)}
-                      <span className="font-medium text-slate-800">{client.name}</span>
+                      <Link to={`/ga/${client.id}`} className="font-medium text-slate-800 hover:text-violet-700 hover:underline">
+                        {client.name}
+                      </Link>
                       {status === "none" && (
                         <span className="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded">No GA</span>
                       )}

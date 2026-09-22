@@ -20,6 +20,7 @@ import UptimeMonitor from '@/pages/UptimeMonitor';
 import WebsiteDetail from '@/pages/WebsiteDetail';
 import GADashboardOverview from '@/pages/GADashboardOverview';
 import GHLSubaccountMonitor from '@/pages/GHLSubaccountMonitor';
+import ClientGADashboard from '@/pages/ClientGADashboard';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -88,6 +89,7 @@ const AuthenticatedApp = () => {
       <Route path="/GADashboardOverview" element={<LayoutWrapper currentPageName="GADashboardOverview"><GADashboardOverview /></LayoutWrapper>} />
       <Route path="/GHLSubaccountMonitor" element={<LayoutWrapper currentPageName="GHLSubaccountMonitor"><GHLSubaccountMonitor /></LayoutWrapper>} />
       <Route path="/WebsiteDetail/:id" element={<LayoutWrapper currentPageName="UptimeMonitor"><WebsiteDetail /></LayoutWrapper>} />
+      <Route path="/ga/:clientId" element={<LayoutWrapper currentPageName="GADashboardOverview"><ClientGADashboard /></LayoutWrapper>} />
       <Route path="/terms-of-service" element={<TermsOfService />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
       <Route path="*" element={<PageNotFound />} />
