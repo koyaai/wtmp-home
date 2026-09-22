@@ -6,7 +6,6 @@ import StaleBadge from "@/components/clients/StaleBadge";
 import { Button } from "@/components/ui/button";
 import MeetingNotes from "@/components/clients/MeetingNotes";
 import CSMUpdates from "@/components/clients/CSMUpdates";
-import ClientTracker from "@/components/clients/ClientTracker";
 import ClientSnapshot from "@/components/clients/ClientSnapshot";
 import ClientScore from "@/components/clients/ClientScore";
 import WillsMeetings from "@/components/clients/WillsMeetings";
@@ -44,7 +43,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
 
   const showFinancials = ["leadership"].includes(userRole);
 
-  const tabs = ["snapshot", "onboarding", "overview", "contacts", "tracker", "uptime", "meetings", "updates", "score", "will", ...(["churned", "offboarded"].includes(client.status) ? ["postmortem"] : [])];
+  const tabs = ["snapshot", "onboarding", "contacts", "uptime", "meetings", "updates", "score", "will", ...(["churned", "offboarded"].includes(client.status) ? ["postmortem"] : [])];
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6 space-y-5">
@@ -124,6 +123,53 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
             </span>
           )}
         </div>
+
+        {/* Account details (moved from Overview tab) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-4 pt-4 border-t border-slate-100">
+          {client.csm_assigned && (
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Assigned CSM</p>
+              <p className="text-sm text-slate-800">{client.csm_assigned}</p>
+            </div>
+          )}
+          {client.start_date && (
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Client Since</p>
+              <p className="text-sm text-slate-800">{new Date(client.start_date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
+            </div>
+          )}
+          {client.google_search_console_url && (
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">GSC URL</p>
+              <a href={client.google_search_console_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">View GSC</a>
+            </div>
+          )}
+          {client.gbp_url && (
+            <div>
+              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">GBP URL</p>
+              <a href={client.gbp_url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 hover:underline">View GBP</a>
+            </div>
+          )}
+          {client.ghl_location_id && (
+            <div>
+              <p className="text-xs text-slate-400">GHL Location ID</p>
+              <p className="text-xs font-mono text-slate-700">{client.ghl_location_id}</p>
+            </div>
+          )}
+          {client.google_ads_account_id && (
+            <div>
+              <p className="text-xs text-slate-400">Google Ads ID</p>
+              <p className="text-xs font-mono text-slate-700">{client.google_ads_account_id}</p>
+            </div>
+          )}
+        </div>
+
+        {client.notes && (
+          <div className="mt-4 pt-4 border-t border-slate-100">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Notes</p>
+            <p className="text-sm text-slate-600 whitespace-pre-wrap">{client.notes}</p>
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -131,7 +177,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
         {tabs.map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={`flex-1 text-sm py-2 rounded-lg font-medium capitalize transition-colors ${activeTab === tab ? "bg-white text-slate-800 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}>
-            {tab === "updates" ? "CSM Updates" : tab === "tracker" ? "Tracker" : tab === "snapshot" ? "Dashboard" : tab === "score" ? "Client Score" : tab === "will" ? "Will's Meetings" : tab === "postmortem" ? "Post-Mortem" : tab === "onboarding" ? "Onboarding" : tab === "contacts" ? "Contacts" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+            {tab === "updates" ? "CSM Updates" : tab === "snapshot" ? "Dashboard" : tab === "score" ? "Client Score" : tab === "will" ? "Will's Meetings" : tab === "postmortem" ? "Post-Mortem" : tab === "onboarding" ? "Onboarding" : tab === "contacts" ? "Contacts" : tab.charAt(0).toUpperCase() + tab.slice(1)}
           </button>
         ))}
       </div>
@@ -141,37 +187,6 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
       {activeTab === "onboarding" && <ClientOnboarding client={client} />}
       {activeTab === "contacts" && <ClientContacts client={client} canEdit={canEdit} />}
 
-      {activeTab === "overview" && (
-        <div className="bg-white rounded-2xl p-5 shadow-sm border border-slate-100 space-y-4">
-          {client.csm_assigned && (
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Assigned CSM</p>
-              <p className="text-sm text-slate-800">{client.csm_assigned}</p>
-            </div>
-          )}
-          {client.start_date && (
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Client Since</p>
-              <p className="text-sm text-slate-800">{new Date(client.start_date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
-            </div>
-          )}
-          {client.notes && (
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Notes</p>
-              <p className="text-sm text-slate-600 whitespace-pre-wrap">{client.notes}</p>
-            </div>
-          )}
-          {/* Tech IDs */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-50">
-            {client.ghl_location_id && <div><p className="text-xs text-slate-400">GHL Location ID</p><p className="text-xs font-mono text-slate-700">{client.ghl_location_id}</p></div>}
-            {client.google_ads_account_id && <div><p className="text-xs text-slate-400">Google Ads ID</p><p className="text-xs font-mono text-slate-700">{client.google_ads_account_id}</p></div>}
-            {client.google_search_console_url && <div><p className="text-xs text-slate-400">GSC URL</p><a href={client.google_search_console_url} target="_blank" className="text-xs text-blue-600 hover:underline">View GSC</a></div>}
-            {client.gbp_url && <div><p className="text-xs text-slate-400">GBP URL</p><a href={client.gbp_url} target="_blank" className="text-xs text-blue-600 hover:underline">View GBP</a></div>}
-          </div>
-        </div>
-      )}
-
-      {activeTab === "tracker" && <ClientTracker clientId={client.id} />}
       {activeTab === "uptime" && <ClientUptime clientId={client.id} />}
       {activeTab === "meetings" && <MeetingNotes clientId={client.id} canEdit={canEdit} />}
       {activeTab === "updates" && <CSMUpdates clientId={client.id} canEdit={canEdit} />}
