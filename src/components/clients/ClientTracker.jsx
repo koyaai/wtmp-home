@@ -64,7 +64,7 @@ function SectionHeader({ icon: Icon, label, count, color, open, onToggle }) {
   );
 }
 
-export default function ClientTracker({ clientId }) {
+export default function ClientTracker({ clientId, onDataChange }) {
   const [insights, setInsights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
@@ -94,6 +94,7 @@ export default function ClientTracker({ clientId }) {
     items[index] = newItem;
     await base44.entities.ClientInsight.update(insight.id, { [field]: items });
     loadInsights();
+    onDataChange?.();
     promptSlack({ type: field === "red_flags" ? "red_flag_updated" : "todo_updated", text: newItem.text });
   };
 
@@ -103,6 +104,7 @@ export default function ClientTracker({ clientId }) {
     items[index] = { ...items[index], deleted: true, deleted_at: new Date().toISOString() };
     await base44.entities.ClientInsight.update(insight.id, { [field]: items });
     loadInsights();
+    onDataChange?.();
     promptSlack({ type: field === "red_flags" ? "red_flag_deleted" : "todo_deleted", text: itemText });
   };
 
@@ -112,6 +114,7 @@ export default function ClientTracker({ clientId }) {
     items[index] = { ...items[index], resolved: !wasResolved };
     await base44.entities.ClientInsight.update(insight.id, { [field]: items });
     loadInsights();
+    onDataChange?.();
     const isFlag = field === "red_flags";
     const text = items[index].text;
     if (!wasResolved) {
@@ -129,6 +132,7 @@ export default function ClientTracker({ clientId }) {
     items.push(newItem);
     await base44.entities.ClientInsight.update(target.id, { [field]: items });
     loadInsights();
+    onDataChange?.();
     setAdding(null);
     promptSlack({ type: field === "red_flags" ? "red_flag_added" : "todo_added", text: newItem.text });
   };

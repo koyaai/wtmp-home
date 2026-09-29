@@ -39,7 +39,7 @@ const serviceColors = {
   "Customer Success": "bg-emerald-100 text-emerald-700",
 };
 
-export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit, userRole, health, lastActivityDate }) {
+export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit, userRole, health, lastActivityDate, onDataChange }) {
   const [activeTab, setActiveTab] = useState("snapshot");
 
   const showFinancials = ["leadership"].includes(userRole);
@@ -188,7 +188,7 @@ export default function ClientDetail({ client, onEdit, onDelete, onBack, canEdit
       {activeTab === "onboarding" && <ClientOnboarding client={client} />}
       {activeTab === "contacts" && <ClientContacts client={client} canEdit={canEdit} />}
 
-      {activeTab === "tracker" && <ClientTracker clientId={client.id} />}
+      {activeTab === "tracker" && <ClientTracker clientId={client.id} onDataChange={onDataChange} />}
       {activeTab === "uptime" && <ClientUptime clientId={client.id} />}
       {activeTab === "meetings" && <MeetingNotes clientId={client.id} canEdit={canEdit} />}
       {activeTab === "updates" && <CSMUpdates clientId={client.id} canEdit={canEdit} />}

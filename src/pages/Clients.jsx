@@ -109,6 +109,7 @@ export default function Clients() {
             userRole={user?.role}
             health={healthMap[selectedClient?.id]}
             lastActivityDate={lastActivityMap[selectedClient?.id]}
+            onDataChange={loadClients}
           />
         ) : (
           <div className="hidden md:flex items-center justify-center h-full text-slate-400 flex-col gap-2">
