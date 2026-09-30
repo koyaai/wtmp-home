@@ -56,6 +56,10 @@
           "point_person": {
             "type": "string"
           },
+          "solution": {
+            "type": "string",
+            "description": "How the to-do was resolved (optional context)"
+          },
           "slack_link": {
             "type": "string"
           },

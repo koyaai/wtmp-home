@@ -109,7 +109,12 @@ export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleR
   };
 
   const handleResolveClick = () => {
-    if (!resolved && isFlag && !item.solution) {
+    if (!resolved) {
+      // Red flags with an existing solution can be toggled directly; otherwise open the resolution box.
+      if (isFlag && item.solution) {
+        onToggleResolved();
+        return;
+      }
       setResolvingFlag(true);
       return;
     }
@@ -117,8 +122,10 @@ export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleR
   };
 
   const handleConfirmSolution = () => {
-    if (!solutionInput.trim()) return;
-    onSave({ ...item, solution: solutionInput.trim(), resolved: true });
+    if (isFlag && !solutionInput.trim()) return;
+    const payload = { ...item, resolved: true };
+    if (solutionInput.trim()) payload.solution = solutionInput.trim();
+    onSave(payload);
     setResolvingFlag(false);
     setSolutionInput("");
   };
@@ -154,14 +161,12 @@ export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleR
                 onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
                 className="border border-slate-200 rounded px-2 py-1.5 text-xs bg-white focus:outline-none"
               />
-              {isFlag && (
-                <input
-                  placeholder="Solution / resolution notes"
-                  value={form.solution}
-                  onChange={e => setForm(f => ({ ...f, solution: e.target.value }))}
-                  className="border border-slate-200 rounded px-2 py-1.5 text-xs bg-white focus:outline-none"
-                />
-              )}
+              <input
+                placeholder={isFlag ? "Solution / resolution notes" : "Resolution notes (optional)"}
+                value={form.solution}
+                onChange={e => setForm(f => ({ ...f, solution: e.target.value }))}
+                className="border border-slate-200 rounded px-2 py-1.5 text-xs bg-white focus:outline-none"
+              />
               <input
                 placeholder="Slack thread link (optional)"
                 value={form.slack_link}
@@ -267,21 +272,23 @@ export default function TrackerItemRow({ item, type, onSave, onDelete, onToggleR
         </td>
       </tr>
 
-      {/* Inline solution prompt for red flags */}
+      {/* Inline resolution prompt: required for red flags, optional context for to-dos */}
       {resolvingFlag && (
-        <tr className="bg-red-50">
-          <td colSpan={6} className="px-4 py-3 border-b border-red-100">
-            <p className="text-xs text-red-700 font-medium mb-2">A solution is required before marking this resolved:</p>
+        <tr className={isFlag ? "bg-red-50" : "bg-blue-50"}>
+          <td colSpan={6} className={`px-4 py-3 border-b ${isFlag ? "border-red-100" : "border-blue-100"}`}>
+            <p className={`text-xs font-medium mb-2 ${isFlag ? "text-red-700" : "text-blue-700"}`}>
+              {isFlag ? "A solution is required before marking this resolved:" : "Add context on how this to-do was solved (optional):"}
+            </p>
             <textarea
               autoFocus
               value={solutionInput}
               onChange={e => setSolutionInput(e.target.value)}
-              placeholder="Describe what was done to resolve this red flag..."
-              className="w-full border border-red-200 rounded px-2 py-1.5 text-xs resize-none focus:outline-none bg-white"
+              placeholder={isFlag ? "Describe what was done to resolve this red flag..." : "How was this to-do completed? (optional)"}
+              className={`w-full border rounded px-2 py-1.5 text-xs resize-none focus:outline-none bg-white ${isFlag ? "border-red-200" : "border-blue-200"}`}
               rows={2}
             />
             <div className="flex gap-2 mt-2">
-              <button onClick={handleConfirmSolution} disabled={!solutionInput.trim()} className="text-xs bg-emerald-500 text-white px-3 py-1.5 rounded-md hover:bg-emerald-600 disabled:opacity-40">
+              <button onClick={handleConfirmSolution} disabled={isFlag && !solutionInput.trim()} className="text-xs bg-emerald-500 text-white px-3 py-1.5 rounded-md hover:bg-emerald-600 disabled:opacity-40">
                 Mark Resolved
               </button>
               <button onClick={() => { setResolvingFlag(false); setSolutionInput(""); }} className="text-xs text-slate-500 px-3 py-1.5 rounded-md border bg-white hover:bg-slate-50">
