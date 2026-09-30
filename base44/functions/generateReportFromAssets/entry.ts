@@ -98,6 +98,7 @@ Map this data to the seo.gbp_metrics block in the output JSON.`);
       }
       sections.push(`GOOGLE ANALYTICS 4 DATA for ${month} ${year} (report_date: ${ga.report_date}):
 - Total Sessions: ${ga.sessions ?? 'N/A'}
+- Engaged Sessions: ${ga.engaged_sessions ?? 'N/A'}
 - Total Users: ${ga.users ?? 'N/A'}
 - New Users: ${ga.new_users ?? 'N/A'}
 - Organic Search Sessions: ${organicSessions}
@@ -107,7 +108,7 @@ Map this data to the seo.gbp_metrics block in the output JSON.`);
 - Traffic Sources Breakdown: ${ga.traffic_sources || 'N/A'}
 - Top Pages: ${ga.top_pages || 'N/A'}
 
-Map sessions, users, new_users, organic_sessions, bounce_rate, avg_session_duration, pageviews, and traffic_sources_breakdown to the seo.ga4_metrics block in the output JSON.`);
+Map sessions, engaged_sessions, users, new_users, organic_sessions, bounce_rate, avg_session_duration, pageviews, and traffic_sources_breakdown to the seo.ga4_metrics block in the output JSON.`);
     }
   }
 
@@ -252,6 +253,7 @@ STRICT RULES:
               type: "object",
               properties: {
                 sessions: { type: "string" },
+                engaged_sessions: { type: "string" },
                 users: { type: "string" },
                 new_users: { type: "string" },
                 organic_sessions: { type: "string" },

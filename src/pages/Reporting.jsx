@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Loader2, Sparkles, CheckCircle2, AlertTriangle, TrendingUp, Target, ArrowRight, Download, ChevronLeft, BarChart2, Plus, Link2, Star, Trash2, CalendarClock, MapPin } from "lucide-react";
 import ScheduledReports from "@/components/reporting/ScheduledReports";
 import YTDSummary from "@/components/reporting/YTDSummary";
+import SyncedSEOData from "@/components/reporting/SyncedSEOData";
+import ReportTrendCharts from "@/components/reporting/ReportTrendCharts";
 import ClientSelect from "@/components/clients/ClientSelect";
 import { getPriorMonthYear } from "@/utils/reportComparison";
 import { toast } from "sonner";
@@ -129,7 +131,7 @@ function ScorecardBanner({ scorecard }) {
   );
 }
 
-function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl }) {
+function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl, syncedSeo, trendData }) {
   if (!report) return null;
   return (
     <div className="space-y-6">
@@ -158,6 +160,8 @@ function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl }) {
       </div>
 
       <ScorecardBanner scorecard={report.client_scorecard} />
+
+      <ReportTrendCharts data={trendData} />
 
       {report.leads && report.leads.total_leads && report.leads.total_leads !== "N/A" && report.leads.total_leads !== "0" && (
         <Section title="Leads & ROI (GHL Pipeline)" icon={Users} color={{ border: "border-teal-100", bg: "bg-teal-50", icon: "text-teal-600", text: "text-teal-700" }}>
@@ -216,6 +220,7 @@ function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl }) {
 
         const ga4Cards = [
           { label: "Total Sessions", value: ga4.sessions },
+          { label: "Engaged Sessions", value: ga4.engaged_sessions },
           { label: "Total Users", value: ga4.users },
           { label: "Organic Sessions", value: ga4.organic_sessions },
           { label: "New Users", value: ga4.new_users },
@@ -292,6 +297,7 @@ function ReportView({ report, clientName, dateRange, onCopy, brightlocalUrl }) {
             {seo.highlights?.length > 0 && <div className="mb-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Highlights</p><BulletList items={seo.highlights} color="bg-violet-500" /></div>}
             {seo.local_seo_notes && <div className="mt-3 p-3 bg-violet-50 rounded-lg border border-violet-100"><p className="text-xs font-semibold text-violet-700 mb-1">Local SEO Notes</p><p className="text-sm text-slate-600">{seo.local_seo_notes}</p></div>}
             {seo.challenges?.length > 0 && <div className="mt-4"><p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Challenges</p><BulletList items={seo.challenges} color="bg-amber-400" /></div>}
+            <SyncedSEOData ga={syncedSeo?.ga} seo={syncedSeo?.seo} />
           </Section>
         );
       })()}
@@ -361,6 +367,8 @@ export default function Reporting() {
   const [year, setYear] = useState(now.getFullYear());
   const [brightlocalStatus, setBrightlocalStatus] = useState(null);
   const [brightlocalData, setBrightlocalData] = useState(null);
+  const [syncedSeo, setSyncedSeo] = useState(null);
+  const [trendData, setTrendData] = useState([]);
 
   useEffect(() => {
     base44.entities.Client.list().then(setClients).catch(() => {});
@@ -409,6 +417,64 @@ export default function Reporting() {
     return results[0]?.report_data || null;
   };
 
+  const monthIndexFromName = (name) => MONTHS.indexOf(name);
+
+  const matchesReportMonth = (reportDate, monthName, yearNum) => {
+    if (!reportDate) return false;
+    const d = new Date(reportDate + "T12:00:00");
+    return d.getFullYear() === Number(yearNum) && d.toLocaleString("en-US", { month: "long" }) === monthName;
+  };
+
+  const freshest = (arr) =>
+    arr.sort((a, b) => new Date(b.updated_date || 0).getTime() - new Date(a.updated_date || 0).getTime())[0];
+
+  const loadSyncedSeoData = async (clientId, monthName, yearNum) => {
+    try {
+      const [gaRecords, seoRecords] = await Promise.all([
+        base44.entities.GAData.filter({ client_id: clientId }, "-report_date", 100),
+        base44.entities.SEOData.filter({ client_id: clientId }, "-report_date", 100),
+      ]);
+      const gaMatch = freshest(gaRecords.filter(r => matchesReportMonth(r.report_date, monthName, yearNum)));
+      const seoMatch = freshest(seoRecords.filter(r => matchesReportMonth(r.report_date, monthName, yearNum)));
+      setSyncedSeo({ ga: gaMatch || null, seo: seoMatch || null });
+    } catch (_) {
+      setSyncedSeo(null);
+    }
+  };
+
+  const loadTrendData = async (clientId, monthName, yearNum) => {
+    try {
+      const monthIndex = monthIndexFromName(monthName);
+      if (monthIndex < 0) return;
+      const months = [];
+      let y = Number(yearNum), m = monthIndex;
+      for (let i = 0; i < 6; i++) {
+        months.unshift({ year: y, monthIndex: m, label: MONTHS[m].slice(0, 3) });
+        m--; if (m < 0) { m = 11; y--; }
+      }
+      const [gaRecords, seoRecords, leadRecords] = await Promise.all([
+        base44.entities.GAData.filter({ client_id: clientId }, "-report_date", 200),
+        base44.entities.SEOData.filter({ client_id: clientId }, "-report_date", 200),
+        base44.entities.LeadData.filter({ client_id: clientId }, "-report_date", 200),
+      ]);
+      const data = months.map(mo => {
+        const gaMonth = gaRecords.filter(r => matchesReportMonth(r.report_date, MONTHS[mo.monthIndex], mo.year));
+        const monthly = gaMonth.find(r => r.period_type === "month");
+        const sessions = monthly
+          ? (monthly.sessions || 0)
+          : gaMonth.filter(r => r.period_type === "week").reduce((s, r) => s + (r.sessions || 0), 0);
+        const seoRec = freshest(seoRecords.filter(r => matchesReportMonth(r.report_date, MONTHS[mo.monthIndex], mo.year)));
+        const organicClicks = seoRec?.organic_clicks || 0;
+        const leadRec = freshest(leadRecords.filter(r => matchesReportMonth(r.report_date, MONTHS[mo.monthIndex], mo.year)));
+        const leads = leadRec?.new_leads ?? leadRec?.total_leads ?? 0;
+        return { label: mo.label, sessions: sessions || 0, organicClicks: organicClicks || 0, leads: leads || 0 };
+      });
+      setTrendData(data);
+    } catch (_) {
+      setTrendData([]);
+    }
+  };
+
   const handleStartNew = () => {
     setReport(null);
     setSavedReportId(null);
@@ -418,6 +484,8 @@ export default function Reporting() {
     setSelectedClient(null);
     setBrightlocalStatus(null);
     setBrightlocalData(null);
+    setSyncedSeo(null);
+    setTrendData([]);
     setView("new");
   };
 
@@ -428,7 +496,11 @@ export default function Reporting() {
     setYear(r.year);
     setDateRange(r.date_range || `${r.month} ${r.year}`);
     setSavedReportId(r.id);
+    setSyncedSeo(null);
+    setTrendData([]);
     setView("existing");
+    loadSyncedSeoData(r.client_id, r.month, r.year);
+    loadTrendData(r.client_id, r.month, r.year);
   };
 
   const handleClientChange = (clientId) => {
@@ -505,6 +577,8 @@ export default function Reporting() {
     toast.success("Report generated & saved!");
     loadSavedReports();
     setUploading(false);
+    loadSyncedSeoData(selectedClient.id, month, year);
+    loadTrendData(selectedClient.id, month, year);
   };
 
   const canGenerate = selectedClient && !uploading;
@@ -548,6 +622,8 @@ export default function Reporting() {
     toast.success('Report generated from connected assets!');
     loadSavedReports();
     setUploading(false);
+    loadSyncedSeoData(selectedClient.id, month, year);
+    loadTrendData(selectedClient.id, month, year);
   };
 
   const groupedReports = savedReports.reduce((acc, r) => {
@@ -679,6 +755,8 @@ export default function Reporting() {
             clientName={selectedClient?.name}
             dateRange={dateRange}
             brightlocalUrl={clientData?.brightlocal_report_url}
+            syncedSeo={syncedSeo}
+            trendData={trendData}
             onCopy={() => { navigator.clipboard.writeText(JSON.stringify(report, null, 2)); toast.success("Copied!"); }}
           />
         )}
@@ -800,6 +878,8 @@ export default function Reporting() {
           clientName={selectedClient?.name}
           dateRange={dateRange || `${month} ${year}`}
           brightlocalUrl={getClientData(selectedClient?.id)?.brightlocal_report_url}
+          syncedSeo={syncedSeo}
+          trendData={trendData}
           onCopy={() => { navigator.clipboard.writeText(JSON.stringify(report, null, 2)); toast.success("Copied!"); }}
         />
       )}
