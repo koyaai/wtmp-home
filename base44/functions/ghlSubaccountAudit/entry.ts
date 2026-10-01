@@ -239,7 +239,7 @@ export default async function(req) {
     // Soft admin gate for manual triggers; scheduled (no user) proceeds.
     try {
       const user = await base44.auth.me();
-      if (user && user.role && !ADMIN_ROLES.includes(user.role) && user.role !== "csm") {
+      if (user && user.role && !ADMIN_ROLES.includes(user.role)) {
         return Response.json({ error: "Forbidden" }, { status: 403 });
       }
     } catch (_) { /* no user session — scheduled run */ }
