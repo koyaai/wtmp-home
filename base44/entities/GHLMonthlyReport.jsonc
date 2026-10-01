@@ -1,0 +1,106 @@
+{
+  "name": "GHLMonthlyReport",
+  "type": "object",
+  "properties": {
+    "client_id": {
+      "type": "string",
+      "description": "Reference to Client (GHL subaccount)"
+    },
+    "client_name": {
+      "type": "string",
+      "description": "Client name for display"
+    },
+    "month": {
+      "type": "string",
+      "description": "Month name e.g. September"
+    },
+    "year": {
+      "type": "number"
+    },
+    "month_key": {
+      "type": "string",
+      "description": "YYYY-MM unique key for client+month upsert"
+    },
+    "form_submissions": {
+      "type": "number",
+      "description": "Form submissions in the month (null if unavailable)"
+    },
+    "cal_new": {
+      "type": "number",
+      "default": 0
+    },
+    "cal_confirmed": {
+      "type": "number",
+      "default": 0
+    },
+    "cal_cancelled": {
+      "type": "number",
+      "default": 0
+    },
+    "cal_rescheduled": {
+      "type": "number",
+      "default": 0
+    },
+    "cal_total": {
+      "type": "number",
+      "default": 0,
+      "description": "Total appointments counted"
+    },
+    "unread_conversations": {
+      "type": "number",
+      "description": "Unread conversations count (null if unavailable)"
+    },
+    "workflows_with_errors": {
+      "type": "number",
+      "description": "Not available via API \u2014 stored as null. Surfaced as a manual check item."
+    },
+    "calls_missed": {
+      "type": "number",
+      "description": "Missed calls in the month, counted via native call status (null if unavailable)"
+    },
+    "email_deliverability": {
+      "type": "string",
+      "enum": [
+        "good",
+        "warning",
+        "failed",
+        "not_available"
+      ],
+      "default": "not_available"
+    },
+    "sms_deliverability": {
+      "type": "string",
+      "enum": [
+        "good",
+        "warning",
+        "failed",
+        "not_available"
+      ],
+      "default": "not_available"
+    },
+    "integration_status": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "issue",
+        "not_available"
+      ],
+      "default": "not_available"
+    },
+    "integration_issues": {
+      "type": "string",
+      "description": "JSON array of {integration, status, error}"
+    },
+    "pulled_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "client_id",
+    "client_name",
+    "month",
+    "year",
+    "month_key"
+  ]
+}
