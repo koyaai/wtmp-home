@@ -101,27 +101,6 @@
       "type": "string",
       "description": "Go High Level API key for this location"
     },
-    "ghl_audit_active": {
-      "type": "boolean",
-      "default": true,
-      "description": "Include this subaccount in the monthly GHL audit"
-    },
-    "ghl_threshold_missed_calls": {
-      "type": "number",
-      "description": "Per-subaccount override for missed-call alert threshold (global default 10)"
-    },
-    "ghl_threshold_unread_conversations": {
-      "type": "number",
-      "description": "Per-subaccount override for unread conversations alert threshold (global default 10)"
-    },
-    "ghl_threshold_cancelled_resched_pct": {
-      "type": "number",
-      "description": "Per-subaccount override for cancelled+rescheduled appointment share % threshold (global default 30)"
-    },
-    "ghl_missed_call_tag": {
-      "type": "string",
-      "description": "GHL contact tag used to count missed calls (default 'missed-call')"
-    },
     "google_ads_account_id": {
       "type": "string"
     },

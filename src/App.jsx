@@ -19,7 +19,6 @@ import PostMortemArchive from '@/pages/PostMortemArchive';
 import UptimeMonitor from '@/pages/UptimeMonitor';
 import WebsiteDetail from '@/pages/WebsiteDetail';
 import GADashboardOverview from '@/pages/GADashboardOverview';
-import GHLSubaccountMonitor from '@/pages/GHLSubaccountMonitor';
 import ClientGADashboard from '@/pages/ClientGADashboard';
 import ClientIntelligence from '@/pages/ClientIntelligence';
 import ContactProfile from '@/pages/ContactProfile';
@@ -89,7 +88,6 @@ const AuthenticatedApp = () => {
       <Route path="/PostMortemArchive" element={<LayoutWrapper currentPageName="PostMortemArchive"><PostMortemArchive /></LayoutWrapper>} />
       <Route path="/UptimeMonitor" element={<LayoutWrapper currentPageName="UptimeMonitor"><UptimeMonitor /></LayoutWrapper>} />
       <Route path="/GADashboardOverview" element={<LayoutWrapper currentPageName="GADashboardOverview"><GADashboardOverview /></LayoutWrapper>} />
-      <Route path="/GHLSubaccountMonitor" element={<LayoutWrapper currentPageName="GHLSubaccountMonitor"><GHLSubaccountMonitor /></LayoutWrapper>} />
       <Route path="/WebsiteDetail/:id" element={<LayoutWrapper currentPageName="UptimeMonitor"><WebsiteDetail /></LayoutWrapper>} />
       <Route path="/ga/:clientId" element={<LayoutWrapper currentPageName="GADashboardOverview"><ClientGADashboard /></LayoutWrapper>} />
       <Route path="/ClientIntelligence" element={<LayoutWrapper currentPageName="ClientIntelligence"><ClientIntelligence /></LayoutWrapper>} />
