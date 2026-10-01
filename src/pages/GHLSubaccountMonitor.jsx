@@ -46,6 +46,7 @@ export default function GHLSubaccountMonitor() {
   const [togglingId, setTogglingId] = useState(null);
   const [runningId, setRunningId] = useState(null);
   const [resolvingId, setResolvingId] = useState(null);
+  const [alertsExpanded, setAlertsExpanded] = useState(false);
 
   const loadClients = useCallback(async () => {
     const all = await base44.entities.Client.list("-name", 500);
@@ -168,13 +169,27 @@ export default function GHLSubaccountMonitor() {
 
       {showSettings && <MonitorSettings settings={settings} onSaved={(s) => { setSettings(s); setShowSettings(false); }} />}
 
-      {/* Open Alerts */}
+      {/* Open Alerts (collapsible) */}
       <div>
-        <div className="flex items-center gap-2 mb-2">
-          <AlertTriangle className="w-4 h-4 text-amber-500" />
+        <button
+          onClick={() => setAlertsExpanded(e => !e)}
+          className="w-full flex items-center gap-2 mb-2 group"
+        >
+          <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0" />
           <h2 className="font-semibold text-slate-700 text-sm">Open Alerts ({alerts.length})</h2>
-        </div>
-        <GHLAlertsList alerts={alerts} onResolve={resolveAlert} resolvingId={resolvingId} />
+          {alerts.length > 0 && (
+            <span className="text-xs text-slate-500 flex items-center gap-1.5">
+              <span className="text-rose-600 font-medium">{alerts.filter(a => a.severity === "critical").length} critical</span>
+              <span className="text-amber-600 font-medium">{alerts.filter(a => a.severity === "warning").length} warning</span>
+            </span>
+          )}
+          <span className="ml-auto flex items-center gap-1 text-xs text-slate-400 group-hover:text-slate-600">
+            {alertsExpanded ? <><ChevronDown className="w-4 h-4" /> Hide</> : <><ChevronRight className="w-4 h-4" /> Show all</>}
+          </span>
+        </button>
+        {alertsExpanded && (
+          <GHLAlertsList alerts={alerts} onResolve={resolveAlert} resolvingId={resolvingId} />
+        )}
       </div>
 
       {/* Health Table */}
