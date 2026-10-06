@@ -5,9 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Plus, RefreshCw } from "lucide-react";
+import { Plus, RefreshCw, Users } from "lucide-react";
 
-export default function SubaccountsTable({ subaccounts, alerts, reports, onRun, running, onChanged }) {
+export default function SubaccountsTable({ subaccounts, alerts, reports, onRun, running, onChanged, onImportFromClients, importing }) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name: "", ghl_location_id: "", ghl_api_key: "", active: true });
   const [saving, setSaving] = useState(false);
@@ -45,9 +45,14 @@ export default function SubaccountsTable({ subaccounts, alerts, reports, onRun, 
     <div>
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-semibold text-slate-700 text-sm">Subaccounts ({subaccounts.length})</h2>
-        <Button size="sm" onClick={() => setOpen(true)}>
-          <Plus className="w-4 h-4 mr-1" /> Add Subaccount
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" variant="outline" onClick={onImportFromClients} disabled={importing}>
+            <Users className="w-4 h-4 mr-1" /> {importing ? "Importing..." : "Import from Clients"}
+          </Button>
+          <Button size="sm" onClick={() => setOpen(true)}>
+            <Plus className="w-4 h-4 mr-1" /> Add Subaccount
+          </Button>
+        </div>
       </div>
       <div className="rounded-lg border border-slate-200 overflow-x-auto">
         <table className="w-full text-sm">

@@ -20,6 +20,7 @@ export default function GHLMonitor() {
   const [running, setRunning] = useState(false);
   const [resolvingId, setResolvingId] = useState(null);
   const [sending, setSending] = useState(false);
+  const [importing, setImporting] = useState(false);
 
   const loadData = useCallback(async () => {
     const [subs, al, reps] = await Promise.all([
@@ -114,6 +115,24 @@ export default function GHLMonitor() {
     setSending(false);
   };
 
+  const importFromClients = async () => {
+    setImporting(true);
+    try {
+      const clients = await base44.entities.Client.list();
+      const eligible = clients.filter((c) => c.ghl_location_id && c.ghl_api_key);
+      const existing = new Set(subaccounts.map((s) => s.ghl_location_id));
+      const toCreate = eligible
+        .filter((c) => !existing.has(c.ghl_location_id))
+        .map((c) => ({ name: c.name, ghl_location_id: c.ghl_location_id, ghl_api_key: c.ghl_api_key, active: true }));
+      if (toCreate.length) await base44.entities.Subaccount.bulkCreate(toCreate);
+      toast({ title: "Import complete", description: `${toCreate.length} subaccount(s) added from clients.` });
+      await loadData();
+    } catch (e) {
+      toast({ title: "Import failed", description: e.message, variant: "destructive" });
+    }
+    setImporting(false);
+  };
+
   if (loading) return <div className="p-8 text-slate-400">Loading GHL Monitor…</div>;
 
   return (
@@ -135,7 +154,7 @@ export default function GHLMonitor() {
         </TabsList>
         <TabsContent value="overview">
           <Card className="p-4">
-            <SubaccountsTable subaccounts={subaccounts} alerts={alerts} reports={reports} onRun={runNow} running={running} onChanged={loadData} />
+            <SubaccountsTable subaccounts={subaccounts} alerts={alerts} reports={reports} onRun={runNow} running={running} onChanged={loadData} onImportFromClients={importFromClients} importing={importing} />
           </Card>
         </TabsContent>
         <TabsContent value="alerts">
