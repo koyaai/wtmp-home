@@ -1,0 +1,58 @@
+{
+  "name": "Call",
+  "type": "object",
+  "properties": {
+    "subaccount_id": {
+      "type": "string",
+      "description": "Reference to Subaccount"
+    },
+    "subaccount_name": {
+      "type": "string"
+    },
+    "ghl_message_id": {
+      "type": "string",
+      "description": "Unique GHL message id (upsert key)"
+    },
+    "call_status": {
+      "type": "string",
+      "description": "meta.call.status or top-level status"
+    },
+    "direction": {
+      "type": "string",
+      "description": "inbound / outbound"
+    },
+    "from_number": {
+      "type": "string"
+    },
+    "to_number": {
+      "type": "string"
+    },
+    "contact_id": {
+      "type": "string"
+    },
+    "conversation_id": {
+      "type": "string"
+    },
+    "user_id": {
+      "type": "string"
+    },
+    "date_added": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "date_updated": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "string"
+    },
+    "alt_id": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "subaccount_id",
+    "ghl_message_id"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "name": "NotificationLog",
+  "type": "object",
+  "properties": {
+    "month_key": {
+      "type": "string",
+      "description": "YYYY-MM the notification was for"
+    },
+    "sent_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failed"
+      ]
+    },
+    "attempts": {
+      "type": "number"
+    },
+    "response": {
+      "type": "string",
+      "description": "Slack response text or error message"
+    }
+  },
+  "required": [
+    "status"
+  ]
+}

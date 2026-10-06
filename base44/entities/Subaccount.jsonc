@@ -1,0 +1,47 @@
+{
+  "name": "Subaccount",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Subaccount display name"
+    },
+    "ghl_location_id": {
+      "type": "string",
+      "description": "GoHighLevel location ID"
+    },
+    "ghl_api_key": {
+      "type": "string",
+      "description": "Per-subaccount GHL Private Integration API key"
+    },
+    "active": {
+      "type": "boolean",
+      "default": true,
+      "description": "Include in daily syncs and monthly reports"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "last_synced_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "last_sync_status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failed",
+        "not_available"
+      ],
+      "default": "not_available"
+    },
+    "last_sync_error": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "ghl_location_id",
+    "ghl_api_key"
+  ]
+}

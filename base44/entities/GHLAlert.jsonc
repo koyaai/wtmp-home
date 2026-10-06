@@ -1,0 +1,64 @@
+{
+  "name": "GHLAlert",
+  "type": "object",
+  "properties": {
+    "subaccount_id": {
+      "type": "string",
+      "description": "Reference to Subaccount (null for system alerts)"
+    },
+    "subaccount_name": {
+      "type": "string"
+    },
+    "month_key": {
+      "type": "string",
+      "description": "YYYY-MM the alert pertains to"
+    },
+    "month": {
+      "type": "string"
+    },
+    "year": {
+      "type": "number"
+    },
+    "issue_type": {
+      "type": "string",
+      "enum": [
+        "missed_calls",
+        "unread_conversations",
+        "cancelled_appointments",
+        "noshow_appointments",
+        "integration",
+        "sync_failed",
+        "notification_failed"
+      ]
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "critical",
+        "warning",
+        "info"
+      ]
+    },
+    "description": {
+      "type": "string",
+      "description": "Full context: actual values, threshold/comparison, MoM change"
+    },
+    "resolved": {
+      "type": "boolean",
+      "default": false
+    },
+    "resolved_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "issue_type",
+    "severity",
+    "description"
+  ]
+}

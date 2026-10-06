@@ -1,0 +1,125 @@
+{
+  "name": "GHLMonitorSettings",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "default": "default",
+      "description": "Singleton identifier"
+    },
+    "threshold_missed_calls": {
+      "type": "number",
+      "default": 10
+    },
+    "threshold_unread_conversations": {
+      "type": "number",
+      "default": 10
+    },
+    "threshold_cancelled_pct": {
+      "type": "number",
+      "default": 30
+    },
+    "threshold_noshow_pct": {
+      "type": "number",
+      "default": 30
+    },
+    "missed_call_statuses": {
+      "type": "string",
+      "description": "JSON array of call statuses counted as missed",
+      "default": "[\"no-answer\",\"busy\",\"voicemail\"]"
+    },
+    "version_calendars": {
+      "type": "string",
+      "default": "v3"
+    },
+    "fallback_calendars": {
+      "type": "string",
+      "default": "2021-07-28"
+    },
+    "version_events": {
+      "type": "string",
+      "default": "v3"
+    },
+    "fallback_events": {
+      "type": "string",
+      "default": "2021-07-28"
+    },
+    "version_calls": {
+      "type": "string",
+      "default": "v3"
+    },
+    "fallback_calls": {
+      "type": "string",
+      "default": "2021-07-28"
+    },
+    "version_forms": {
+      "type": "string",
+      "default": "v3"
+    },
+    "fallback_forms": {
+      "type": "string",
+      "default": "2021-07-28"
+    },
+    "version_conversations": {
+      "type": "string",
+      "default": "v3"
+    },
+    "fallback_conversations": {
+      "type": "string",
+      "default": "2021-07-28"
+    },
+    "version_integrations": {
+      "type": "string",
+      "default": "v3"
+    },
+    "fallback_integrations": {
+      "type": "string",
+      "default": "2021-07-28"
+    },
+    "slack_webhook_url": {
+      "type": "string",
+      "description": "Slack Incoming Webhook URL"
+    },
+    "notify_day_of_month": {
+      "type": "number",
+      "default": 1
+    },
+    "notify_time": {
+      "type": "string",
+      "default": "08:00"
+    },
+    "notify_timezone": {
+      "type": "string",
+      "default": "Asia/Manila"
+    },
+    "include_no_alerts": {
+      "type": "boolean",
+      "default": true,
+      "description": "Include subaccounts with no alerts in the Slack message"
+    },
+    "diagnostics_call_statuses": {
+      "type": "string",
+      "description": "JSON array of {status, count, last_seen}",
+      "default": "[]"
+    },
+    "diagnostics_appt_statuses": {
+      "type": "string",
+      "description": "JSON array of {status, count, last_seen}",
+      "default": "[]"
+    },
+    "last_notification_status": {
+      "type": "string"
+    },
+    "last_notification_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

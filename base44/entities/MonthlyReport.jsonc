@@ -2,39 +2,80 @@
   "name": "MonthlyReport",
   "type": "object",
   "properties": {
-    "client_id": {
+    "subaccount_id": {
       "type": "string",
-      "description": "Reference to Client"
+      "description": "Reference to Subaccount"
     },
-    "client_name": {
+    "subaccount_name": {
       "type": "string"
     },
     "month": {
       "type": "string",
-      "description": "e.g. January"
+      "description": "Month name e.g. September"
     },
     "year": {
       "type": "number"
     },
-    "date_range": {
+    "month_key": {
       "type": "string",
-      "description": "Human readable e.g. October \u2013 December 2025"
+      "description": "YYYY-MM unique key for subaccount+month upsert"
     },
-    "report_data": {
-      "type": "object",
-      "description": "AI-generated combined report JSON"
+    "form_submissions": {
+      "type": "number",
+      "description": "Form submissions count (null if unavailable)"
     },
-    "seo_file_url": {
+    "appointment_status_counts": {
+      "type": "string",
+      "description": "JSON {status: count} of appointments in the month"
+    },
+    "total_appointments": {
+      "type": "number",
+      "default": 0
+    },
+    "unread_conversations": {
+      "type": "number",
+      "description": "Unread conversations count (null if unavailable)"
+    },
+    "calls_missed": {
+      "type": "number",
+      "default": 0
+    },
+    "calls_missed_breakdown": {
+      "type": "string",
+      "description": "JSON {call_status: count} of missed calls"
+    },
+    "integration_status": {
+      "type": "string",
+      "enum": [
+        "healthy",
+        "issue",
+        "not_available"
+      ],
+      "default": "not_available"
+    },
+    "integration_issues": {
+      "type": "string",
+      "description": "JSON array of integration issues"
+    },
+    "sync_status": {
+      "type": "string",
+      "enum": [
+        "success",
+        "failed",
+        "not_available"
+      ],
+      "default": "not_available"
+    },
+    "sync_errors": {
       "type": "string"
     },
-    "ppc_file_url": {
-      "type": "string"
+    "pulled_at": {
+      "type": "string",
+      "format": "date-time"
     }
   },
   "required": [
-    "client_id",
-    "client_name",
-    "month",
-    "year"
+    "subaccount_id",
+    "month_key"
   ]
 }

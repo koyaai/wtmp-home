@@ -1,0 +1,48 @@
+{
+  "definition": {
+    "document": {
+      "dsl": "1.0.0",
+      "name": "monthly_ghl_report",
+      "version": "1.0",
+      "namespace": "base44"
+    },
+    "do": [
+      {
+        "report": {
+          "call": "invoke_backend_function",
+          "with": {
+            "function_name": "ghlSubaccountMonitor",
+            "args": {
+              "mode": "report",
+              "send_slack": true
+            }
+          },
+          "then": "end",
+          "x-base44": {
+            "title": "Generate monthly report",
+            "description": "Metrics, alerts, Slack"
+          }
+        }
+      }
+    ]
+  },
+  "description": "Monthly GHL subaccount report: metrics, alerts, and Slack notification on the 1st at 08:00",
+  "trigger": {
+    "condition": null,
+    "config": {
+      "trigger_type": "scheduled",
+      "events": [],
+      "schedule_mode": "recurring",
+      "cron_expression": "0 8 1 * *",
+      "one_time_date": null,
+      "timezone": "Asia/Manila",
+      "interval_value": null,
+      "interval_unit": null,
+      "interval_anchor": null,
+      "ends_type": "never",
+      "ends_on_date": null,
+      "ends_after_count": null
+    }
+  },
+  "name": "Monthly GHL Subaccount Report"
+}

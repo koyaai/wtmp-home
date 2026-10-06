@@ -1,0 +1,57 @@
+{
+  "name": "Appointment",
+  "type": "object",
+  "properties": {
+    "subaccount_id": {
+      "type": "string",
+      "description": "Reference to Subaccount"
+    },
+    "subaccount_name": {
+      "type": "string"
+    },
+    "ghl_event_id": {
+      "type": "string",
+      "description": "Unique GHL event id (upsert key)"
+    },
+    "calendar_id": {
+      "type": "string"
+    },
+    "contact_id": {
+      "type": "string"
+    },
+    "assigned_user_id": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "appointment_status": {
+      "type": "string",
+      "description": "appointmentStatus from GHL event"
+    },
+    "start_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "end_time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "date_added": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "date_updated": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "raw_event": {
+      "type": "string",
+      "description": "Raw event JSON for diagnosing unmapped fields"
+    }
+  },
+  "required": [
+    "subaccount_id",
+    "ghl_event_id"
+  ]
+}
