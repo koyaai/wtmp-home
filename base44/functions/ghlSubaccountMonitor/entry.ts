@@ -31,20 +31,26 @@ function inMonth(dateStr, year, month) {
   return d.getFullYear() === year && d.getMonth() === month;
 }
 
-// ---------- GHL request with version fallback ----------
+// ---------- GHL request with version fallback + 429 retry ----------
 async function ghlRequest(pathname, { apiKey, version, fallbackVersion, params }) {
   const url = new URL(BASE + pathname);
   for (const [k, v] of Object.entries(params || {})) {
     if (v !== undefined && v !== null) url.searchParams.set(k, String(v));
   }
   const tryReq = async (ver) => {
-    const res = await fetch(url.toString(), {
-      headers: { Authorization: `Bearer ${apiKey}`, Version: ver, Accept: "application/json" },
-    });
-    const text = await res.text();
-    let data = null;
-    try { data = text ? JSON.parse(text) : null; } catch { data = null; }
-    return { ok: res.ok, status: res.status, data, text, ver };
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const res = await fetch(url.toString(), {
+        headers: { Authorization: `Bearer ${apiKey}`, Version: ver, Accept: "application/json" },
+      });
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+      if (res.status === 429 && attempt < 2) {
+        await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+        continue;
+      }
+      return { ok: res.ok, status: res.status, data, text, ver };
+    }
   };
   const safeUrl = url.pathname + url.search;
   let r = await tryReq(version || "v3");
@@ -91,15 +97,19 @@ function mergeDiagnostics(existingJson, seen) {
   return JSON.stringify([...map.values()]);
 }
 
-// ---------- sync: calls ----------
+// ---------- sync: calls (bulk upsert) ----------
 async function syncCalls(base44, sub, settings, diagSeen) {
   const now = Date.now();
-  const startDate = new Date(now - 30 * 86400000).toISOString().slice(0, 10);
-  const endDate = new Date(now).toISOString().slice(0, 10);
   const existing = await base44.asServiceRole.entities.Call.filter({ subaccount_id: sub.id }, "-date_added", 5000);
+  const firstRun = existing.length === 0;
+  const days = firstRun ? 30 : 3;
+  const startDate = new Date(now - days * 86400000).toISOString().slice(0, 10);
+  const endDate = new Date(now).toISOString().slice(0, 10);
   const idMap = new Map(existing.map((c) => [c.ghl_message_id, c.id]));
   let cursor = null;
   let synced = 0;
+  const newRecords = [];
+  const updateRecords = [];
   do {
     const params = { locationId: sub.ghl_location_id, channel: "Call", limit: 1000, startDate, endDate };
     if (cursor) params.cursor = cursor;
@@ -126,24 +136,29 @@ async function syncCalls(base44, sub, settings, diagSeen) {
         date_updated: m.dateUpdated || m.updatedAt || null,
         source: m.source || null, alt_id: m.altId || null,
       };
-      if (idMap.has(mid)) {
-        await base44.asServiceRole.entities.Call.update(idMap.get(mid), payload);
-      } else {
-        const created = await base44.asServiceRole.entities.Call.create(payload);
-        idMap.set(mid, created.id);
-      }
+      if (idMap.has(mid)) updateRecords.push({ id: idMap.get(mid), ...payload });
+      else newRecords.push(payload);
       synced++;
     }
     cursor = data.nextCursor || null;
   } while (cursor);
+  if (newRecords.length) {
+    const created = await base44.asServiceRole.entities.Call.bulkCreate(newRecords);
+    for (const c of created) idMap.set(c.ghl_message_id, c.id);
+  }
+  if (updateRecords.length) await base44.asServiceRole.entities.Call.bulkUpdate(updateRecords);
   return { ok: true, synced };
 }
 
-// ---------- sync: appointments ----------
+// ---------- sync: appointments (bulk upsert) ----------
 async function syncAppointments(base44, sub, settings, diagSeen) {
   const now = Date.now();
-  const windowStart = now - 30 * 86400000;
-  const windowEnd = now + 60 * 86400000;
+  const existing = await base44.asServiceRole.entities.Appointment.filter({ subaccount_id: sub.id }, "-start_time", 5000);
+  const firstRun = existing.length === 0;
+  const backDays = firstRun ? 30 : 14;
+  const aheadDays = firstRun ? 60 : 14;
+  const windowStart = now - backDays * 86400000;
+  const windowEnd = now + aheadDays * 86400000;
   const calRes = await ghlRequest("/calendars/", {
     apiKey: sub.ghl_api_key, version: settings.version_calendars, fallbackVersion: settings.fallback_calendars,
     params: { locationId: sub.ghl_location_id },
@@ -151,9 +166,10 @@ async function syncAppointments(base44, sub, settings, diagSeen) {
   if (!calRes.ok) return { ok: false, error: `Calendars list failed: HTTP ${calRes.status} ${calRes.error}`, safeUrl: calRes.safeUrl };
   const calendars = (calRes.data && calRes.data.calendars) || [];
   if (!calendars.length) return { ok: true, synced: 0 };
-  const existing = await base44.asServiceRole.entities.Appointment.filter({ subaccount_id: sub.id }, "-start_time", 5000);
   const idMap = new Map(existing.map((a) => [a.ghl_event_id, a.id]));
   let synced = 0;
+  const newRecords = [];
+  const updateRecords = [];
   for (const cal of calendars) {
     for (let ws = windowStart; ws < windowEnd; ws += 7 * 86400000) {
       const we = Math.min(ws + 7 * 86400000, windowEnd);
@@ -179,16 +195,17 @@ async function syncAppointments(base44, sub, settings, diagSeen) {
           date_updated: e.dateUpdated || e.updatedAt || null,
           raw_event: JSON.stringify(e),
         };
-        if (idMap.has(eid)) {
-          await base44.asServiceRole.entities.Appointment.update(idMap.get(eid), payload);
-        } else {
-          const created = await base44.asServiceRole.entities.Appointment.create(payload);
-          idMap.set(eid, created.id);
-        }
+        if (idMap.has(eid)) updateRecords.push({ id: idMap.get(eid), ...payload });
+        else newRecords.push(payload);
         synced++;
       }
     }
   }
+  if (newRecords.length) {
+    const created = await base44.asServiceRole.entities.Appointment.bulkCreate(newRecords);
+    for (const c of created) idMap.set(c.ghl_event_id, c.id);
+  }
+  if (updateRecords.length) await base44.asServiceRole.entities.Appointment.bulkUpdate(updateRecords);
   return { ok: true, synced };
 }
 
@@ -203,28 +220,37 @@ async function runSync(base44, settings, subaccountId) {
   }
   const diagSeen = { calls: {}, appts: {} };
   const results = [];
-  for (const sub of subs) {
+  for (let i = 0; i < subs.length; i++) {
+    const sub = subs[i];
     let status = "success";
     let error = null;
-    const callsR = await syncCalls(base44, sub, settings, diagSeen);
-    const apptsR = await syncAppointments(base44, sub, settings, diagSeen);
-    if (!callsR.ok || !apptsR.ok) {
+    try {
+      const callsR = await syncCalls(base44, sub, settings, diagSeen);
+      const apptsR = await syncAppointments(base44, sub, settings, diagSeen);
+      if (!callsR.ok || !apptsR.ok) {
+        status = "failed";
+        error = [callsR.error, apptsR.error].filter(Boolean).join(" | ");
+        const mk = currentPreviousMonthKey();
+        await base44.asServiceRole.entities.GHLAlert.create({
+          subaccount_id: sub.id, subaccount_name: sub.name, month_key: mk,
+          month: monthLabel(mk), year: parseMonthKey(mk).year,
+          issue_type: "sync_failed", severity: "critical",
+          description: `Sync failed: ${error}${callsR.safeUrl ? ` | URL: ${callsR.safeUrl}` : ""}${apptsR.safeUrl ? ` | URL: ${apptsR.safeUrl}` : ""}`,
+          resolved: false, created_at: new Date().toISOString(),
+        });
+      }
+    } catch (e) {
       status = "failed";
-      error = [callsR.error, apptsR.error].filter(Boolean).join(" | ");
-      const mk = currentPreviousMonthKey();
-      await base44.asServiceRole.entities.GHLAlert.create({
-        subaccount_id: sub.id, subaccount_name: sub.name, month_key: mk,
-        month: monthLabel(mk), year: parseMonthKey(mk).year,
-        issue_type: "sync_failed", severity: "critical",
-        description: `Sync failed: ${error}${callsR.safeUrl ? ` | URL: ${callsR.safeUrl}` : ""}${apptsR.safeUrl ? ` | URL: ${apptsR.safeUrl}` : ""}`,
-        resolved: false, created_at: new Date().toISOString(),
-      });
+      error = e.message;
     }
-    await base44.asServiceRole.entities.Subaccount.update(sub.id, {
-      last_synced_at: new Date().toISOString(),
-      last_sync_status: status, last_sync_error: error || null,
-    });
-    results.push({ subaccount_id: sub.id, name: sub.name, status, calls: callsR.synced || 0, appts: apptsR.synced || 0, error });
+    try {
+      await base44.asServiceRole.entities.Subaccount.update(sub.id, {
+        last_synced_at: new Date().toISOString(),
+        last_sync_status: status, last_sync_error: error || null,
+      });
+    } catch {}
+    results.push({ subaccount_id: sub.id, name: sub.name, status, calls: 0, appts: 0, error });
+    if (i < subs.length - 1) await new Promise((r) => setTimeout(r, 200));
   }
   await base44.asServiceRole.entities.GHLMonitorSettings.update(settings.id, {
     diagnostics_call_statuses: mergeDiagnostics(settings.diagnostics_call_statuses, diagSeen.calls),
