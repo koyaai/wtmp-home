@@ -101,11 +101,6 @@
       "type": "string",
       "description": "Go High Level Private Integration API key for this location"
     },
-    "ghl_monitor_active": {
-      "type": "boolean",
-      "default": false,
-      "description": "Include this subaccount in the monthly GHL monitor audit"
-    },
     "google_ads_account_id": {
       "type": "string"
     },
