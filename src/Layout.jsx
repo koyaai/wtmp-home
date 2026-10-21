@@ -29,7 +29,8 @@ import {
   Activity,
   Archive,
   HeartPulse,
-  Contact
+  Contact,
+  Inbox
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -64,6 +65,7 @@ const navItems = [
     ]
   },
   { label: "Client Insights", icon: Brain, page: "ClientInsights", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist"] },
+  { label: "Meeting Inbox", icon: Inbox, page: "MeetingInbox", roles: [...CSM_ROLES] },
   { label: "Client Intelligence", icon: Contact, page: "ClientIntelligence", roles: [...CSM_ROLES] },
   { label: "Reporting", icon: BarChart2, page: "Reporting", roles: [...CSM_ROLES, "seo_specialist", "ppc_specialist", "lead_boomerang"] },
   { label: "Lead Tracker", icon: TrendingUp, page: "Leads", roles: [...CSM_ROLES, "lead_boomerang"] },
