@@ -140,6 +140,22 @@
     "meeting_date": {
       "type": "string",
       "format": "date"
+    },
+    "team": {
+      "type": "string",
+      "description": "Team whose meeting this came from (auto-ingested notes)"
+    },
+    "source_meeting_title": {
+      "type": "string",
+      "description": "Meeting name for auto-ingested Gemini notes, e.g. Meet PPC"
+    },
+    "source_url": {
+      "type": "string",
+      "description": "Link to the original notes (Google Doc)"
+    },
+    "meeting_inbox_id": {
+      "type": "string",
+      "description": "Reference to MeetingInbox when routed from the meeting notes queue"
     }
   },
   "required": [
