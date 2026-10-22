@@ -141,7 +141,6 @@
       "type": "string",
       "format": "date"
     }
-    }
   },
   "required": [
     "client_id",
