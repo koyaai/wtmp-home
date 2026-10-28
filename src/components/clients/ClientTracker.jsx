@@ -90,6 +90,8 @@ export default function ClientTracker({ clientId, onDataChange }) {
   const canEdit = ALLOWED_ROLES.includes(user?.role);
 
   const updateItem = async (insight, field, index, newItem) => {
+    const isFlag = field === "red_flags";
+    const prev = normalizeItem(insight[field]?.[index]);
     const items = (insight[field] || []).map(normalizeItem);
     items[index] = newItem;
     await base44.entities.ClientInsight.update(insight.id, {
@@ -98,7 +100,12 @@ export default function ClientTracker({ clientId, onDataChange }) {
     });
     loadInsights();
     onDataChange?.();
-    promptSlack({ type: field === "red_flags" ? "red_flag_updated" : "todo_updated", text: newItem.text });
+    // Closing the item out reads as "Completed"/"Resolved", not just "Updated".
+    const justCompleted = !!newItem.resolved && !prev.resolved;
+    const type = justCompleted
+      ? (isFlag ? "red_flag_resolved" : "todo_completed")
+      : (isFlag ? "red_flag_updated" : "todo_updated");
+    promptSlack({ type, text: newItem.text, solution: newItem.solution });
   };
 
   const deleteItem = async (insight, field, index) => {
@@ -127,7 +134,7 @@ export default function ClientTracker({ clientId, onDataChange }) {
     const isFlag = field === "red_flags";
     const text = items[index].text;
     if (!wasResolved) {
-      promptSlack({ type: isFlag ? "red_flag_resolved" : "todo_completed", text });
+      promptSlack({ type: isFlag ? "red_flag_resolved" : "todo_completed", text, solution: items[index].solution });
     } else {
       promptSlack({ type: isFlag ? "red_flag_reopened" : "todo_reopened", text });
     }

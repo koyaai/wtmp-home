@@ -35,6 +35,12 @@ export default function SlackAnnounceToast({ toast, onConfirm, onSkip }) {
               <div className="px-4 py-2.5 mx-4 my-2 bg-slate-50 rounded-lg border border-slate-100">
                 <p className="text-xs text-slate-600 whitespace-pre-wrap line-clamp-4">{toast.preview || toast.text}</p>
               </div>
+              {toast.thread && (
+                <div className="px-4 py-2 mx-4 mb-1 bg-slate-50/60 rounded-lg border border-dashed border-slate-200">
+                  <p className="text-[11px] text-slate-400 mb-0.5">Thread reply</p>
+                  <p className="text-xs text-slate-600 whitespace-pre-wrap line-clamp-3">{toast.thread}</p>
+                </div>
+              )}
               <div className="flex gap-2 px-4 pb-3.5">
                 <button
                   onClick={onConfirm}

@@ -8,17 +8,23 @@ import { buildMentions } from "@/utils/slackMentions";
 // messages posted after a client insight summary (so they can create tasks).
 const PM_MENTIONS = ["U04MJKKEVBL", "U0ALEJ5B0F9"].map((id) => `<@${id}>`).join(" ");
 
+// Types that announce an item being closed out — these get the resolution
+// context posted as a threaded reply under the parent message.
+const COMPLETION_TYPES = ["todo_completed", "red_flag_resolved"];
+
+// Tracker updates are posted into the client's own Slack channel, so the
+// client name is intentionally omitted from these messages.
 const MESSAGES = {
-  red_flag_added: (name, text) => `🚩 *New Red Flag* — ${name}\n${text}`,
-  red_flag_resolved: (name, text) => `✅ *Red Flag Resolved* — ${name}\n${text}`,
-  red_flag_reopened: (name, text) => `↩️ *Red Flag Reopened* — ${name}\n${text}`,
-  red_flag_updated: (name, text) => `🚩 *Red Flag Updated* — ${name}\n${text}`,
-  red_flag_deleted: (name, text) => `🗑️ *Red Flag Deleted* — ${name}\n${text}`,
-  todo_added: (name, text) => `📝 *New To-Do* — ${name}\n${text}`,
-  todo_completed: (name, text) => `✅ *To-Do Completed* — ${name}\n${text}`,
-  todo_reopened: (name, text) => `↩️ *To-Do Reopened* — ${name}\n${text}`,
-  todo_updated: (name, text) => `📝 *To-Do Updated* — ${name}\n${text}`,
-  todo_deleted: (name, text) => `🗑️ *To-Do Deleted* — ${name}\n${text}`,
+  red_flag_added: (text) => `🚩 *New Red Flag*\n${text}`,
+  red_flag_resolved: (text) => `✅ *Red Flag Resolved*\n${text}`,
+  red_flag_reopened: (text) => `↩️ *Red Flag Reopened*\n${text}`,
+  red_flag_updated: (text) => `🚩 *Red Flag Updated*\n${text}`,
+  red_flag_deleted: (text) => `🗑️ *Red Flag Deleted*\n${text}`,
+  todo_added: (text) => `📝 *New To-Do*\n${text}`,
+  todo_completed: (text) => `✅ *To-Do Completed*\n${text}`,
+  todo_reopened: (text) => `↩️ *To-Do Reopened*\n${text}`,
+  todo_updated: (text) => `📝 *To-Do Updated*\n${text}`,
+  todo_deleted: (text) => `🗑️ *To-Do Deleted*\n${text}`,
   csm_update: (name, type, content) => `📢 *CSM Update (${type})* — ${name}\n${content}`,
   insight_added: (name, data) => {
     const date = data.meeting_date
@@ -77,7 +83,7 @@ export function useSlackAnnounce(clientId) {
     base44.entities.Client.get(clientId).then(setClient).catch(() => setClient(null));
   }, [clientId]);
 
-  const prompt = useCallback(({ type, text, updateType, content }) => {
+  const prompt = useCallback(({ type, text, updateType, content, solution }) => {
     if (!client) return;
     if (!client.slack_channel) {
       setToast({ mode: "no-channel" });
@@ -86,6 +92,9 @@ export function useSlackAnnounce(clientId) {
     }
     const fn = MESSAGES[type];
     if (!fn) return;
+    const thread = COMPLETION_TYPES.includes(type) && solution?.trim()
+      ? `💬 *Resolution context*\n${solution.trim()}`
+      : null;
     if (type === "insight_added") {
       const { headline, body, itemMessages } = fn(client.name, text);
       const tag = buildMentions(client);
@@ -99,8 +108,8 @@ export function useSlackAnnounce(clientId) {
     }
     const msg = type === "csm_update" ? fn(client.name, updateType, content)
       : (type === "meeting_note") ? fn(client.name, text)
-      : fn(client.name, text);
-    setToast({ mode: "confirm", text: msg });
+      : fn(text);
+    setToast({ mode: "confirm", text: msg, thread });
   }, [client]);
 
   const confirm = useCallback(async () => {
@@ -124,6 +133,19 @@ export function useSlackAnnounce(clientId) {
             await base44.functions.invoke("sendSlackMessage", { client_id: clientId, text: itemText });
           } catch (e) { /* best-effort; continue with remaining items */ }
         }
+      } else if (toast.thread) {
+        // Main update first, then the resolution context as a threaded reply.
+        const headRes = await base44.functions.invoke("sendSlackMessage", { client_id: clientId, text: toast.text });
+        if (!headRes.data?.ok || !headRes.data?.ts) {
+          setToast({ mode: "error", error: headRes.data?.error || "Update post failed" });
+          setTimeout(() => setToast(null), 4000);
+          return;
+        }
+        res = await base44.functions.invoke("sendSlackMessage", {
+          client_id: clientId,
+          text: toast.thread,
+          thread_ts: headRes.data.ts,
+        });
       } else {
         res = await base44.functions.invoke("sendSlackMessage", { client_id: clientId, text: toast.text });
       }
