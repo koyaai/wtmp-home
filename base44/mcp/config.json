@@ -1,0 +1,87 @@
+{
+  "auth": "oauth",
+  "tools": {
+    "entity_overrides": {
+      "Client": {
+        "description": "Client account profile: name, program, services, retainer, assigned CSM, website, Google Ads / GA4 / GHL identifiers.",
+        "operations": ["read"]
+      },
+      "ClientInsight": {
+        "description": "Client tracker records: AI summary, to-dos and red flags (with resolved state, team assignment, resolution notes), meeting date.",
+        "operations": ["read"]
+      },
+      "ClientScore": {
+        "description": "Monthly client scorecard: grades (A-F) per category with notes, overall grade, roadblocks.",
+        "operations": ["read"]
+      },
+      "ClientContact": {
+        "description": "Client contact profiles: questionnaire answers, AI prep sheet, timeline notes.",
+        "operations": ["read"]
+      },
+      "Onboarding": {
+        "description": "Onboarding records with summary notes and uploaded transcript/form references.",
+        "operations": ["read"]
+      },
+      "PostMortem": {
+        "description": "Offboarding post-mortems: reason, date, summary notes.",
+        "operations": ["read"]
+      },
+      "WillMeeting": {
+        "description": "Will's meeting records with parsed summary, highlights, action items, sentiment.",
+        "operations": ["read"]
+      },
+      "MeetingNote": {
+        "description": "Meeting notes per client.",
+        "operations": ["read"]
+      },
+      "CSMUpdate": {
+        "description": "CSM-written client updates.",
+        "operations": ["read"]
+      },
+      "PPCData": {
+        "description": "PPC performance per client per period: spend, impressions, clicks, CPC, CTR, conversions, notes.",
+        "operations": ["read"]
+      },
+      "GAData": {
+        "description": "GA4 analytics per client per period: sessions, users, pageviews, bounce rate, top pages, traffic sources.",
+        "operations": ["read"]
+      },
+      "SEOData": {
+        "description": "SEO performance per client per period: organic clicks, impressions, average position, top keywords/pages, GBP metrics.",
+        "operations": ["read"]
+      },
+      "LeadData": {
+        "description": "Lead performance per client per period: leads, appointments, closed deals, revenue, source breakdowns.",
+        "operations": ["read"]
+      },
+      "Website": {
+        "description": "Monitored client websites.",
+        "operations": ["read"]
+      },
+      "UptimeCheck": {
+        "description": "Website uptime check history: status, response code, response time.",
+        "operations": ["read"]
+      },
+      "Appointment": { "operations": [] },
+      "BrandProfile": { "operations": [] },
+      "Calendar": { "operations": [] },
+      "Call": { "operations": [] },
+      "ContentItem": { "operations": [] },
+      "ContentPlan": { "operations": [] },
+      "DashboardRecommendation": { "operations": [] },
+      "GBPCalendar": { "operations": [] },
+      "GBPProfile": { "operations": [] },
+      "GBPSettings": { "operations": [] },
+      "GHLAlert": { "operations": [] },
+      "GHLMonitorSettings": { "operations": [] },
+      "MeetingInbox": { "operations": [] },
+      "MonthlyReport": { "operations": [] },
+      "NotificationLog": { "operations": [] },
+      "ReportSchedule": { "operations": [] },
+      "Subaccount": { "operations": [] },
+      "SyncSettings": { "operations": [] },
+      "User": { "operations": [] },
+      "WebsiteProject": { "operations": [] }
+    }
+  }
+}

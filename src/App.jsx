@@ -23,6 +23,7 @@ import ClientGADashboard from '@/pages/ClientGADashboard';
 import ClientIntelligence from '@/pages/ClientIntelligence';
 import ContactProfile from '@/pages/ContactProfile';
 import GHLMonitor from '@/pages/GHLMonitor';
+import OAuthConsent from '@/pages/OAuthConsent';
 
 const { Pages, Layout, mainPage } = pagesConfig;
 const mainPageKey = mainPage ?? Object.keys(Pages)[0];
@@ -109,6 +110,7 @@ function App() {
         <Router>
           <Routes>
             <Route path="/report/:clientId" element={<ClientReportPublic />} />
+            <Route path="/oauth/consent" element={<OAuthConsent />} />
             <Route path="/*" element={<AuthenticatedApp />} />
           </Routes>
         </Router>
