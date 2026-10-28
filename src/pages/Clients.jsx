@@ -31,7 +31,7 @@ export default function Clients() {
     const [data, updates, insights, meetingNotes, onboardings] = await Promise.all([
       base44.entities.Client.list("-created_date", 100),
       base44.entities.CSMUpdate.list("-created_date", 200),
-      base44.entities.ClientInsight.list("-created_date", 500),
+      base44.entities.ClientInsight.list("-updated_date", 500),
       base44.entities.MeetingNote.list("-created_date", 500),
       base44.entities.Onboarding.list("-created_date", 500),
     ]);

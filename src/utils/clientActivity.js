@@ -7,6 +7,18 @@ export function getStaleThreshold(program) {
 }
 
 /**
+ * Most recent activity timestamp (ms) for one record. Tracker edits write an
+ * explicit last_tracker_activity, so to-do / red flag changes always count.
+ */
+function recordTimestamp(r) {
+  const stamps = [r.created_date, r.updated_date, r.last_tracker_activity]
+    .filter(Boolean)
+    .map(d => new Date(d).getTime())
+    .filter(Number.isFinite);
+  return stamps.length ? Math.max(...stamps) : 0;
+}
+
+/**
  * Fetch the most recent activity timestamp for a single client
  * by querying ClientInsight, CSMUpdate, MeetingNote, and Onboarding in parallel.
  * Returns a Date or null.
@@ -21,9 +33,7 @@ export async function getLastActivityDate(clientId) {
   let latest = null;
   for (const records of [insights, updates, meetingNotes, onboardings]) {
     for (const r of records) {
-      const ts = Math.max(
-        ...[r.created_date, r.updated_date].filter(Boolean).map(d => new Date(d).getTime())
-      );
+      const ts = recordTimestamp(r);
       if (ts > (latest ?? 0)) latest = ts;
     }
   }
@@ -41,9 +51,7 @@ export function buildLastActivityMap(clients, insights, updates, meetingNotes, o
     for (const r of records) {
       const cid = r.client_id;
       if (!(cid in map)) continue;
-      const ts = Math.max(
-        ...[r.created_date, r.updated_date].filter(Boolean).map(d => new Date(d).getTime())
-      );
+      const ts = recordTimestamp(r);
       if (ts > (map[cid] ?? 0)) map[cid] = ts;
     }
   }

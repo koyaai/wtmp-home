@@ -92,7 +92,10 @@ export default function ClientTracker({ clientId, onDataChange }) {
   const updateItem = async (insight, field, index, newItem) => {
     const items = (insight[field] || []).map(normalizeItem);
     items[index] = newItem;
-    await base44.entities.ClientInsight.update(insight.id, { [field]: items });
+    await base44.entities.ClientInsight.update(insight.id, {
+      [field]: items,
+      last_tracker_activity: new Date().toISOString(),
+    });
     loadInsights();
     onDataChange?.();
     promptSlack({ type: field === "red_flags" ? "red_flag_updated" : "todo_updated", text: newItem.text });
@@ -102,7 +105,10 @@ export default function ClientTracker({ clientId, onDataChange }) {
     const itemText = normalizeItem(insight[field][index]).text;
     const items = (insight[field] || []).map(normalizeItem);
     items[index] = { ...items[index], deleted: true, deleted_at: new Date().toISOString() };
-    await base44.entities.ClientInsight.update(insight.id, { [field]: items });
+    await base44.entities.ClientInsight.update(insight.id, {
+      [field]: items,
+      last_tracker_activity: new Date().toISOString(),
+    });
     loadInsights();
     onDataChange?.();
     promptSlack({ type: field === "red_flags" ? "red_flag_deleted" : "todo_deleted", text: itemText });
@@ -112,7 +118,10 @@ export default function ClientTracker({ clientId, onDataChange }) {
     const items = (insight[field] || []).map(normalizeItem);
     const wasResolved = items[index].resolved;
     items[index] = { ...items[index], resolved: !wasResolved };
-    await base44.entities.ClientInsight.update(insight.id, { [field]: items });
+    await base44.entities.ClientInsight.update(insight.id, {
+      [field]: items,
+      last_tracker_activity: new Date().toISOString(),
+    });
     loadInsights();
     onDataChange?.();
     const isFlag = field === "red_flags";
@@ -130,7 +139,10 @@ export default function ClientTracker({ clientId, onDataChange }) {
     if (!target) return;
     const items = (target[field] || []).map(normalizeItem);
     items.push(newItem);
-    await base44.entities.ClientInsight.update(target.id, { [field]: items });
+    await base44.entities.ClientInsight.update(target.id, {
+      [field]: items,
+      last_tracker_activity: new Date().toISOString(),
+    });
     loadInsights();
     onDataChange?.();
     setAdding(null);

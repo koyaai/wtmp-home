@@ -140,6 +140,11 @@
     "meeting_date": {
       "type": "string",
       "format": "date"
+    },
+    "last_tracker_activity": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Timestamp of the most recent change to a to-do or red flag in the tracker. Counts as client activity for stale detection."
     }
   },
   "required": [

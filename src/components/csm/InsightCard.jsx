@@ -86,7 +86,10 @@ export default function InsightCard({ insight, onUpdate }) {
   const [showDeleted, setShowDeleted] = useState(false);
 
   const updateItems = async (field, newItems) => {
-    await base44.entities.ClientInsight.update(insight.id, { [field]: newItems });
+    await base44.entities.ClientInsight.update(insight.id, {
+      [field]: newItems,
+      last_tracker_activity: new Date().toISOString(),
+    });
     onUpdate();
   };
 
