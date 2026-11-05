@@ -74,7 +74,6 @@
       "GBPSettings": { "operations": [] },
       "GHLAlert": { "operations": [] },
       "GHLMonitorSettings": { "operations": [] },
-      "MeetingInbox": { "operations": [] },
       "MonthlyReport": { "operations": [] },
       "NotificationLog": { "operations": [] },
       "ReportSchedule": { "operations": [] },
